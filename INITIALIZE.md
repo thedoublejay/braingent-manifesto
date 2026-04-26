@@ -66,6 +66,7 @@ Based on the answer:
 - If Claude: confirm `CLAUDE.md` is present and complete.
 - If Codex: confirm `AGENTS.md` is present and complete.
 - If ChatGPT: confirm `CHATGPT_PROJECT_BRIEF.md` is present and remind me to paste it into my ChatGPT project instructions.
+- If Gemini CLI: create a `GEMINI.md` at the repo root with the same read order and workflow triggers as `CLAUDE.md`. Remind me to place it where Gemini CLI will pick it up. See `AGENT-INTEGRATION.md` for details.
 - If other: note which tools in `CURRENT_STATE.md` under "AI Tools In Use".
 
 ---

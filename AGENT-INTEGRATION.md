@@ -50,6 +50,23 @@ Recommended behavior:
 - Keep the brief short and focused on workflow.
 - Use the same taxonomy and templates as Claude and Codex.
 
+## Gemini CLI
+
+Use `GEMINI.md` as the Gemini CLI entrypoint.
+
+Gemini CLI reads `GEMINI.md` from the project root when starting a session in that directory. Place a `GEMINI.md` in your memory repo pointing to the same read order and workflow instructions as `CLAUDE.md`.
+
+Recommended behavior:
+
+- Read `README.md`, `INDEX.md`, `CURRENT_STATE.md`, and `preferences/` before planning.
+- Search durable records for prior decisions, bugs, and conventions.
+- Follow the capture policy when the task ends.
+- Keep the file thin — route into focused memory rather than duplicating instructions.
+
+Gemini CLI skills (if configured) can activate workflows automatically. Wire the same trigger phrases (`"index this repo to braingent"`, `"clean up braingent"`, etc.) so the behavior stays consistent across tools.
+
+If your Gemini setup supports global instructions, copy or symlink the `GEMINI.md` content into that global location.
+
 ## Tool-Agnostic Rule
 
 Any AI tool using Braingent should follow this loop:

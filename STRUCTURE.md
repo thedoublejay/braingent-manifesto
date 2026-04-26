@@ -51,6 +51,7 @@ Standing rules that agents should read before planning. Examples:
 - planning expectations
 - code review expectations
 - commit and PR hygiene
+- project conventions
 - privacy and safety
 
 ### `templates/`
@@ -62,6 +63,7 @@ Copyable Markdown templates for durable records:
 - review
 - decision
 - learning
+- note
 - repository profile
 - tool version
 - person interaction
@@ -78,6 +80,7 @@ Example:
 - "capture this"
 - "backfill this project"
 - "clean up braingent"
+- "retrieve braingent context"
 
 ### `orgs/`
 

@@ -15,10 +15,13 @@ Copy this directory into a new memory repo.
 |   |-- capture-policy.md
 |   |-- code-review.md
 |   |-- content-style.md
+|   |-- engineering-defaults.md
 |   |-- naming.md
+|   |-- note-taking-and-ai-memory.md
 |   |-- planning.md
 |   |-- pr-and-commit.md
 |   |-- privacy-and-safety.md
+|   |-- project-conventions.md
 |   |-- search-recipes.md
 |   `-- taxonomy.md
 |-- templates/
@@ -26,6 +29,7 @@ Copy this directory into a new memory repo.
 |   |-- decision-record.md
 |   |-- import-summary-record.md
 |   |-- learning-record.md
+|   |-- note-record.md
 |   |-- person-interaction-record.md
 |   |-- repository-profile.md
 |   |-- task-record-minimal.md
@@ -33,7 +37,9 @@ Copy this directory into a new memory repo.
 |   |-- ticket-stub.md
 |   `-- tool-version-record.md
 |-- workflows/
-|   `-- index-repo.md
+|   |-- cleanup-braingent.md
+|   |-- index-repo.md
+|   `-- retrieve-context.md
 |-- orgs/
 |   `-- org--example/
 |       |-- README.md

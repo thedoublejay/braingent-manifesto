@@ -18,7 +18,7 @@ cp -r ../braingent-manifesto/starter-pack/. .
 
 **2. Feed it to your agent.**
 
-Paste the contents of `BOOTSTRAP-PROMPT.md` into Claude, Codex, or ChatGPT as the first message in a new session (or as your project/system instructions).
+Paste the contents of `BOOTSTRAP-PROMPT.md` into Claude, Codex, ChatGPT, or Gemini CLI as the first message in a new session (or as your project/system instructions).
 
 **3. Let it initialize.**
 
@@ -174,7 +174,7 @@ Optional tools to add later: ripgrep, jq, yq, SQLite. Day one, plain Markdown is
 | `MANIFESTO.md` | Philosophy and core principles. |
 | `SETUP.md` | Full manual setup guide. |
 | `STRUCTURE.md` | Recommended directory structure and naming. |
-| `AGENT-INTEGRATION.md` | How to connect to Claude, Codex, and ChatGPT. |
+| `AGENT-INTEGRATION.md` | How to connect to Claude, Codex, ChatGPT, and Gemini CLI. |
 | `WORKFLOW.md` | Detailed day-to-day usage loop. |
 | `BOOTSTRAP-PROMPT.md` | Short copyable prompt to give your agent context about this repo. |
 | `PRIVACY-AND-SAFETY.md` | What must never be captured and how to redact. |
