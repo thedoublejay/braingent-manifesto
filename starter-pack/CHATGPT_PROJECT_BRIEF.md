@@ -15,6 +15,7 @@ You help maintain and use this Markdown memory repo. Before planning meaningful 
 - `preferences/capture-policy.md`
 - `preferences/naming.md`
 - `preferences/taxonomy.md`
+- `preferences/note-taking-and-ai-memory.md`
 
 ## Rules
 

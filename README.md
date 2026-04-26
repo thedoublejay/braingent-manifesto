@@ -216,6 +216,7 @@ your-memory-repo/
 │   ├── capture-policy.md      ← What to save and when (trigger phrases live here)
 │   ├── naming.md              ← File and key naming conventions
 │   ├── taxonomy.md            ← Allowed record kinds, statuses, prefixes
+│   ├── note-taking-and-ai-memory.md ← Memory layers, capture funnel, anti-drift rules
 │   ├── engineering-defaults.md← Tech choices: deps, libs, CI, architecture
 │   ├── planning.md            ← How to frame tasks (GOAL/ANALYSIS/APPROACH/RISKS)
 │   ├── code-review.md         ← Review focus and output format
@@ -235,7 +236,9 @@ your-memory-repo/
 │   ├── ticket-stub.md
 │   └── ...
 │
-├── workflows/                 ← Step-by-step procedures (e.g. "index this repo")
+├── workflows/                 ← Step-by-step procedures triggered by phrase
+│   ├── index-repo.md          ← "index this repo to braingent"
+│   └── cleanup-braingent.md   ← "clean up braingent" (daily/weekly/monthly/quarterly)
 │
 ├── orgs/                      ← One folder per org, client, or team
 │   └── org--<slug>/
@@ -270,6 +273,28 @@ Braingent starts as plain Markdown. You can add tooling incrementally without ch
 | GitHub CLI | Import merged PRs as records automatically |
 
 **SQLite specifically** — it's an optional read cache, not a source of truth. The Markdown files are always the source. SQLite is regenerated from them on demand. You add it when `rg` queries get slow or you want structured queries like `SELECT * FROM records WHERE record_kind = 'decision' AND status = 'active'`.
+
+---
+
+## Keeping Memory Healthy
+
+Braingent compounds only if records stay trustworthy. Tell your agent to run
+maintenance using a trigger phrase:
+
+> **"clean up braingent"**
+
+The agent runs the `workflows/cleanup-braingent.md` procedure and reports
+findings before making any changes.
+
+| Cadence | Time | What it covers |
+| --- | --- | --- |
+| **Daily** | 5-10 min | Validate frontmatter, check indexes, scan for unchecked follow-ups and TODOs |
+| **Weekly** | 30-45 min | Review active tasks, stale profiles, raw imports, and backlink gaps |
+| **Monthly** | 60-90 min | Create or refresh cited synthesis pages, check for drift |
+| **Quarterly** | 2-3 hrs | Review taxonomy, templates, agent entrypoints, and workflow relevance |
+
+The cleanup workflow is report-first: it always shows findings before editing
+anything. You approve structural changes before they happen.
 
 ---
 

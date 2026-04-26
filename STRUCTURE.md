@@ -47,6 +47,7 @@ Standing rules that agents should read before planning. Examples:
 - search recipes
 - taxonomy
 - content style
+- note-taking and AI memory
 - planning expectations
 - code review expectations
 - commit and PR hygiene
@@ -76,6 +77,7 @@ Example:
 - "index this repo to memory"
 - "capture this"
 - "backfill this project"
+- "clean up braingent"
 
 ### `orgs/`
 

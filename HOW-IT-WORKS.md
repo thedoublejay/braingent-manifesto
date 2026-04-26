@@ -2,6 +2,24 @@
 
 Braingent is built from a few simple parts that reinforce each other.
 
+## 0. Three Memory Layers
+
+Braingent organizes memory into three layers:
+
+1. **Pinned context:** root entry files (`CLAUDE.md`, `AGENTS.md`,
+   `CURRENT_STATE.md`), and stable preferences. Keep this small and current.
+   Agents read this layer for every task.
+2. **Durable memory:** task, review, decision, learning, summary, version, and
+   profile records. Markdown files with YAML frontmatter. These are canonical.
+   Agents search and cite this layer.
+3. **Derived retrieval:** generated indexes, optional local databases, and
+   future recall packs. These are aids — not source of truth. Rebuild from
+   durable records on demand.
+
+**ELI5:** The pinned layer is the short briefing. Durable records are the
+receipts. Derived retrieval is the search assistant that pulls the right
+receipts.
+
 ## 1. The Memory Repo
 
 The memory repo is a normal Git repository full of Markdown files.
@@ -187,7 +205,37 @@ The preferred path is:
 raw source -> curated summary -> durable task/decision/learning records
 ```
 
-## 11. The Feedback Loop
+## 11. The Capture Funnel
+
+Not every piece of information is ready for a durable record immediately. Use
+the capture funnel:
+
+1. **Capture fast:** drop rough material into `inbox/` or `imports/raw/`.
+2. **Classify:** choose the record kind before polishing.
+3. **Normalize:** add frontmatter, exact identifiers, dates, and source links.
+4. **Summarize:** write the shortest useful summary in your own words.
+5. **Link:** add related records and promote repeated ideas to topics/tools.
+6. **Validate and index:** run validation and index scripts if available.
+7. **Review later:** stale, active, raw, and unchecked items are handled by
+   the cleanup workflow.
+
+Do not let `inbox/` become permanent storage.
+
+## 12. The Retrieval Ladder
+
+Agents should retrieve memory in this order — most precise first:
+
+1. **Exact metadata search:** filter by repo, project, ticket, topic, tool,
+   status, or date using structured search (`scripts/find.sh` or equivalent).
+2. **Free-text body search:** use `rg` for error strings, API names, partial
+   names, and exploratory queries.
+3. **Full record reads:** only open records that passed the filter step.
+4. **Raw imports:** read only when curated records are insufficient.
+
+Do not ask agents to read every record for every task. Retrieve the smallest
+useful set.
+
+## 13. The Feedback Loop
 
 Braingent compounds through repetition:
 
@@ -200,7 +248,7 @@ Braingent compounds through repetition:
 
 The repo becomes more useful every time this loop runs.
 
-## 12. Why Markdown-Only First
+## 14. Why Markdown-Only First
 
 Starting with Markdown keeps the system understandable.
 
