@@ -1,0 +1,67 @@
+# Starter Pack File Tree
+
+Copy this directory into a new memory repo.
+
+```text
+.
+|-- README.md
+|-- AGENTS.md
+|-- CLAUDE.md
+|-- CHATGPT_PROJECT_BRIEF.md
+|-- INDEX.md
+|-- CURRENT_STATE.md
+|-- preferences/
+|   |-- agent-workflow.md
+|   |-- capture-policy.md
+|   |-- code-review.md
+|   |-- content-style.md
+|   |-- naming.md
+|   |-- planning.md
+|   |-- pr-and-commit.md
+|   |-- privacy-and-safety.md
+|   |-- search-recipes.md
+|   `-- taxonomy.md
+|-- templates/
+|   |-- code-review-record.md
+|   |-- decision-record.md
+|   |-- import-summary-record.md
+|   |-- learning-record.md
+|   |-- person-interaction-record.md
+|   |-- repository-profile.md
+|   |-- task-record-minimal.md
+|   |-- task-record.md
+|   |-- ticket-stub.md
+|   `-- tool-version-record.md
+|-- workflows/
+|   `-- index-repo.md
+|-- orgs/
+|   `-- org--example/
+|       |-- README.md
+|       `-- projects/
+|           `-- project--example--memory/
+|               |-- README.md
+|               `-- records/
+|                   `-- README.md
+|-- repositories/
+|   `-- repo--example--owner--repo/
+|       `-- README.md
+|-- topics/
+|   `-- topic--ai-memory/
+|       `-- README.md
+|-- tools/
+|   `-- README.md
+|-- people/
+|   `-- README.md
+|-- tickets/
+|   `-- README.md
+|-- inbox/
+|   `-- README.md
+|-- imports/
+|   |-- README.md
+|   |-- raw/
+|   |   `-- README.md
+|   `-- summaries/
+|       `-- README.md
+`-- indexes/
+    `-- README.md
+```
