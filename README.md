@@ -11,7 +11,7 @@ This repository is not a private memory dump. It is a public, open source setup 
 **1. Clone this repo and copy the starter pack into a new empty repo.**
 
 ```bash
-git clone https://github.com/jjadonis/braingent-manifesto
+git clone https://github.com/thedoublejay/braingent-manifesto
 mkdir my-braingent && cd my-braingent && git init
 cp -r ../braingent-manifesto/starter-pack/. .
 ```
