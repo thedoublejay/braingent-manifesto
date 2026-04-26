@@ -109,6 +109,49 @@ Next time the same problem appears, your agent reads the record first.
 
 ---
 
+## Then: Index Your Repos
+
+Once Braingent is initialized, the next step is pointing it at your actual codebases. Tell your agent:
+
+> **"Index this repo to braingent"**
+
+The agent runs the `workflows/index-repo.md` procedure and pulls in context from every source it can reach:
+
+| Source | What it captures |
+| --- | --- |
+| Local docs | `README.md`, architecture docs, planning files, `CLAUDE.md`, `AGENTS.md`, untracked notes |
+| Git history | Your authored commits, branch names, merge history, ticket IDs in commit messages |
+| GitHub Issues | Open and closed issues assigned to you or linked to your work |
+| Pull Requests | Merged PRs — decisions made, what changed, review findings |
+| **Jira** | Tickets, epics, sprint history — if your org uses Jira and you have access |
+| **Linear** | Issues and cycles — if your team uses Linear |
+
+The result is a set of durable records in your memory repo: task records for completed work, decision records for architectural choices, a repository profile with the stack and common commands, and learning records for anything worth remembering.
+
+**You do not need all sources on day one.** Git history and local docs are always available. GitHub, Jira, and Linear are optional — the agent notes what it could not reach and skips it cleanly.
+
+### What indexing looks like
+
+```
+You:   "index this repo to braingent"
+Agent: Found 34 merged PRs, 12 months of commits, 3 local planning docs.
+       Estimated 8–12 records. Proceed?
+You:   yes
+Agent: [creates records, repo profile, and import summary]
+       Done. 9 records written. Committed.
+```
+
+After indexing, your agent knows the repo's history before you write a single line of new code.
+
+### Supported trigger phrases
+
+- `"index this repo to braingent"`
+- `"backfill this repo to braingent"`
+- `"scan this repo into braingent"`
+- `"create a repo profile for this"`
+
+---
+
 ## Quick Start
 
 1. **Create a new Git repository** for your memory.

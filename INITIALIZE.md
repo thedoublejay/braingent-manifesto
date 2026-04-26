@@ -181,9 +181,45 @@ Then summarize what was set up: which files were updated, which folders were cre
 
 After initialization:
 
-1. **Add your first real task record.** Next time you finish a piece of work, say `"capture this"` (or your chosen trigger phrase).
-2. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
-3. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
-4. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, and script setup if you want faster search later.
+1. **Index your first repo.** See below — this is the highest-value next step.
+2. **Add your first real task record.** Next time you finish a piece of work, say `"capture this"` (or your chosen trigger phrase).
+3. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
+4. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
+5. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, and script setup if you want faster search later.
 
 The memory gets better with use. The first record is the hardest — everything after that is just the loop.
+
+---
+
+## Ready To Index Your First Repo?
+
+Your memory repo is set up. Now give it real history to work from.
+
+Tell your agent:
+
+> **"Index this repo to braingent"**
+
+Navigate to any codebase you work in and say that phrase. The agent will:
+
+1. Scan local docs, planning files, and untracked notes.
+2. Pull your authored commits from Git history.
+3. Import merged pull requests from GitHub (if `gh` is authenticated).
+4. Pull tickets from Jira or Linear (if connected and configured).
+5. Write durable records — tasks, decisions, learnings, a repo profile.
+6. Commit everything to your memory repo.
+
+**You do not need all sources.** Git and local docs always work. GitHub, Jira, and Linear are optional — the agent skips what it cannot reach and tells you what was missed.
+
+### Connecting external sources
+
+| Source | What to do |
+| --- | --- |
+| GitHub Issues + PRs | Run `gh auth login` in your terminal before indexing |
+| Jira | Ask your agent: `"connect Jira to braingent"` — it will guide you through the MCP or API key setup |
+| Linear | Ask your agent: `"connect Linear to braingent"` — same flow |
+
+Once connected, those sources are available for every future indexing run.
+
+### After indexing
+
+Your agent now knows the repo's full history before you write a single line of new code. Next time you start work on a ticket, it will search memory first and surface relevant past decisions, known risks, and prior fixes automatically.
