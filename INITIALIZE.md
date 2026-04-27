@@ -201,6 +201,15 @@ After initialization:
 
 The memory gets better with use. The first record is the hardest — everything after that is just the loop.
 
+End setup by asking me:
+
+> What do you want to use Braingent for next?
+>
+> - Index a codebase so future planning has repo context.
+> - Build a plan for a feature, bug fix, or cleanup.
+> - Capture a task or decision that already happened.
+> - Tune preferences, workflows, or capture depth.
+
 ---
 
 ## Ready To Index Your First Repo?

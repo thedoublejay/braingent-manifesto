@@ -36,6 +36,7 @@ Tasks:
 7. Add a short current-state update.
 8. Run a privacy pass before finishing.
 9. After the first commit, remind me to delete or archive the cloned `braingent-manifesto` setup repo so future `AGENTS.md` / `CLAUDE.md` searches do not query the public starter kit by mistake.
+10. Ask what I want to use Braingent for next: indexing a codebase, planning a feature or fix, capturing prior work, or tuning preferences.
 
 Rules:
 - Markdown only unless I explicitly approve automation.
@@ -52,6 +53,7 @@ When finished, summarize:
 - recommended first commit
 - how to index my first repo (`Index this repo to braingent` from inside a repo, or `Index <specific-repo> to braingent` from elsewhere)
 - next useful record to add
+- a prompt asking what I want to use Braingent for next
 ```
 
 ## Short Variant
@@ -59,5 +61,5 @@ When finished, summarize:
 Use this if you already copied the starter pack and want a quick agent instruction:
 
 ```text
-Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo and show me how to index my first repo. Markdown only. No secrets, no local paths, no sensitive personal data.
+Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo, show me how to index my first repo, and ask what I want to use Braingent for next: planning a feature or fix, capturing prior work, or tuning preferences. Markdown only. No secrets, no local paths, no sensitive personal data.
 ```

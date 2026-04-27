@@ -71,15 +71,16 @@ The agent reads your capture policy and knows which template to use and where to
 - Full context, decisions, errors, follow-ups, links
 - For complex work, architecture changes, debugging sessions
 
-### Custom Commands (Optional)
+### Command Phrases
 
-Wire your trigger phrases as slash commands in Claude Projects, Codex, or ChatGPT:
+Use plain chat phrases. These work anywhere the agent can read your memory repo:
 
-- `/save` → prefixes your message with `"dump this to braingent"`
-- `/done` → appends `"task done"`
-- `/capture` → explicit capture request
+- `"capture this"`
+- `"task done"` or `"done thanks"`
+- `"dump this to braingent"`
+- `"write to braingent"`
 
-The `BOOTSTRAP-PROMPT.md` has ready-to-paste setup prompts for each tool.
+Tool-specific shortcuts can wrap these phrases later, but they are not part of this starter kit.
 
 ---
 

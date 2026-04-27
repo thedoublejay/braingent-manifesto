@@ -143,6 +143,13 @@ For every meaningful task:
 4. Capture outcome, decisions, verification, risks, and follow-ups.
 5. Commit the memory update.
 
+After setup, ask what the user wants to do next:
+
+- Index a codebase with `Index this repo to braingent`.
+- Build a plan for a feature, bug fix, or cleanup.
+- Capture a task or decision that already happened.
+- Tune preferences, workflows, or capture depth.
+
 ## Step 9: Add Automation Later
 
 This manifesto intentionally starts with Markdown only.
