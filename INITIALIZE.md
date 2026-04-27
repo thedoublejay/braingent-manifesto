@@ -178,15 +178,26 @@ Then summarize what was set up: which files were updated, which folders were cre
 
 ---
 
+### Step 14: Cleanup Reminder
+
+Tell me:
+
+> Your memory repo is committed. If the cloned `braingent-manifesto` setup repo is still on disk, delete or archive it now unless you plan to contribute to the starter kit. Keeping it around can confuse future `AGENTS.md` / `CLAUDE.md` searches because agents may query the public starter repo instead of your real memory repo.
+
+Do not delete anything automatically. Ask me to confirm the path first.
+
+---
+
 ## What To Do Next
 
 After initialization:
 
-1. **Index your first repo.** See below — this is the highest-value next step.
-2. **Add your first real task record.** Next time you finish a piece of work, say `"capture this"` (or your chosen trigger phrase).
-3. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
-4. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
-5. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, and script setup if you want faster search later.
+1. **Remove the setup repo from your active workspace.** Delete or archive `braingent-manifesto` after confirming your memory repo is committed.
+2. **Index your first repo.** See below — this is the highest-value next step.
+3. **Add your first real task record.** Next time you finish a piece of work, say `"capture this"` (or your chosen trigger phrase).
+4. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
+5. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
+6. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, and script setup if you want faster search later.
 
 The memory gets better with use. The first record is the hardest — everything after that is just the loop.
 
@@ -200,7 +211,11 @@ Tell your agent:
 
 > **"Index this repo to braingent"**
 
-Navigate to any codebase you work in and say that phrase. The agent will:
+Use it from inside the codebase you want indexed. If you are in a different directory, name the target repo instead:
+
+> **"Index `<specific-repo>` to braingent"**
+
+The agent will:
 
 1. Scan local docs, planning files, and untracked notes.
 2. Pull your authored commits from Git history.

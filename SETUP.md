@@ -113,7 +113,27 @@ git commit -m "Initialize Braingent memory repo"
 
 After this, use normal Git commits to preserve memory changes.
 
-## Step 7: Use The Loop
+Delete or archive the cloned `braingent-manifesto` setup repo after this first commit unless you plan to contribute to the starter kit. Keeping both repos active can confuse future `AGENTS.md` / `CLAUDE.md` searches because agents may read the public starter kit instead of your real memory repo.
+
+## Step 7: Index Your First Codebase
+
+Once setup is committed, point Braingent at a real repo.
+
+If you are inside the codebase you want indexed, tell your agent:
+
+```text
+Index this repo to braingent
+```
+
+If you are working from another directory, name the target:
+
+```text
+Index <specific-repo> to braingent
+```
+
+The agent should follow `workflows/index-repo.md`, scan local docs and Git history, use optional sources such as GitHub/Jira/Linear when available, then create durable records and a repository profile in your memory repo.
+
+## Step 8: Use The Loop
 
 For every meaningful task:
 
@@ -123,7 +143,7 @@ For every meaningful task:
 4. Capture outcome, decisions, verification, risks, and follow-ups.
 5. Commit the memory update.
 
-## Step 8: Add Automation Later
+## Step 9: Add Automation Later
 
 This manifesto intentionally starts with Markdown only.
 
@@ -137,4 +157,3 @@ Later, you can add scripts for:
 - summarizing PRs or tickets
 
 Automation should support the memory model, not define it.
-

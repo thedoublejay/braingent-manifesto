@@ -27,7 +27,7 @@ Do not read archives or raw imports by default. Search them only when relevant.
 
 When the user invokes a workflow trigger phrase, follow the matching procedure in `workflows/` exactly. Current workflows:
 - "clean up braingent" → `workflows/cleanup-braingent.md`
-- "index this repo to braingent" → `workflows/index-repo.md`
+- "index this repo to braingent" / "index <specific-repo> to braingent" → `workflows/index-repo.md`
 - "retrieve braingent context" / "check braingent before planning" → `workflows/retrieve-context.md`
 
 ## Core Rules

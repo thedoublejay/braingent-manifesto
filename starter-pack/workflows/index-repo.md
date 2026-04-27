@@ -5,6 +5,9 @@ Use this workflow when you want to backfill useful history from a code repositor
 Trigger phrases:
 
 - "index this repo to memory"
+- "index <specific-repo> to memory"
+- "index this repo to braingent"
+- "index <specific-repo> to braingent"
 - "backfill this repo to memory"
 - "scan this repo into memory"
 - "create a repo profile"
@@ -25,6 +28,8 @@ Before scanning:
 4. Confirm no secrets or sensitive personal data should be copied.
 5. Check whether a repository profile already exists.
 6. Estimate scope before doing a large import.
+
+If the trigger names a specific repository, resolve that repo before scanning. If the trigger says "this repo," use the current working directory.
 
 ## Sources To Check
 
@@ -144,4 +149,3 @@ End with:
 - gaps
 - follow-ups
 - recommended next import
-

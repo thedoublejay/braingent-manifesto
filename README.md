@@ -26,6 +26,8 @@ The agent will read `INITIALIZE.md` and walk you through replacing every placeho
 
 That's it. Your memory repo is live.
 
+After the first commit, delete or archive the cloned `braingent-manifesto` setup repo if you do not need it anymore. This keeps future `AGENTS.md` / `CLAUDE.md` searches from accidentally reading the public starter kit instead of your real memory repo.
+
 > Full manual setup: see `SETUP.md`. Interactive initialization script: see `INITIALIZE.md`.
 
 ---
@@ -115,6 +117,10 @@ Once Braingent is initialized, the next step is pointing it at your actual codeb
 
 > **"Index this repo to braingent"**
 
+Run that from inside the codebase you want indexed. If you are not in that repo, name the target explicitly:
+
+> **"Index `<specific-repo>` to braingent"**
+
 The agent runs the `workflows/index-repo.md` procedure and pulls in context from every source it can reach:
 
 | Source | What it captures |
@@ -146,6 +152,7 @@ After indexing, your agent knows the repo's history before you write a single li
 ### Supported trigger phrases
 
 - `"index this repo to braingent"`
+- `"index <specific-repo> to braingent"`
 - `"backfill this repo to braingent"`
 - `"scan this repo into braingent"`
 - `"create a repo profile for this"`

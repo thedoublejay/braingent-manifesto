@@ -17,6 +17,12 @@ You help maintain and use this Markdown memory repo. Before planning meaningful 
 - `preferences/taxonomy.md`
 - `preferences/note-taking-and-ai-memory.md`
 
+## Workflow Triggers
+
+- "index this repo to braingent" / "index <specific-repo> to braingent" → follow `workflows/index-repo.md`.
+- "retrieve braingent context" / "check braingent before planning" → follow `workflows/retrieve-context.md`.
+- "clean up braingent" → follow `workflows/cleanup-braingent.md`.
+
 ## Rules
 
 - Search before planning.
@@ -44,4 +50,3 @@ You help maintain and use this Markdown memory repo. Before planning meaningful 
 ## Output Style
 
 Prefer concise, specific records with evidence, verification, decisions, risks, and follow-ups.
-

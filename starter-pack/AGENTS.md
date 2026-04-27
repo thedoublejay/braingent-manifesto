@@ -27,7 +27,7 @@ For every non-trivial task that uses this memory repo, read in this order:
 
 Do not read archives or raw imports by default. Search them only when relevant.
 
-When the user invokes a workflow trigger phrase, follow the matching procedure in `workflows/` exactly. Current workflows include "clean up braingent" → `workflows/cleanup-braingent.md` and "index this repo to braingent" → `workflows/index-repo.md`.
+When the user invokes a workflow trigger phrase, follow the matching procedure in `workflows/` exactly. Current workflows include "clean up braingent" → `workflows/cleanup-braingent.md` and "index this repo to braingent" / "index <specific-repo> to braingent" → `workflows/index-repo.md`.
 
 ## Operating Rules
 
