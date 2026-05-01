@@ -1,176 +1,192 @@
 # Braingent Manifesto
 
-Braingent is a Markdown-first memory system for software engineers who work with AI agents. It gives Claude, Codex, ChatGPT, and future tools one durable place to read before planning, one consistent structure for capturing work, and one searchable history of decisions, tasks, reviews, lessons, projects, tools, and repositories.
+Braingent is a Markdown-first memory system for software engineers who work
+with AI agents. It gives Claude, Codex, ChatGPT, Gemini CLI, and future tools
+one durable place to read before planning, one consistent structure for
+capturing work, and one searchable history of tasks, reviews, decisions,
+learnings, tools, repositories, and projects.
 
-This repository is not a private memory dump. It is a public, open source setup guide and starter kit. Copy the Markdown files into a new repo and personalize them. No database, server, or install required.
+This repository is not a private memory dump. It is a public, open source
+starter kit. Copy the Markdown files into your own repo, personalize them, and
+let your agents use that repo as shared engineering memory. No database,
+server, or required install is needed on day one.
+
+Braingent stays simple: Markdown is the source of truth. Optional scripts,
+generated indexes, local search databases, live task files, and dashboards are
+helpers built around the Markdown, not replacements for it.
 
 ---
 
-## Get Started in 3 Steps
+## Start Here
 
-**1. Clone this repo and copy the starter pack into a new empty repo.**
+1. **Copy the starter pack into a new memory repo.**
 
 ```bash
 git clone https://github.com/thedoublejay/braingent-manifesto
-mkdir my-braingent && cd my-braingent && git init
+mkdir my-braingent
+cd my-braingent
+git init
 cp -r ../braingent-manifesto/starter-pack/. .
 ```
 
-**2. Feed it to your agent.**
+2. **Give the setup prompt to your agent.**
 
-Paste the contents of `BOOTSTRAP-PROMPT.md` into Claude, Codex, ChatGPT, or Gemini CLI as the first message in a new session (or as your project/system instructions).
+Paste `BOOTSTRAP-PROMPT.md` into Claude, Codex, ChatGPT, or Gemini CLI as the
+first message in a new session. The agent will read `INITIALIZE.md` and walk
+you through the setup one question at a time.
 
-**3. Let it initialize.**
+3. **Commit your initialized memory repo.**
 
-The agent will read `INITIALIZE.md` and walk you through replacing every placeholder — your name, timezone, organizations, repos, and preferences — step by step. Answer the questions. It commits when done.
+After the agent replaces placeholders, creates your first folders, and writes
+the first setup record:
 
-That's it. Your memory repo is live.
+```bash
+git add .
+git commit -m "Initialize Braingent memory repo"
+```
 
-After the first commit, delete or archive the cloned `braingent-manifesto` setup repo if you do not need it anymore. This keeps future `AGENTS.md` / `CLAUDE.md` searches from accidentally reading the public starter kit instead of your real memory repo.
+After that first commit, delete or archive the cloned `braingent-manifesto`
+setup repo unless you plan to contribute to it. Keeping both repos active can
+confuse agent searches because they may read the public starter kit instead of
+your real memory repo.
 
-> Full manual setup: see `SETUP.md`. Interactive initialization script: see `INITIALIZE.md`.
+Detailed setup lives in `INITIALIZE.md` and `SETUP.md`.
+
+---
+
+## What Braingent Gives You
+
+| Surface | What it does | Source of truth |
+| --- | --- | --- |
+| Agent entrypoints | Tell each AI tool what to read, how to search, when to capture, and what never to store. | `AGENTS.md`, `CLAUDE.md`, `CHATGPT_PROJECT_BRIEF.md` |
+| Durable memory | Stores completed work, decisions, reviews, learnings, repo profiles, tool notes, and summaries. | Markdown records with YAML frontmatter |
+| Preferences | Keeps standing rules outside individual chats: naming, capture policy, privacy, planning, review, and workflow defaults. | `preferences/` |
+| Workflows | Gives agents repeatable procedures for repo indexing, cleanup, retrieval, and capture. | `workflows/` |
+| Generated indexes | Summarize records, follow-ups, stale candidates, and current memory health. | Rebuilt from Markdown |
+| Live tasks | Coordinates active work with `BGT-NNNN` task files, status, owners, dependencies, and append-only activity. | `tasks/active/*.md` |
+| Local dashboard | Shows the live task queue, filters, task detail, dependency graph, activity, raw Markdown, and guide. | Read-only over task Markdown |
+
+You can start with only durable memory and preferences. Add live tasks,
+generated indexes, helper scripts, and the dashboard when they solve real
+coordination or search problems.
+
+ELI5: the durable records are your engineering notebook. The live task files
+are the shared whiteboard for work in progress. The dashboard is a window onto
+the whiteboard, not a second notebook.
 
 ---
 
 ## The Daily Loop
 
-Every use of your memory follows the same rhythm:
+Every useful Braingent session follows the same loop:
 
-**1. Before work:** Agent reads memory entrypoints and searches for prior context on the task.
+1. **Search before planning.** The agent reads the thin entrypoints and searches
+   for related tasks, prior decisions, repo profiles, and known risks.
+2. **Do the work.** You and the agent work as usual. The agent keeps track of
+   decisions, commands, errors, links, versions, and tradeoffs.
+3. **Capture the outcome.** At the end, the agent writes a durable record and
+   commits it.
 
-**2. During work:** Agent notices commands, decisions, errors, versions, PR links, tradeoffs.
+The capture habit is the point. A useful memory repo is built from many small,
+evidence-backed records, not one giant document.
 
-**3. After work:** Agent writes a durable record. This is the **CAPTURE** step — the core habit that makes everything else possible.
-
----
-
-## CAPTURE: The One Daily Habit That Matters
-
-**You tell your AI agent to save its work using a trigger phrase.** The agent writes a short record to your memory repo. No manual filing. No overhead. Just "I'm done" → memory updated.
-
-### Trigger Phrases (Customize These)
-
-Type any of these into your chat:
+Common trigger phrases:
 
 | Phrase | What it does |
 | --- | --- |
-| `"capture this"` | Save whatever just happened |
-| `"task done"` or `"done thanks"` | End of task, save automatically |
-| `"dump this to braingent"` | Explicit save request |
-| `"write to braingent"` | Same as above |
+| `"capture this"` | Save what just happened. |
+| `"task done"` or `"done thanks"` | End the task and capture it. |
+| `"dump this to braingent"` | Explicitly save the current context. |
+| `"write to braingent"` | Same idea, different wording. |
 
-The agent reads your capture policy and knows which template to use and where to file the record. Add your own phrases in `preferences/capture-policy.md`.
-
-### Two Capture Modes
-
-**Quick** — uses `templates/task-record-minimal.md`
-- Task name, outcome, one key decision, done
-- Perfect for small fixes and incremental changes
-
-**Full** — uses `templates/task-record.md`
-- Full context, decisions, errors, follow-ups, links
-- For complex work, architecture changes, debugging sessions
-
-### Command Phrases
-
-Use plain chat phrases. These work anywhere the agent can read your memory repo:
-
-- `"capture this"`
-- `"task done"` or `"done thanks"`
-- `"dump this to braingent"`
-- `"write to braingent"`
-
-Tool-specific shortcuts can wrap these phrases later, but they are not part of this starter kit.
+Customize trigger phrases in `preferences/capture-policy.md`.
 
 ---
 
-## Day-to-Day in Practice
+## Index Your Repos
 
-### Before You Start
+After setup, point Braingent at your real codebases:
 
-Agent reads the root instructions (`CLAUDE.md`, `AGENTS.md`), then searches memory for related tasks, prior decisions, and known risks. Takes seconds. Prevents duplicated work and surfaces old decisions that still apply.
+```text
+Index this repo to braingent
+```
 
-### Do the Work
+Run that from inside the codebase you want indexed. If you are somewhere else,
+name the target explicitly:
 
-You and the agent work as usual. The agent notices edge cases, errors, version bumps, and tradeoffs. No extra friction.
+```text
+Index <specific-repo> to braingent
+```
 
-### Task Done → Capture
-
-Say: `"capture this"` or any trigger phrase from your policy.
-
-Agent writes to memory automatically:
-
-- What was accomplished
-- Why decisions were made
-- What didn't work and why
-- Links to PRs, issues, and commits
-- Follow-up items and risks
-
-Record is committed to Git. Done.
-
-Next time the same problem appears, your agent reads the record first.
-
----
-
-## Then: Index Your Repos
-
-Once Braingent is initialized, the next step is pointing it at your actual codebases. Tell your agent:
-
-> **"Index this repo to braingent"**
-
-Run that from inside the codebase you want indexed. If you are not in that repo, name the target explicitly:
-
-> **"Index `<specific-repo>` to braingent"**
-
-The agent runs the `workflows/index-repo.md` procedure and pulls in context from every source it can reach:
+The agent follows `workflows/index-repo.md` and captures what it can reach:
 
 | Source | What it captures |
 | --- | --- |
-| Local docs | `README.md`, architecture docs, planning files, `CLAUDE.md`, `AGENTS.md`, untracked notes |
-| Git history | Your authored commits, branch names, merge history, ticket IDs in commit messages |
-| GitHub Issues | Open and closed issues assigned to you or linked to your work |
-| Pull Requests | Merged PRs — decisions made, what changed, review findings |
-| **Jira** | Tickets, epics, sprint history — if your org uses Jira and you have access |
-| **Linear** | Issues and cycles — if your team uses Linear |
+| Local docs | README files, architecture notes, planning files, agent instructions, and untracked notes |
+| Git history | Your authored commits, branch names, merge history, and issue or ticket references already present in commit messages |
+| GitHub | Issues and pull requests when `gh` is authenticated |
+| External trackers | Jira, Linear, or other systems only when you connect them |
 
-The result is a set of durable records in your memory repo: task records for completed work, decision records for architectural choices, a repository profile with the stack and common commands, and learning records for anything worth remembering.
+The result is a set of durable task, decision, review, learning, and repository
+profile records. Next time you start work in that codebase, the agent can read
+the repo's history before writing code.
 
-**You do not need all sources on day one.** Git history and local docs are always available. GitHub, Jira, and Linear are optional — the agent notes what it could not reach and skips it cleanly.
-
-### What indexing looks like
-
-```
-You:   "index this repo to braingent"
-Agent: Found 34 merged PRs, 12 months of commits, 3 local planning docs.
-       Estimated 8–12 records. Proceed?
-You:   yes
-Agent: [creates records, repo profile, and import summary]
-       Done. 9 records written. Committed.
-```
-
-After indexing, your agent knows the repo's history before you write a single line of new code.
-
-### Supported trigger phrases
-
-- `"index this repo to braingent"`
-- `"index <specific-repo> to braingent"`
-- `"backfill this repo to braingent"`
-- `"scan this repo into braingent"`
-- `"create a repo profile for this"`
+You do not need every source on day one. Git history and local docs are enough
+to start; connected services can be added later.
 
 ---
 
-## Quick Start
+## Live Task Coordination
 
-1. **Create a new Git repository** for your memory.
-2. **Copy `starter-pack/`** contents into it.
-3. **Open `INITIALIZE.md`** and paste the prompt inside into your AI agent.
-4. **Answer the questions.** The agent replaces all placeholders and sets up your config.
-5. **Commit.** The agent tells you exactly what to run.
+Durable records describe what happened. Live tasks coordinate what is happening
+now.
 
-No database. No server. No install. Just Git and Markdown.
+Use `tasks/` when work spans multiple agents, sessions, or reviews and needs:
 
-Optional tools to add later: ripgrep, jq, yq, SQLite. Day one, plain Markdown is enough.
+- a visible queue;
+- status, owner, priority, and dependencies;
+- append-only handoff activity;
+- a clear closeout path into durable memory.
+
+Live task files use `BGT-NNNN` IDs and `record_kind: agent-task`. When a live
+task is completed, important outcomes should still be promoted into normal
+durable records with `agent_task: BGT-NNNN` linking back to the live task.
+
+The full task workflow is documented in `AGENT-TASK-COORDINATION.md`,
+`starter-pack/tasks/README.md`, and `starter-pack/preferences/agent-task-protocol.md`.
+
+---
+
+## Local Dashboard
+
+The dashboard sample in `examples/task-dashboard/` is a copyable Bun + React
+app for inspecting active task files. It includes:
+
+- dark-mode task queue;
+- status, priority, owner, and text filters;
+- task detail, acceptance criteria, plan, closeout, raw Markdown, and activity;
+- dependency graph;
+- fixed-height paginated recent activity;
+- in-app guide page;
+- synthetic sample data for safe public use;
+- Playwright e2e coverage.
+
+The dashboard is read-only over Markdown task files. It does not own a separate
+schema and does not replace `tasks/active/*.md`.
+
+To try the sample:
+
+```bash
+cd examples/task-dashboard
+bun install
+bun run dev
+```
+
+To point it at a real memory repo:
+
+```bash
+BRAINGENT_MEMORY_ROOT=/path/to/your-memory-repo bun run dev
+```
 
 ---
 
@@ -178,150 +194,116 @@ Optional tools to add later: ripgrep, jq, yq, SQLite. Day one, plain Markdown is
 
 | File or directory | Purpose |
 | --- | --- |
-| `INITIALIZE.md` | **Start here.** Interactive agent-guided setup — paste into your AI tool and answer questions. |
+| `INITIALIZE.md` | Guided agent setup prompt. Start here after copying `starter-pack/`. |
+| `SETUP.md` | Manual setup guide and optional tooling notes. |
 | `MANIFESTO.md` | Philosophy and core principles. |
-| `SETUP.md` | Full manual setup guide. |
-| `STRUCTURE.md` | Recommended directory structure and naming. |
-| `AGENT-INTEGRATION.md` | How to connect to Claude, Codex, ChatGPT, and Gemini CLI. |
-| `WORKFLOW.md` | Detailed day-to-day usage loop. |
-| `BOOTSTRAP-PROMPT.md` | Short copyable prompt to give your agent context about this repo. |
-| `PRIVACY-AND-SAFETY.md` | What must never be captured and how to redact. |
-| `FAQ.md` | Practical questions answered. |
-| `starter-pack/` | Markdown files to copy into your new memory repo. |
+| `HOW-IT-WORKS.md` | Conceptual model for the memory layers. |
+| `STRUCTURE.md` | Recommended directory layout and naming. |
+| `WORKFLOW.md` | Day-to-day search, work, capture, and cleanup loop. |
+| `AGENT-INTEGRATION.md` | How to connect Claude, Codex, ChatGPT, and Gemini CLI. |
+| `AGENT-TASK-COORDINATION.md` | Optional Markdown-based live task coordination. |
+| `PRIVACY-AND-SAFETY.md` | What must never be captured and how to review before publishing. |
+| `PUBLISHING-CHECKLIST.md` | Public-release checklist for examples and docs. |
+| `FAQ.md` | Practical questions and answers. |
+| `starter-pack/` | Files to copy into a new memory repo. |
+| `examples/task-dashboard/` | Copyable local dashboard sample with synthetic task data. |
 
 ---
 
-## How It Works
-
-Braingent turns engineering memory into a searchable, Git-backed knowledge base:
-
-- **Root instructions** tell agents how to use the memory.
-- **Preference files** define durable rules: naming, capture policy, privacy, search.
-- **YAML frontmatter** makes records machine-searchable.
-- **Markdown bodies** keep records readable by humans.
-- **Templates** make capture consistent and fast.
-- **Index files** give humans and agents a map of what's recorded.
-- **Workflows** define repeatable procedures like onboarding a new repo.
-- **Raw imports** stay separate from curated summaries.
-
----
-
-## Architecture
-
-Braingent is a layered folder structure. No magic — just Markdown files organized so agents can navigate them predictably.
+## Recommended Memory Repo Shape
 
 ```text
 your-memory-repo/
-├── CLAUDE.md                  ← Claude reads this first
-├── AGENTS.md                  ← Codex/other agents read this first
-├── CHATGPT_PROJECT_BRIEF.md   ← Paste into ChatGPT project instructions
-├── README.md                  ← Human overview
-├── INDEX.md                   ← Hand-curated map of important records
-├── CURRENT_STATE.md           ← Active context: what's in flight right now
-│
-├── preferences/               ← Standing rules agents apply before every task
-│   ├── agent-workflow.md      ← The search → plan → work → capture loop
-│   ├── capture-policy.md      ← What to save and when (trigger phrases live here)
-│   ├── naming.md              ← File and key naming conventions
-│   ├── taxonomy.md            ← Allowed record kinds, statuses, prefixes
-│   ├── note-taking-and-ai-memory.md ← Memory layers, capture funnel, anti-drift rules
-│   ├── engineering-defaults.md← Tech choices: deps, libs, CI, architecture
-│   ├── planning.md            ← How to frame tasks (GOAL/ANALYSIS/APPROACH/RISKS)
-│   ├── code-review.md         ← Review focus and output format
-│   ├── pr-and-commit.md       ← Commit and PR hygiene
-│   ├── content-style.md       ← How records should be written
-│   ├── search-recipes.md      ← How to search the memory
-│   └── privacy-and-safety.md  ← What must never be captured
-│
-├── templates/                 ← Copyable record starters
-│   ├── task-record.md         ← Full task capture
-│   ├── task-record-minimal.md ← Quick end-of-task capture
-│   ├── decision-record.md
-│   ├── learning-record.md
-│   ├── code-review-record.md
-│   ├── repository-profile.md
-│   ├── tool-version-record.md
-│   ├── ticket-stub.md
-│   └── ...
-│
-├── workflows/                 ← Step-by-step procedures triggered by phrase
-│   ├── index-repo.md          ← "index this repo to braingent"
-│   └── cleanup-braingent.md   ← "clean up braingent" (daily/weekly/monthly/quarterly)
-│
-├── orgs/                      ← One folder per org, client, or team
-│   └── org--<slug>/
-│       └── projects/
-│           └── project--<slug>/
-│               └── records/   ← Task, decision, review records for this project
-│
-├── repositories/              ← One profile per codebase you work in
-│   └── repo--github--<owner>--<name>/
-│
-├── topics/                    ← Reusable learnings grouped by technology or theme
-├── tools/                     ← Framework, runtime, and model version records
-├── people/                    ← Optional: collaboration context
-├── tickets/                   ← Cross-cutting ticket stubs
-├── inbox/                     ← Temp drop zone — empty regularly
+├── AGENTS.md
+├── CLAUDE.md
+├── CHATGPT_PROJECT_BRIEF.md
+├── README.md
+├── INDEX.md
+├── CURRENT_STATE.md
+├── preferences/
+├── templates/
+├── workflows/
+├── tasks/                     # optional live task queue
+├── dashboard/                 # optional local dashboard
+├── orgs/
+├── repositories/
+├── topics/
+├── tools/
+├── people/
+├── tickets/
+├── inbox/
 ├── imports/
-│   ├── raw/                   ← Unprocessed exports (chat dumps, PR lists)
-│   └── summaries/             ← Curated summaries of raw imports
-└── indexes/                   ← Generated or hand-maintained indexes
+└── indexes/
 ```
 
-### Optional Automation Layer
+The exact structure can be adapted, but keep the same principles:
 
-Braingent starts as plain Markdown. You can add tooling incrementally without changing the structure:
+- thin root entrypoints;
+- stable preferences;
+- durable records with YAML frontmatter;
+- generated files that can be rebuilt;
+- raw imports separated from curated summaries;
+- secrets and sensitive personal data kept out.
+
+---
+
+## Optional Tooling
+
+Braingent starts as plain Markdown. Add tools when they help:
 
 | Tool | What it adds |
 | --- | --- |
-| `ripgrep` | Fast full-text search across all records |
-| `jq` / `yq` | Parse and query YAML frontmatter from the terminal |
-| Shell scripts | `new-record.sh` to create dated files, `validate.sh` for frontmatter checks |
-| **SQLite** | Local search cache — generated from frontmatter by a `reindex.sh` script. Lets you query records by status, date, repo, topic, or record kind without grepping files. Useful once you have hundreds of records. |
-| GitHub CLI | Import merged PRs as records automatically |
+| `rg` | Fast full-text search. |
+| `jq` / `yq` | Structured JSON/YAML inspection. |
+| Shell scripts | Record creation, validation, reindexing, task helpers. |
+| SQLite | Rebuildable local search cache for structured queries. |
+| GitHub CLI | Import pull requests and issues when authenticated. |
+| Bun + React | Local dashboard over active task Markdown. |
 
-**SQLite specifically** — it's an optional read cache, not a source of truth. The Markdown files are always the source. SQLite is regenerated from them on demand. You add it when `rg` queries get slow or you want structured queries like `SELECT * FROM records WHERE record_kind = 'decision' AND status = 'active'`.
+Automation should support the memory model, not define it. Markdown remains the
+source of truth.
 
 ---
 
 ## Keeping Memory Healthy
 
-Braingent compounds only if records stay trustworthy. Tell your agent to run
-maintenance using a trigger phrase:
+Tell your agent:
 
-> **"clean up braingent"**
+```text
+clean up braingent
+```
 
-The agent runs the `workflows/cleanup-braingent.md` procedure and reports
-findings before making any changes.
+The cleanup workflow checks frontmatter, generated indexes, unchecked
+follow-ups, stale records, stale live tasks, raw imports, and drift in
+entrypoint docs. It should report findings before making structural edits.
 
-| Cadence | Time | What it covers |
-| --- | --- | --- |
-| **Daily** | 5-10 min | Validate frontmatter, check indexes, scan for unchecked follow-ups and TODOs |
-| **Weekly** | 30-45 min | Review active tasks, stale profiles, raw imports, and backlink gaps |
-| **Monthly** | 60-90 min | Create or refresh cited synthesis pages, check for drift |
-| **Quarterly** | 2-3 hrs | Review taxonomy, templates, agent entrypoints, and workflow relevance |
+Suggested cadence:
 
-The cleanup workflow is report-first: it always shows findings before editing
-anything. You approve structural changes before they happen.
+| Cadence | What it covers |
+| --- | --- |
+| Daily | Validate frontmatter, check indexes, scan open follow-ups. |
+| Weekly | Review active tasks, blocked work, stale profiles, and raw imports. |
+| Monthly | Refresh synthesis pages and check cross-links. |
+| Quarterly | Revisit taxonomy, templates, workflows, and agent entrypoints. |
 
 ---
 
 ## Design Goals
 
-- Keep knowledge portable across AI tools — no vendor lock-in.
-- Keep instructions small enough that agents read them at task start.
-- Separate stable preferences from one-time records.
+- Keep engineering memory portable across AI tools.
+- Make agents search prior context before planning.
+- Capture meaningful work before details disappear.
+- Keep stable preferences separate from one-time records.
 - Make search reliable through frontmatter and consistent naming.
-- Preserve *why* a decision happened, not just *what* changed.
-- Capture enough evidence that future agents don't need old chat transcripts.
-- Keep secrets, credentials, tokens, and sensitive personal data out of memory.
+- Preserve why decisions happened, not just what changed.
+- Keep secrets, credentials, tokens, and sensitive personal data out.
 
 ## Anti-Goals
 
 - Braingent is not a replacement for source control.
 - Braingent is not a place to store secrets or credentials.
 - Braingent is not a full chat transcript archive.
-- Braingent is not a project management system.
+- Braingent is not a replacement for your team's project management system.
 - Braingent is not tied to one AI vendor.
 - Braingent does not require automation on day one.
 
@@ -329,30 +311,16 @@ anything. You approve structural changes before they happen.
 
 ## Make It Yours
 
-Everything in the starter pack is a starting point, not a contract.
+Everything in the starter pack is a starting point. Change the preference files,
+templates, trigger phrases, and workflows to match how you actually work.
 
-**Change the preference files** to match how you actually work. Rename sections. Drop things you won't use. Add what's missing. The structure is a suggestion — your real usage will tell you what to keep.
-
-The only fixed principles (from `MANIFESTO.md`):
+The fixed principles are intentionally small:
 
 - Search before planning.
 - Capture after meaningful work.
 - Keep secrets out.
 
-Everything else is adjustable — trigger phrases, templates, directory layout, naming conventions.
-
----
-
-## First Commit
-
-After copying the starter pack and personalizing the placeholders:
-
-```bash
-git add .
-git commit -m "Initialize Braingent memory repo"
-```
-
-Then use it for real work. The value compounds from the loop: **search → work → capture → better context next time.**
+Everything else is adjustable.
 
 ---
 
@@ -362,9 +330,11 @@ Suggestions, fixes, and improvements are welcome.
 
 - **Bug or unclear docs?** [Open a bug report](../../issues/new?template=bug_report.md)
 - **Have an idea?** [Open a suggestion](../../issues/new?template=suggestion.md)
-- **Want to contribute directly?** Open a pull request — the PR template will walk you through the checklist.
+- **Want to contribute directly?** Open a pull request. The PR template includes the privacy checklist.
 
-The main things to keep in mind for contributions: no private data, examples use placeholders, and changes should be generic enough to work for any user's setup. See `CONTRIBUTING.md` for details.
+The main contribution rule: no private data. Examples should use placeholders,
+and changes should be generic enough to work for another user's setup. See
+`CONTRIBUTING.md` for details.
 
 ---
 
@@ -374,4 +344,4 @@ MIT — see `LICENSE`.
 
 ---
 
-*Created by JJ Adonis.*
+Created by JJ Adonis.

@@ -1,6 +1,6 @@
 # Taxonomy
 
-This file defines the controlled vocabulary for durable records.
+This file defines the controlled vocabulary for durable records and optional live task files.
 
 ## Record Kinds
 
@@ -16,6 +16,7 @@ This file defines the controlled vocabulary for durable records.
 | `summary` | Imported historical baselines. |
 | `profile` | Repository or durable entity profiles. |
 | `ticket-stub` | Cross-cutting tickets linking related records. |
+| `agent-task` | Optional live `BGT-NNNN` task files for active coordination. |
 
 ## Status Values
 
@@ -31,6 +32,7 @@ This file defines the controlled vocabulary for durable records.
 | `summary` | `draft`, `completed` |
 | `profile` | `active`, `archived`, `superseded` |
 | `ticket-stub` | `active`, `completed`, `abandoned` |
+| `agent-task` | `triage`, `ready`, `in-progress`, `blocked`, `in-review`, `completed`, `closed` |
 
 ## Entity Key Prefixes
 
@@ -42,6 +44,7 @@ This file defines the controlled vocabulary for durable records.
 | `person`, `people` | `person--` | `people/` |
 | `topic`, `topics` | `topic--` | `topics/` |
 | `tool`, `tools` | `tool--` | `tools/` |
+| `agent_task` | `BGT-` | `tasks/` |
 
 ## AI Tools
 
@@ -55,6 +58,18 @@ Use consistent names:
 - `GitHub Copilot`
 
 Add new tools here before using them in frontmatter.
+
+## Live Agent IDs
+
+Use concrete IDs for live task ownership and activity:
+
+- `agent--codex-cli`
+- `agent--claude-code`
+- `agent--chatgpt`
+- `agent--gemini-cli`
+- `human--<handle>`
+
+Use these in `agent-task` files, not in durable `ai_tools` fields.
 
 ## Ticket IDs
 
@@ -71,4 +86,3 @@ Recommended common fields:
 - `timezone`
 
 Add stricter validation later if the repo grows.
-

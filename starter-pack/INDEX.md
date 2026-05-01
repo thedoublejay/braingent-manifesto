@@ -9,6 +9,7 @@ This is the manually curated map of the memory repo.
 - `preferences/naming.md` - file and entity naming rules.
 - `preferences/agent-workflow.md` - how agents should use this repo.
 - `preferences/capture-policy.md` - what to capture and when.
+- `preferences/agent-task-protocol.md` - optional live task coordination rules.
 - `preferences/search-recipes.md` - useful search queries.
 - `preferences/taxonomy.md` - controlled frontmatter vocabulary.
 - `preferences/content-style.md` - durable memory writing style.
@@ -45,8 +46,22 @@ This is the manually curated map of the memory repo.
 
 - Add cross-cutting ticket stubs under `tickets/ticket--<system>--<id>/README.md`.
 
+## Live Tasks
+
+- `tasks/README.md` - optional live task module guide.
+- `tasks/CLAUDE.md` - scoped instructions for `BGT-NNNN` task files.
+- `tasks/INDEX.md` - generated or hand-maintained active task queue.
+- `tasks/active/BGT-0001--example-review-task.md` - synthetic example task to replace or delete.
+
+## Task Dashboard
+
+- `dashboard/tasks/CLAUDE.md` - scoped instructions for dashboard edits.
+- `dashboard/tasks/README.md` - optional read-only dashboard contract.
+- `dashboard/tasks/USER-GUIDE.md` - user-facing dashboard guide.
+
 ## Templates
 
+- `templates/agent-task.md`
 - `templates/task-record.md`
 - `templates/task-record-minimal.md`
 - `templates/code-review-record.md`
@@ -61,10 +76,11 @@ This is the manually curated map of the memory repo.
 ## Workflows
 
 - `workflows/index-repo.md` - backfill a repository into memory.
+- `workflows/retrieve-context.md` - build a focused context pack before work.
+- `workflows/cleanup-braingent.md` - maintain records, indexes, stale candidates, and optional live tasks.
 
 ## Raw Intake
 
 - `inbox/` - quick notes waiting to be normalized.
 - `imports/raw/` - raw exports before cleanup.
 - `imports/summaries/` - curated import summaries.
-

@@ -28,6 +28,12 @@ No.
 
 Scripts are useful later for validation, indexing, and search, but the public starter kit is Markdown-only. Start manually, then automate what becomes repetitive.
 
+## Do I Need Live Tasks?
+
+No.
+
+Use live tasks when work spans sessions, agents, owners, dependencies, or review states. If you are working alone on small tasks, durable records may be enough.
+
 ## Should Every Task Get A Record?
 
 No.
@@ -43,6 +49,36 @@ Capture meaningful work:
 - setup changes that future agents need
 
 Tiny one-off edits do not need a permanent record unless they teach something.
+
+## What Is The Difference Between `agent-task` And `task`?
+
+`agent-task` is live coordination. It is mutable, belongs under `tasks/active/`, and tracks what should happen next.
+
+`task` is durable memory. It is written after meaningful work and records what happened, why, how it was verified, and what should be remembered.
+
+## Is The Dashboard Required?
+
+No.
+
+The dashboard is an optional read-only view over `tasks/active/` and generated indexes. Markdown remains the source of truth, so the system still works from a terminal.
+
+## Are Task IDs Always `BGT-*`?
+
+The starter pack uses `BGT-NNNN` as the local live-task namespace. You can rename
+the prefix, but keep one predictable format so scripts, dashboards, and agents
+do not guess.
+
+Do not confuse `BGT-NNNN` live tasks with external Jira, Linear, or GitHub issue
+IDs. Link external trackers through `tickets/` or task `external_links`.
+
+## How Do Agents Name Themselves?
+
+Live task activity should use concrete actor IDs such as `agent--codex-cli`,
+`agent--claude-code`, `agent--chatgpt`, `agent--gemini-cli`, or
+`human--<handle>`.
+
+Durable records should keep using broad `ai_tools` names such as `Codex`,
+`Claude`, `ChatGPT`, or `Gemini`.
 
 ## Should I Store Raw Chat Logs?
 
@@ -65,4 +101,3 @@ Prefer one concise record per meaningful event. Promote repeated patterns into t
 Search before planning. Capture after meaningful work.
 
 That loop is the system.
-

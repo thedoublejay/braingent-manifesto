@@ -55,7 +55,7 @@ These practices are adapted for Braingent's Git-backed Markdown model:
 
 ## Memory Layers
 
-Treat Braingent as three layers:
+Treat Braingent as four surfaces:
 
 1. **Pinned context:** root entry files, `CURRENT_STATE.md`, and stable
    preferences. Keep this small and current.
@@ -64,10 +64,13 @@ Treat Braingent as three layers:
 3. **Derived retrieval:** generated indexes, optional local databases, future
    recall packs, and future synthesis pages. These are aids, not source of
    truth.
+4. **Optional live work:** `agent-task` files under `tasks/active/` coordinate
+   current work. They are mutable and should promote important outcomes into
+   durable records when closed.
 
 **ELI5:** The pinned layer is the short briefing, durable records are the
-receipts, and derived retrieval is the search assistant that pulls the right
-receipts.
+receipts, derived retrieval is the search assistant that pulls the right
+receipts, and live work is the whiteboard for what is happening now.
 
 ## Capture Funnel
 

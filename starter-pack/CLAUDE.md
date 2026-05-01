@@ -21,7 +21,8 @@ This repository is a durable engineering memory. Use it before planning meaningf
 13. `preferences/code-review.md`
 14. `preferences/pr-and-commit.md`
 15. `preferences/privacy-and-safety.md`
-16. Any relevant org, project, repository, topic, tool, ticket, or person records.
+16. If live tasks are enabled and relevant, `tasks/INDEX.md`.
+17. Any relevant org, project, repository, topic, tool, ticket, or person records.
 
 Do not read archives or raw imports by default. Search them only when relevant.
 
@@ -33,6 +34,7 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 ## Core Rules
 
 - Search memory before planning.
+- Check live tasks before creating overlapping active work.
 - Prefer prior decisions and established conventions when still valid.
 - Capture decisions, verification, versions, failures, fixes, and follow-ups.
 - Keep root instruction files thin.
@@ -45,10 +47,11 @@ Before planning or answering from memory:
 
 1. Identify the relevant org, project, repo, ticket, topic, tool, and time window.
 2. Run structured search (`scripts/find.sh` or equivalent) with metadata filters first.
-3. Use `rg` for body text, error strings, partial names, and exploratory search.
-4. Open the smallest useful set of records.
-5. Separate current, stale, superseded, and raw-only evidence.
-6. Cite file paths when memory affects the answer or plan.
+3. Check `tasks/INDEX.md` or `indexes/agent-task-queue.md` when active work may already exist.
+4. Use `rg` for body text, error strings, partial names, and exploratory search.
+5. Open the smallest useful set of records.
+6. Separate current, stale, superseded, live, and raw-only evidence.
+7. Cite file paths when memory affects the answer or plan.
 
 ## Subagent Handoff Protocol
 
@@ -57,6 +60,7 @@ When delegating work to subagents:
 - Retrieve memory once in the parent agent.
 - Pass a focused context pack to subagents — do not ask each subagent to reread the whole repo.
 - Subagent outputs should cite the supplied memory and any local files inspected.
+- If the subagent is working on a live task, append its result as a task activity entry with a concrete agent ID.
 
 ## Note Quality Protocol
 
@@ -88,9 +92,10 @@ For multi-step plans, give each step a `→ verify: [check]` so progress is obse
 When meaningful work is complete:
 
 1. Create or update the appropriate record.
-2. Update `CURRENT_STATE.md` or `INDEX.md` if the durable map changed.
-3. Mention evidence and verification.
-4. Note follow-ups.
+2. Link completed live `BGT-NNNN` tasks with `agent_task: BGT-NNNN`.
+3. Update `CURRENT_STATE.md` or `INDEX.md` if the durable map changed.
+4. Mention evidence and verification.
+5. Note follow-ups.
 
 ## Stuck Protocol
 

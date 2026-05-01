@@ -22,6 +22,16 @@ rg -n "<ticket-or-topic-or-repo-name>" .
 
 If you later add a structured search script, use that first and `rg` second.
 
+If the repo uses the optional live task layer, also check:
+
+```bash
+scripts/task-list.sh --count
+scripts/task-list.sh --status in-progress
+```
+
+or open `tasks/INDEX.md` / `indexes/agent-task-queue.md`. Do this before
+creating a new task so duplicate live work does not split across files.
+
 ### 2. Frame The Task
 
 For non-trivial work, state:
@@ -59,6 +69,11 @@ Notice facts worth preserving:
 - deployment notes
 - follow-up risks
 
+If the work is tracked by a live `BGT-NNNN` task, append concise activity
+entries as handoff breadcrumbs. Activity belongs in the live task while the work
+is in motion; durable records are written when the result matters after the
+session ends.
+
 ### 5. Capture At The End
 
 Create or update a record when:
@@ -73,6 +88,10 @@ Create or update a record when:
 - the user says "capture this" or "task done"
 
 Use the smallest record that preserves the important evidence.
+
+If a live task closes with `status: completed`, create or link the durable
+record and reference it with `agent_task: BGT-NNNN`. Then add a closeout note to
+the live task and regenerate indexes.
 
 ### 6. Commit The Memory
 
@@ -89,6 +108,7 @@ Keep commits focused. Do not bundle unrelated memory updates.
 
 | Need | Use |
 | --- | --- |
+| Active multi-agent or multi-session coordination | `agent-task` in `tasks/active/` |
 | Planned or completed work | `task` |
 | Quick end-of-task capture | `task` minimal |
 | Code or design review | `review` |
@@ -99,6 +119,9 @@ Keep commits focused. Do not bundle unrelated memory updates.
 | Historical import | `summary` |
 | Mixed temporary context | `note` |
 | Cross-repo ticket | `ticket-stub` |
+
+`agent-task` is forward-looking and mutable. `task` is retrospective durable
+memory.
 
 ## Review Loop
 

@@ -12,6 +12,7 @@ Copy this directory into a new memory repo.
 |-- CURRENT_STATE.md
 |-- preferences/
 |   |-- agent-workflow.md
+|   |-- agent-task-protocol.md
 |   |-- capture-policy.md
 |   |-- code-review.md
 |   |-- content-style.md
@@ -32,6 +33,7 @@ Copy this directory into a new memory repo.
 |   |-- note-record.md
 |   |-- person-interaction-record.md
 |   |-- repository-profile.md
+|   |-- agent-task.md
 |   |-- task-record-minimal.md
 |   |-- task-record.md
 |   |-- ticket-stub.md
@@ -40,6 +42,19 @@ Copy this directory into a new memory repo.
 |   |-- cleanup-braingent.md
 |   |-- index-repo.md
 |   `-- retrieve-context.md
+|-- tasks/
+|   |-- README.md
+|   |-- CLAUDE.md
+|   |-- INDEX.md
+|   |-- active/
+|   |   `-- BGT-0001--example-review-task.md
+|   `-- archive/
+|       `-- README.md
+|-- dashboard/
+|   `-- tasks/
+|       |-- CLAUDE.md
+|       |-- README.md
+|       `-- USER-GUIDE.md
 |-- orgs/
 |   `-- org--example/
 |       |-- README.md

@@ -24,6 +24,7 @@ rg -n "record_kind: task" .
 rg -n "record_kind: review" .
 rg -n "record_kind: decision" .
 rg -n "record_kind: learning" .
+rg -n "record_kind: agent-task" tasks indexes
 ```
 
 ## By Status
@@ -32,6 +33,14 @@ rg -n "record_kind: learning" .
 rg -n "status: active" .
 rg -n "status: blocked" .
 rg -n "status: superseded" .
+rg -n "status: in-review|status: triage|status: in-progress" tasks indexes
+```
+
+## By Live Task
+
+```bash
+rg -n "BGT-[0-9]{4}" tasks indexes orgs repositories topics tools tickets
+rg -n "agent_task: BGT-[0-9]{4}" orgs repositories topics tools tickets
 ```
 
 ## By Repository
@@ -66,4 +75,3 @@ rg -n "token|secret|password|api_key|apikey|private key" .
 ```
 
 Search results are leads, not proof. Read the matching files before making decisions.
-

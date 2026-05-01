@@ -10,3 +10,9 @@ Thumbs.db
 # Temporary
 *.tmp
 *.swp
+
+# JavaScript examples
+node_modules/
+dist/
+test-results/
+playwright-report/

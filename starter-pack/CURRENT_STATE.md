@@ -13,6 +13,7 @@ This memory repo has been initialized from the Braingent starter pack. It is rea
 - Add the first organization and project records.
 - Add the first repository profile.
 - Add the first task record documenting this setup.
+- Decide whether to keep the optional live `BGT-NNNN` task module.
 - Decide whether to add automation for validation and indexes.
 
 ## Current Defaults
@@ -24,7 +25,9 @@ This memory repo has been initialized from the Braingent starter pack. It is rea
 - Templates live under `templates/`.
 - Raw imports stay under `imports/raw/` until summarized.
 - Search before planning.
+- Check live tasks before starting overlapping active work, if `tasks/` is enabled.
 - Capture after meaningful work.
+- Completed live tasks should link durable records with `agent_task: BGT-NNNN`.
 
 ## Open Questions
 
@@ -32,9 +35,9 @@ This memory repo has been initialized from the Braingent starter pack. It is rea
 - Which repositories need profiles first?
 - Which AI tools will read this memory?
 - Which metadata fields should be required for this team?
+- Do we need live task coordination now, or should `tasks/` be removed until later?
 - Should automation be added now or after manual usage proves the structure?
 
 ## Recent Changes
 
 - <yyyy-mm-dd>: Initialized memory repo from Braingent starter pack.
-

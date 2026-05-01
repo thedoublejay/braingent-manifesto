@@ -20,6 +20,7 @@ Use these files as source material:
 - preferences/
 - templates/
 - workflows/
+- optional tasks/ live-work module, if present
 
 Tasks:
 1. Read the repo structure and preferences.
@@ -34,9 +35,12 @@ Tasks:
 5. Create or update the initial organization, project, topic, and repository profile pages.
 6. Keep root agent files thin and focused.
 7. Add a short current-state update.
-8. Run a privacy pass before finishing.
-9. After the first commit, remind me to delete or archive the cloned `braingent-manifesto` setup repo so future `AGENTS.md` / `CLAUDE.md` searches do not query the public starter kit by mistake.
-10. Ask what I want to use Braingent for next: indexing a codebase, planning a feature or fix, capturing prior work, or tuning preferences.
+8. Ask whether to keep the optional live-work module:
+   - keep it if I want `BGT-NNNN` active task files, agent activity, dependencies, and optional dashboard views;
+   - remove it if I only want durable records for now.
+9. Run a privacy pass before finishing.
+10. After the first commit, remind me to delete or archive the cloned `braingent-manifesto` setup repo so future `AGENTS.md` / `CLAUDE.md` searches do not query the public starter kit by mistake.
+11. Ask what I want to use Braingent for next: indexing a codebase, planning a feature or fix, capturing prior work, using live tasks, or tuning preferences.
 
 Rules:
 - Markdown only unless I explicitly approve automation.
@@ -44,7 +48,9 @@ Rules:
 - Use lowercase ASCII slugs.
 - Use the filename format yyyy-mm-dd--record-kind--short-subject.md.
 - Search the memory before planning future tasks.
+- If live tasks are enabled, check `tasks/INDEX.md` before starting overlapping work.
 - Capture meaningful work after completion.
+- Promote completed `agent-task` work into durable records with `agent_task: BGT-NNNN`.
 - Never store secrets or sensitive personal data.
 
 When finished, summarize:
@@ -61,5 +67,5 @@ When finished, summarize:
 Use this if you already copied the starter pack and want a quick agent instruction:
 
 ```text
-Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo, show me how to index my first repo, and ask what I want to use Braingent for next: planning a feature or fix, capturing prior work, or tuning preferences. Markdown only. No secrets, no local paths, no sensitive personal data.
+Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. Ask whether to keep the optional live-work module for `BGT-NNNN` agent tasks and dashboard views. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo, show me how to index my first repo, and ask what I want to use Braingent for next: planning a feature or fix, capturing prior work, using live tasks, or tuning preferences. Markdown only. No secrets, no local paths, no sensitive personal data.
 ```

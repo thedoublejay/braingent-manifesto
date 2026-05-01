@@ -23,7 +23,8 @@ For every non-trivial task that uses this memory repo, read in this order:
 13. `preferences/code-review.md`
 14. `preferences/pr-and-commit.md`
 15. `preferences/privacy-and-safety.md`
-16. Any relevant org, project, repository, topic, tool, ticket, or person records.
+16. If live tasks are enabled and relevant, `tasks/INDEX.md`.
+17. Any relevant org, project, repository, topic, tool, ticket, or person records.
 
 Do not read archives or raw imports by default. Search them only when relevant.
 
@@ -33,6 +34,7 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 
 - Search this repo before planning, reviewing code, or starting implementation.
 - Use `scripts/find.sh` for structured frontmatter searches; use `rg` for free-text body searches.
+- If live tasks are enabled, check `tasks/INDEX.md` before starting overlapping work.
 - Prefer durable summaries over chat transcripts.
 - Record decisions, versions, evidence, and follow-up work explicitly.
 - Every durable record begins with a YAML frontmatter block (see `templates/`).
@@ -41,6 +43,7 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 - Use lowercase ASCII slugs and the naming format in `preferences/naming.md`.
 - Do not create vague filenames like `notes.md`, `todo.md`, or `review.md`.
 - When a task is completed, create or update a task record before considering memory capture done.
+- When a live `BGT-NNNN` task is completed, link it to durable memory with `agent_task: BGT-NNNN`.
 - Never store secrets, credentials, tokens, or sensitive personal data.
 
 ## Memory Retrieval Protocol
@@ -49,10 +52,11 @@ Before planning or answering from memory:
 
 1. Identify the relevant org, project, repo, ticket, topic, tool, and time window.
 2. Run structured search (`scripts/find.sh` or equivalent) with metadata filters first.
-3. Use `rg` for body text, error strings, partial names, and exploratory search.
-4. Open the smallest useful set of records.
-5. Separate current, stale, superseded, and raw-only evidence.
-6. Cite file paths when memory affects the answer or plan.
+3. Check `tasks/INDEX.md` or `indexes/agent-task-queue.md` when active work may already exist.
+4. Use `rg` for body text, error strings, partial names, and exploratory search.
+5. Open the smallest useful set of records.
+6. Separate current, stale, superseded, live, and raw-only evidence.
+7. Cite file paths when memory affects the answer or plan.
 
 ## Subagent Handoff Protocol
 
@@ -61,6 +65,7 @@ When delegating work to subagents:
 - Retrieve memory once in the parent agent.
 - Pass a focused context pack to subagents — do not ask each subagent to reread the whole repo.
 - Subagent outputs should cite the supplied memory and any local files inspected.
+- If the subagent is working on a live task, append its result as a task activity entry with a concrete agent ID.
 
 ## Problem Framing
 

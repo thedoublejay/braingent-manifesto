@@ -2,9 +2,9 @@
 
 Braingent is built from a few simple parts that reinforce each other.
 
-## 0. Three Memory Layers
+## 0. Five Memory Surfaces
 
-Braingent organizes memory into three layers:
+Braingent organizes memory into five surfaces:
 
 1. **Pinned context:** root entry files (`CLAUDE.md`, `AGENTS.md`,
    `CURRENT_STATE.md`), and stable preferences. Keep this small and current.
@@ -15,10 +15,16 @@ Braingent organizes memory into three layers:
 3. **Derived retrieval:** generated indexes, optional local databases, and
    future recall packs. These are aids — not source of truth. Rebuild from
    durable records on demand.
+4. **Optional live work:** mutable `BGT-NNNN` task files under `tasks/active/`
+   for current agent coordination. These are not final records. Close them by
+   promoting important outcomes into durable memory.
+5. **Optional local dashboard:** a read-only UI over live tasks and generated
+   indexes. It improves visibility but does not own any state.
 
 **ELI5:** The pinned layer is the short briefing. Durable records are the
 receipts. Derived retrieval is the search assistant that pulls the right
-receipts.
+receipts. Live work is the shared whiteboard for what is happening right now.
+The dashboard is a window, not a second whiteboard.
 
 ## 1. The Memory Repo
 
@@ -186,8 +192,42 @@ Useful indexes:
 - tools
 - people
 - records
+- follow-ups
+- memory summary
+- stale candidates
+- live task queue
+- live task graph
 
-## 10. Raw Imports
+## 10. Optional Live Work
+
+The live-work layer is for coordinating current work before it becomes durable memory.
+
+Use it when:
+
+- multiple agents may touch related work;
+- work spans more than one session;
+- a task needs ownership, dependencies, comments, or review state;
+- a dashboard or terminal queue helps you see what is active.
+
+Live task files live under `tasks/active/` and use `record_kind: agent-task`. A
+typical task has a `BGT-NNNN` ID, title, status, priority, owner, dependencies,
+timestamps, and an append-only activity log.
+
+Durable task records still live under `orgs/`, `topics/`, `tools/`, or another
+canonical memory location. When a live task closes as completed, create or link
+a durable record with `agent_task: BGT-NNNN`.
+
+Generated live-work surfaces usually include:
+
+- `tasks/INDEX.md`
+- `indexes/agent-task-queue.md`
+- `indexes/agent-task-graph.md`
+- a short active/in-review/blocked count in `indexes/memory-summary.md`
+
+ELI5: the live task is the sticky note on the monitor. The durable record is the
+entry in the engineering journal after the work is done.
+
+## 11. Raw Imports
 
 Raw imports are temporary source material:
 
@@ -205,7 +245,7 @@ The preferred path is:
 raw source -> curated summary -> durable task/decision/learning records
 ```
 
-## 11. The Capture Funnel
+## 12. The Capture Funnel
 
 Not every piece of information is ready for a durable record immediately. Use
 the capture funnel:
@@ -221,34 +261,39 @@ the capture funnel:
 
 Do not let `inbox/` become permanent storage.
 
-## 12. The Retrieval Ladder
+## 13. The Retrieval Ladder
 
 Agents should retrieve memory in this order — most precise first:
 
 1. **Exact metadata search:** filter by repo, project, ticket, topic, tool,
    status, or date using structured search (`scripts/find.sh` or equivalent).
-2. **Free-text body search:** use `rg` for error strings, API names, partial
+2. **Live task queue:** when the work may already be active, check
+   `tasks/INDEX.md` or `indexes/agent-task-queue.md` before starting a duplicate
+   task.
+3. **Free-text body search:** use `rg` for error strings, API names, partial
    names, and exploratory queries.
-3. **Full record reads:** only open records that passed the filter step.
-4. **Raw imports:** read only when curated records are insufficient.
+4. **Full record reads:** only open records that passed the filter step.
+5. **Raw imports:** read only when curated records are insufficient.
 
 Do not ask agents to read every record for every task. Retrieve the smallest
 useful set.
 
-## 13. The Feedback Loop
+## 14. The Feedback Loop
 
 Braingent compounds through repetition:
 
 1. Search memory before planning.
 2. Use prior context to avoid repeating mistakes.
 3. Work with better defaults.
-4. Capture what changed.
-5. Commit the memory update.
-6. Start the next task with more context.
+4. Use a live task when coordination or handoff matters.
+5. Capture what changed.
+6. Close completed live tasks by linking durable records.
+7. Commit the memory update.
+8. Start the next task with more context.
 
 The repo becomes more useful every time this loop runs.
 
-## 14. Why Markdown-Only First
+## 15. Why Markdown-Only First
 
 Starting with Markdown keeps the system understandable.
 
@@ -262,4 +307,3 @@ You do not need:
 - a custom app
 
 Those can be added later. The first useful version is a folder of well-written Markdown files.
-

@@ -13,6 +13,7 @@ Capture enough detail that a future agent can understand what happened without r
 - Ticket, PR, branch, commit, and release details.
 - Important professional conversations or decisions.
 - User preferences that affect future work.
+- Completed live `BGT-NNNN` tasks that produced durable decisions, changes, reviews, or learnings.
 
 ## Do Not Capture
 
@@ -32,6 +33,7 @@ Capture enough detail that a future agent can understand what happened without r
 - Use `summary` for imported historical baselines.
 - Use `note` for temporary or mixed context that does not fit yet.
 - Use `ticket-stub` for cross-cutting tickets that link related records.
+- Use `agent-task` only for optional live files under `tasks/active/`.
 
 ## Common Frontmatter Shape
 
@@ -52,8 +54,12 @@ ai_tools: []
 people: []
 topics: []
 tools: []
+agent_task: <BGT-NNNN-or-null>
 ---
 ```
+
+Live `agent-task` files use a different frontmatter shape. See
+`preferences/agent-task-protocol.md` and `templates/agent-task.md`.
 
 ## Capture Triggers
 
@@ -66,6 +72,7 @@ Always capture when:
 - a surprising failure or bug was diagnosed
 - a reusable learning surfaced
 - a new tool, framework, library, or version was adopted
+- a live `BGT-NNNN` task is completed and the outcome should survive after the task is archived
 
 Explicit phrases that should trigger capture:
 
@@ -83,6 +90,16 @@ A casual "thanks" without task context is not enough.
 - Use `templates/task-record.md` for substantial work.
 - Minimal records can be expanded later.
 
+## Live Task Closeout
+
+When closing a live task as completed:
+
+1. Create or update the durable record first.
+2. Add `agent_task: BGT-NNNN` to the durable record.
+3. Add a closeout link in the live task.
+4. Regenerate indexes.
+5. Archive the live task when it no longer belongs in the active queue.
+
 ## Raw Imports
 
 For old chats, PRs, tickets, or local notes:
@@ -91,4 +108,3 @@ For old chats, PRs, tickets, or local notes:
 2. Create curated records from the raw material.
 3. Link curated records to raw imports if retained.
 4. Prefer summaries over transcript dumps.
-
