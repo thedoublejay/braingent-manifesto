@@ -81,7 +81,7 @@ Run a manual sweep:
 rg -n "token|secret|password|apikey|api_key|private key|BEGIN .* PRIVATE KEY" .
 rg -n "@|http|https|customer|client|internal" .
 rg -n "/Users/|/home/|C:\\\\" .
-rg -n "REG-[0-9]+|JIRA|Linear|customer|internal|private" .
+rg -n "Jira|Linear|customer|internal|private" .
 ```
 
 Review matches manually. These commands are not proof of safety, but they catch common mistakes.

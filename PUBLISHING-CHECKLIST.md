@@ -36,7 +36,7 @@ Use this before publishing a Braingent-style repo or example.
 rg -n "token|secret|password|api_key|apikey|private key" .
 rg -n "/Users/|/home/|C:\\\\" .
 rg -n "@|customer|client|internal|private" .
-rg -n "REG-[0-9]+|JIRA|Linear" .
+rg -n "Jira|Linear" .
 ```
 
 Review every match before publishing.

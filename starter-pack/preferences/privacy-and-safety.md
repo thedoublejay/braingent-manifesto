@@ -46,7 +46,7 @@ Before publishing or sharing:
 rg -n "token|secret|password|api_key|apikey|private key" .
 rg -n "/Users/|/home/|C:\\\\" .
 rg -n "@|http|https|customer|client|internal|private" .
-rg -n "REG-[0-9]+|JIRA|Linear" .
+rg -n "Jira|Linear" .
 ```
 
 Review matches manually.
