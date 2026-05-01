@@ -169,12 +169,14 @@ Ask me:
 
 > Do you want to keep the optional live task module? Use it if multiple agents or long-running work need a shared `BGT-NNNN` queue. Skip it if you only want durable memory records for now.
 
-If I keep it, leave `tasks/`, `templates/agent-task.md`, and
-`preferences/agent-task-protocol.md` in place. Explain that live tasks use
-`record_kind: agent-task` and completed work should still be promoted into
-durable records with `agent_task: BGT-NNNN`.
+If I keep it, leave `tasks/`, `templates/agent-task.md`,
+`preferences/agent-task-protocol.md`, and `dashboard/tasks/` documentation in
+place. Explain that live tasks use `record_kind: agent-task`, can be viewed by
+optional helper scripts or the dashboard, and completed work should still be
+promoted into durable records with `agent_task: BGT-NNNN`.
 
-If I skip it, remove those optional files before the first commit.
+If I skip it, remove those optional live-task and dashboard-task files before
+the first commit. Durable memory records still work without them.
 
 ---
 
@@ -189,7 +191,9 @@ git add .
 git commit -m "Initialize Braingent memory repo"
 ```
 
-Then summarize what was set up: which files were updated, which folders were created, and what still needs to be filled in manually.
+Then summarize what was set up: which files were updated, which folders were
+created, whether the optional live-task layer was kept, and what still needs to
+be filled in manually.
 
 ---
 
