@@ -13,6 +13,8 @@ Use it as a durable memory layer for AI-assisted software engineering work. Clau
 - Reusable learnings.
 - Tool and version notes.
 - Ticket stubs for cross-cutting work.
+- Optional live `BGT-NNNN` agent tasks for active coordination.
+- Optional dashboard docs for a read-only live task UI.
 - Raw imports before they are summarized.
 - Preferences that guide future AI agents.
 
@@ -24,7 +26,8 @@ Agents should start here:
 2. `INDEX.md`.
 3. `CURRENT_STATE.md`.
 4. `preferences/`.
-5. Relevant organization, project, repository, topic, tool, ticket, or person records.
+5. `tasks/INDEX.md` if live tasks are enabled and the work may already be active.
+6. Relevant organization, project, repository, topic, tool, ticket, or person records.
 
 ## Core Workflow
 
@@ -32,15 +35,18 @@ Before work:
 
 - Read the root instructions.
 - Search memory for relevant context.
+- Check live tasks before creating overlapping active work.
 - Reuse prior decisions and conventions.
 
 During work:
 
 - Track decisions, versions, commands, failures, fixes, tickets, PRs, branches, and follow-ups.
+- Append activity to a live `BGT-NNNN` task when coordination or handoff matters.
 
 After work:
 
 - Create or update a durable record.
+- Link completed live tasks to durable records with `agent_task: BGT-NNNN`.
 - Update indexes or current state if needed.
 - Commit the memory change.
 
@@ -70,4 +76,3 @@ When you add structured search automation later, use frontmatter fields such as:
 Never store secrets, credentials, tokens, private keys, customer secrets, or sensitive personal data in this repo.
 
 Use placeholders and links instead of copying sensitive evidence.
-

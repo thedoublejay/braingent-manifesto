@@ -9,6 +9,7 @@ The exact integration depends on the tool, but the idea is the same:
 3. Tell it to search relevant records before implementation or review.
 4. Tell it to capture meaningful outcomes after work.
 5. Tell it never to store secrets or sensitive data.
+6. If live tasks are enabled, tell it to check `tasks/INDEX.md` before starting overlapping work.
 
 ## Codex
 
@@ -18,6 +19,7 @@ Recommended behavior:
 
 - Read `README.md`, `INDEX.md`, `CURRENT_STATE.md`, and `preferences/`.
 - Search the memory before non-trivial planning.
+- Check live tasks before creating duplicate active work.
 - Prefer existing repo and topic records over guessing.
 - Capture completed work using the templates.
 - Keep changes small and commit meaningful updates.
@@ -34,6 +36,7 @@ Recommended behavior:
 - Treat the memory repo as source material.
 - Read root instructions and preferences before plans.
 - Search durable records for prior decisions, bugs, and conventions.
+- Use `tasks/CLAUDE.md` only when working inside `tasks/` or touching `BGT-NNNN` files.
 - Use the capture policy when the task ends.
 - Keep long transcripts out of permanent records unless there is a retention reason.
 
@@ -72,8 +75,12 @@ If your Gemini setup supports global instructions, copy or symlink the `GEMINI.m
 Any AI tool using Braingent should follow this loop:
 
 ```text
-Read entrypoints -> search relevant memory -> plan -> execute -> verify -> capture -> commit
+Read entrypoints -> search relevant memory -> check live tasks -> plan -> execute -> verify -> capture -> commit
 ```
+
+If a tool is working on a live task, append attributed activity with a concrete
+actor such as `agent--codex-cli` or `agent--claude-code`. Do not use vague
+authors like "AI" or "assistant" in the task log.
 
 ## What Not To Do
 
@@ -81,5 +88,6 @@ Read entrypoints -> search relevant memory -> plan -> execute -> verify -> captu
 - Do not include secrets in global agent instructions.
 - Do not make every agent read every record for every task.
 - Do not let root instruction files become a giant archive.
+- Do not put the full task protocol in the root entrypoint; keep it in `tasks/CLAUDE.md` or a focused preference file.
+- Do not let the local dashboard become a second source of truth.
 - Do not capture raw chat logs as final memory when a summary would work.
-

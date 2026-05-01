@@ -63,6 +63,9 @@ Allowed record kinds:
 - `profile`
 - `ticket-stub`
 
+Live task files are the exception. They use `BGT-NNNN--short-subject.md` under
+`tasks/active/` and `record_kind: agent-task`.
+
 ## Where Records Go
 
 - Organization/project work: `orgs/<org>/projects/<project>/records/`
@@ -73,8 +76,8 @@ Allowed record kinds:
 - Cross-cutting tickets: `tickets/<ticket-key>/README.md`
 - Unsorted notes: `inbox/`
 - Import summaries: `imports/summaries/`
+- Live agent tasks: `tasks/active/BGT-NNNN--short-subject.md`
 
 ## Frontmatter
 
 Every durable record starts with YAML frontmatter. Frontmatter is the source of truth for metadata; the body is for human context.
-

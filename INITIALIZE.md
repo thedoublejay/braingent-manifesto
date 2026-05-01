@@ -163,7 +163,22 @@ Create `<today's-date>--task--initialize-memory-repo.md` in the first org/projec
 
 ---
 
-### Step 13: Commit
+### Step 13: Optional Live Tasks
+
+Ask me:
+
+> Do you want to keep the optional live task module? Use it if multiple agents or long-running work need a shared `BGT-NNNN` queue. Skip it if you only want durable memory records for now.
+
+If I keep it, leave `tasks/`, `templates/agent-task.md`, and
+`preferences/agent-task-protocol.md` in place. Explain that live tasks use
+`record_kind: agent-task` and completed work should still be promoted into
+durable records with `agent_task: BGT-NNNN`.
+
+If I skip it, remove those optional files before the first commit.
+
+---
+
+### Step 14: Commit
 
 Tell me:
 
@@ -178,7 +193,7 @@ Then summarize what was set up: which files were updated, which folders were cre
 
 ---
 
-### Step 14: Cleanup Reminder
+### Step 15: Cleanup Reminder
 
 Tell me:
 
@@ -197,7 +212,8 @@ After initialization:
 3. **Add your first real task record.** Next time you finish a piece of work, say `"capture this"` (or your chosen trigger phrase).
 4. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
 5. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
-6. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, and script setup if you want faster search later.
+6. **Use live tasks only when coordination matters.** Start with `tasks/README.md` and `AGENT-TASK-COORDINATION.md`.
+7. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, task scripts, dashboard, and generated indexes if you want faster search later.
 
 The memory gets better with use. The first record is the hardest — everything after that is just the loop.
 

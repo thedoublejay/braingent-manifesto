@@ -4,6 +4,8 @@ Braingent is a Markdown-first memory system for software engineers who work with
 
 This repository is not a private memory dump. It is a public, open source setup guide and starter kit. Copy the Markdown files into a new repo and personalize them. No database, server, or install required.
 
+Braingent v3 keeps the core Markdown memory model and adds an optional live-work layer for active agent tasks, generated health indexes, and a read-only local dashboard contract. The source of truth is still Markdown; automation only helps agents find and maintain it.
+
 ---
 
 ## Get Started in 3 Steps
@@ -183,11 +185,13 @@ Optional tools to add later: ripgrep, jq, yq, SQLite. Day one, plain Markdown is
 | `SETUP.md` | Full manual setup guide. |
 | `STRUCTURE.md` | Recommended directory structure and naming. |
 | `AGENT-INTEGRATION.md` | How to connect to Claude, Codex, ChatGPT, and Gemini CLI. |
+| `AGENT-TASK-COORDINATION.md` | Optional v3 module for Markdown-based multi-agent task coordination. |
 | `WORKFLOW.md` | Detailed day-to-day usage loop. |
 | `BOOTSTRAP-PROMPT.md` | Short copyable prompt to give your agent context about this repo. |
 | `PRIVACY-AND-SAFETY.md` | What must never be captured and how to redact. |
 | `FAQ.md` | Practical questions answered. |
 | `starter-pack/` | Markdown files to copy into your new memory repo. |
+| `examples/task-dashboard/` | Copyable Bun/React dashboard sample with synthetic task data. |
 
 ---
 
@@ -203,6 +207,30 @@ Braingent turns engineering memory into a searchable, Git-backed knowledge base:
 - **Index files** give humans and agents a map of what's recorded.
 - **Workflows** define repeatable procedures like onboarding a new repo.
 - **Raw imports** stay separate from curated summaries.
+- **Optional live task files** coordinate active work without replacing durable records.
+- **Optional dashboard views** make the live task queue easier to inspect while staying read-only over Markdown.
+
+---
+
+## Braingent V3 Feature Map
+
+Braingent v3 has five practical surfaces:
+
+| Surface | What it does | Source of truth |
+| --- | --- | --- |
+| Root entrypoints | Keep agent instructions thin and current. | `AGENTS.md`, `CLAUDE.md`, `CHATGPT_PROJECT_BRIEF.md`, `README.md`, `INDEX.md`, `CURRENT_STATE.md` |
+| Durable memory | Stores completed work, decisions, reviews, learnings, tool versions, profiles, and ticket stubs. | Markdown records with YAML frontmatter |
+| Retrieval indexes | Summarize records, follow-ups, stale candidates, and current memory health. | Generated from Markdown |
+| Live work | Coordinates active agent tasks with `BGT-NNNN` files, status, owners, dependencies, and append-only activity. | `tasks/active/*.md` |
+| Local dashboard | Shows the live task queue, filters, detail, graph, activity, raw Markdown, and guide. | Read-only over task Markdown and generated indexes |
+
+The live-work layer is optional. A small personal memory repo can start with only durable records and add `tasks/` later when multiple agents or long-running work need coordination.
+
+ELI5: the durable memory is your engineering notebook. The live task layer is the whiteboard beside it. The dashboard is a window onto the whiteboard, not a second notebook.
+
+The public dashboard sample lives in `examples/task-dashboard/`. It uses
+synthetic `BGT-NNNN` data by default and can be copied into `dashboard/tasks/`
+inside a real memory repo.
 
 ---
 
@@ -248,6 +276,15 @@ your-memory-repo/
 │   ├── index-repo.md          ← "index this repo to braingent"
 │   └── cleanup-braingent.md   ← "clean up braingent" (daily/weekly/monthly/quarterly)
 │
+├── tasks/                     ← Optional live agent-task queue
+│   ├── CLAUDE.md              ← Scoped rules for task files
+│   ├── INDEX.md               ← Generated task index
+│   ├── active/                ← Mutable BGT-NNNN task files
+│   └── archive/               ← Closed task files by month
+│
+├── dashboard/
+│   └── tasks/                 ← Optional read-only local task dashboard
+│
 ├── orgs/                      ← One folder per org, client, or team
 │   └── org--<slug>/
 │       └── projects/
@@ -279,6 +316,8 @@ Braingent starts as plain Markdown. You can add tooling incrementally without ch
 | Shell scripts | `new-record.sh` to create dated files, `validate.sh` for frontmatter checks |
 | **SQLite** | Local search cache — generated from frontmatter by a `reindex.sh` script. Lets you query records by status, date, repo, topic, or record kind without grepping files. Useful once you have hundreds of records. |
 | GitHub CLI | Import merged PRs as records automatically |
+| Task helper scripts | Create, claim, comment on, count, close, archive, and list `BGT-NNNN` live task files |
+| Bun + React dashboard | Optional local UI for inspecting `tasks/active/` without changing the Markdown source of truth. See `examples/task-dashboard/`. |
 
 **SQLite specifically** — it's an optional read cache, not a source of truth. The Markdown files are always the source. SQLite is regenerated from them on demand. You add it when `rg` queries get slow or you want structured queries like `SELECT * FROM records WHERE record_kind = 'decision' AND status = 'active'`.
 
@@ -297,7 +336,7 @@ findings before making any changes.
 | Cadence | Time | What it covers |
 | --- | --- | --- |
 | **Daily** | 5-10 min | Validate frontmatter, check indexes, scan for unchecked follow-ups and TODOs |
-| **Weekly** | 30-45 min | Review active tasks, stale profiles, raw imports, and backlink gaps |
+| **Weekly** | 30-45 min | Review active tasks, blocked/stale work, stale profiles, raw imports, and backlink gaps |
 | **Monthly** | 60-90 min | Create or refresh cited synthesis pages, check for drift |
 | **Quarterly** | 2-3 hrs | Review taxonomy, templates, agent entrypoints, and workflow relevance |
 
@@ -321,7 +360,7 @@ anything. You approve structural changes before they happen.
 - Braingent is not a replacement for source control.
 - Braingent is not a place to store secrets or credentials.
 - Braingent is not a full chat transcript archive.
-- Braingent is not a project management system.
+- Braingent is not a replacement for your team's project management system.
 - Braingent is not tied to one AI vendor.
 - Braingent does not require automation on day one.
 

@@ -3,6 +3,7 @@
 Run recurring maintenance on Braingent without drifting away from the core model:
 Markdown records are canonical, frontmatter drives retrieval, generated artifacts
 are disposable, and derived synthesis must cite durable source records.
+Optional live task files are coordination state, not durable source records.
 
 ## Trigger Phrases
 
@@ -57,6 +58,8 @@ This workflow combines these practices:
   retention check and a linked curated summary.
 - **Do not make generated synthesis canonical.** Compiled pages and recall packs
   are derived aids. Durable records remain source of truth.
+- **Do not make live tasks canonical.** Completed `agent-task` files should link
+  durable records with `agent_task: BGT-NNNN`.
 - **Keep diffs small.** Separate mechanical fixes, content reorganization,
   schema changes, and generated index updates.
 - **Do not capture secrets.** If cleanup finds secrets, stop and report without
@@ -75,6 +78,7 @@ git status --short
 scripts/validate.sh
 scripts/reindex.sh --check
 scripts/find.sh status=active
+test ! -f scripts/task-list.sh || scripts/task-list.sh --count
 rg -n "^- \[ \]" --type md orgs repositories topics tools tickets inbox imports
 rg -n "TODO|FIXME|PLACEHOLDER|TBD|XXX" --type md .
 ```
@@ -92,6 +96,7 @@ Daily output:
 
 - validation status;
 - stale generated-index status;
+- live task counts if the optional task module is enabled;
 - active records needing attention;
 - unchecked follow-ups;
 - obvious placeholders or TODOs;
@@ -117,8 +122,10 @@ Run the daily checks, then add:
 scripts/find.sh kind=decision status=accepted
 scripts/find.sh kind=summary
 rg -n "^last_reviewed:|^last_revalidated:|^raw_retained_until:" .
+rg -n "record_kind: agent-task|status: blocked|status: in-progress|status: triage" tasks indexes 2>/dev/null
+rg -n "agent_task: BGT-[0-9]{4}" orgs repositories topics tools tickets 2>/dev/null
 rg -n "source_location: /Users/|local_path: /Users/" .
-rg -n "<your-org-name>|<your-github-username>|Documents/repos" . 2>/dev/null
+rg -n "<your-org-name>|<your-github-username>|<workspace-root>" . 2>/dev/null
 ```
 
 Review:
@@ -127,6 +134,8 @@ Review:
 - repo profiles with old `last_reviewed`;
 - learnings with old `last_revalidated`;
 - active tasks that should now be completed, blocked, or superseded;
+- live tasks that are stale: triage over 30 days, blocked over 30 days, or in-progress with no activity for 14 days;
+- completed live tasks missing durable `agent_task: BGT-NNNN` links;
 - raw imports past `raw_retained_until`;
 - private/local names in public-facing material;
 - duplicated records that should be linked or superseded;
@@ -138,6 +147,7 @@ Weekly output:
 - a list of safe fixes applied;
 - a list of edits needing user approval;
 - suggested captures, synthesis updates, or follow-up tasks.
+- a task hygiene summary if `tasks/` exists.
 
 **ELI5:** Weekly cleanup checks whether the memory map still points to the right
 places and whether old notes need labels like "verified", "superseded", or
@@ -192,6 +202,8 @@ Review:
 - raw import retention policy;
 - active workflows;
 - global agent entrypoint drift between Claude, Codex, and ChatGPT;
+- task protocol drift between `tasks/CLAUDE.md`, `preferences/agent-task-protocol.md`, and generated indexes;
+- dashboard schema-drift checks if a dashboard exists;
 - recall quality against real tasks;
 - whether any workflow should be promoted, simplified, or archived.
 
@@ -223,6 +235,7 @@ Add a first-class `braingent doctor` or equivalent script that reports:
 - broken source paths in derived synthesis;
 - draft/quarantined records that would be served by recall;
 - public-safety leaks in public-facing packages.
+- live task staleness and missing promotion links.
 
 **ELI5:** Put the recurring checklist into one command so cleanup is repeatable,
 not dependent on memory.
@@ -304,11 +317,13 @@ Use this when the user says "clean up braingent" without a mode.
    ```bash
    scripts/validate.sh
    scripts/reindex.sh --check
+   test ! -f scripts/task-list.sh || scripts/task-list.sh --count
    ```
 
 3. Scan for maintenance signals:
    ```bash
    scripts/find.sh status=active
+   rg -n "record_kind: agent-task|status: blocked|status: in-progress|status: triage" tasks indexes 2>/dev/null
    rg -n "^- \[ \]" --type md orgs repositories topics tools tickets inbox imports
    rg -n "^last_reviewed: 202" .
    rg -n "^raw_retained_until:" imports orgs topics repositories tools tickets inbox
@@ -333,6 +348,7 @@ Use this when the user says "clean up braingent" without a mode.
    - moving records;
    - changing taxonomy;
    - editing historical narrative;
+   - closing or archiving live tasks;
    - deleting raw imports;
    - rewriting summaries;
    - committing while unrelated changes are present.
@@ -347,11 +363,12 @@ quarterly maintenance.
 
 1. Run standard cleanup.
 2. Review all active task records.
-3. Review all accepted decisions for supersession candidates.
-4. Review all summaries for retrieval completeness.
-5. Review repo profiles for important-record backlinks.
-6. Review topic pages for repeated patterns that deserve synthesis.
-7. Propose a small backlog instead of doing broad rewrites immediately.
+3. Review optional live tasks for stale status, blockers, dependencies, missing closeout, and missing durable promotion.
+4. Review all accepted decisions for supersession candidates.
+5. Review all summaries for retrieval completeness.
+6. Review repo profiles for important-record backlinks.
+7. Review topic pages for repeated patterns that deserve synthesis.
+8. Propose a small backlog instead of doing broad rewrites immediately.
 
 Deep cleanup should end with one of:
 
@@ -369,6 +386,7 @@ Every cleanup run should produce:
 - pass/fail status;
 - safe fixes applied;
 - findings needing approval;
+- live task hygiene if `tasks/` exists;
 - suggested follow-ups;
 - whether a capture record was created.
 
@@ -389,6 +407,7 @@ Every cleanup run should produce:
   modified before cleanup.
 - **Validation failure:** fix validation before style or synthesis work.
 - **Stale indexes:** run `scripts/reindex.sh`, then `scripts/reindex.sh --check`.
+- **Task schema drift:** fix task frontmatter or dashboard parsing, then rerun reindex and dashboard checks if present.
 - **Optional tools missing:** report skipped checks and continue.
 - **Possible secret found:** stop, report file path and line number only, do not
   quote secret value.
@@ -399,6 +418,7 @@ Every cleanup run should produce:
 - Do not make cleanup an excuse for broad refactors.
 - Do not auto-delete raw imports.
 - Do not let LLM-generated synthesis replace durable records.
+- Do not let live task files replace durable records.
 - Do not auto-commit unless the user explicitly asks for it.
 - Do not optimize for perfect grammar at the cost of preserving evidence.
 - Do not add cloud memory tools as part of routine maintenance.

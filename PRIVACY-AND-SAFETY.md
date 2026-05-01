@@ -30,6 +30,8 @@ Braingent is useful only if it stays safe to search, commit, and share within th
 - Ticket comments.
 - PR comments.
 - Stack traces.
+- Live task activity copied from private work.
+- Dashboard screenshots that reveal private task titles, people, repos, or tickets.
 
 When in doubt, summarize rather than copy.
 
@@ -62,6 +64,8 @@ It should not include:
 - private commit hashes
 - private PR links
 - machine-specific config
+- real live task queues
+- dashboard exports or screenshots from private memory repos
 
 ## Personal Memory Repo Rule
 
@@ -77,7 +81,7 @@ Run a manual sweep:
 rg -n "token|secret|password|apikey|api_key|private key|BEGIN .* PRIVATE KEY" .
 rg -n "@|http|https|customer|client|internal" .
 rg -n "/Users/|/home/|C:\\\\" .
+rg -n "REG-[0-9]+|JIRA|Linear|customer|internal|private" .
 ```
 
 Review matches manually. These commands are not proof of safety, but they catch common mistakes.
-

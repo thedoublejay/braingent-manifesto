@@ -11,6 +11,8 @@ Braingent Manifesto is a Markdown-only public guide. Contributions should improv
 - practical workflows
 - public-safe examples
 - corrections to naming or taxonomy guidance
+- task coordination improvements that keep Markdown as source of truth
+- dashboard documentation that stays read-only over task files
 
 ## Keep It Public-Safe
 
@@ -26,6 +28,7 @@ Do not add:
 - local workspace paths
 - internal ticket links
 - private PR links
+- real task queues or dashboard exports
 
 Use placeholders instead.
 
@@ -37,6 +40,8 @@ Use placeholders instead.
 - Keep examples generic.
 - Explain why a convention exists.
 - Keep root docs useful for first-time readers.
+- Keep optional modules clearly marked optional.
+- Do not blur live `agent-task` files with durable `task` records.
 
 ## Before Opening A PR
 
@@ -49,4 +54,3 @@ rg -n "@|http|https|customer|client|internal" .
 ```
 
 Review matches manually.
-

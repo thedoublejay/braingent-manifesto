@@ -65,7 +65,17 @@ Braingent prefers concise summaries:
 
 Raw imports can exist briefly, but curated records should become the source of truth.
 
-### 7. Immutable Events, Mutable Indexes
+### 7. Live Work Is Not Durable Memory
+
+Active work sometimes needs a shared queue. Braingent v3 supports optional
+`agent-task` files for current coordination, ownership, dependencies, and
+activity.
+
+Those files should not become the archive. When the work is meaningful and
+complete, promote the outcome into durable memory and link it back to the live
+task.
+
+### 8. Immutable Events, Mutable Indexes
 
 Task records, review records, decision records, and learning records should be treated as historical evidence. Do not rewrite history to make it cleaner, except for typo cleanup.
 
@@ -73,7 +83,7 @@ If a fact changes, add a new record and link it as superseding the old one.
 
 Indexes, current-state files, and repository profiles are different. They are living documents and should be updated as reality changes.
 
-### 8. Privacy Is A Feature
+### 9. Privacy Is A Feature
 
 A memory system that stores secrets is a liability.
 
@@ -103,4 +113,3 @@ Good Braingent memory lets a future agent answer:
 - What should not be captured?
 
 The result is not a perfect encyclopedia. It is a practical engineering memory that compounds.
-

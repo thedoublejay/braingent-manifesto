@@ -55,6 +55,33 @@ indexes/
 
 Use this if you want the memory to work across multiple AI tools and projects.
 
+## Optional V3 Live-Work Setup
+
+Add these only when you want Markdown-based active task coordination:
+
+```text
+tasks/
+tasks/CLAUDE.md
+tasks/README.md
+tasks/active/
+tasks/archive/
+templates/agent-task.md
+preferences/agent-task-protocol.md
+indexes/agent-task-queue.md
+indexes/agent-task-graph.md
+dashboard/tasks/
+examples/task-dashboard/
+```
+
+This is enough to:
+
+- track active `BGT-NNNN` work;
+- assign work to concrete agent IDs;
+- record dependencies and append-only activity;
+- promote completed work into durable records;
+- expose a read-only dashboard if you choose to build one.
+- copy a working dashboard sample before customizing it.
+
 ## File Purpose Summary
 
 | File | Required? | Why it exists |
@@ -75,8 +102,13 @@ Use this if you want the memory to work across multiple AI tools and projects.
 | `preferences/code-review.md` | Recommended | Standardizes review output. |
 | `preferences/pr-and-commit.md` | Recommended | Keeps commits and PRs clean. |
 | `preferences/privacy-and-safety.md` | Yes | Prevents unsafe capture. |
+| `preferences/agent-task-protocol.md` | Optional | Defines live task status, identity, activity, and closeout rules. |
 | `templates/*.md` | Yes | Makes record creation consistent. |
+| `templates/agent-task.md` | Optional | Starter template for `BGT-NNNN` live task files. |
 | `workflows/*.md` | Optional | Encodes repeatable procedures. |
+| `tasks/` | Optional | Live agent-task queue for active work. |
+| `dashboard/tasks/` | Optional | Read-only local UI for the live task queue. |
+| `examples/task-dashboard/` | Optional | Public-safe sample app that can be copied into `dashboard/tasks/`. |
 
 ## Installation Needed
 
@@ -97,6 +129,7 @@ Optional later:
 - SQLite for local search cache
 - GitHub CLI for PR imports
 - issue tracker access for ticket imports
+- Bun, React, and Playwright if you build the optional local dashboard
 
 ## What To Customize First
 
@@ -121,4 +154,3 @@ If you plan to publish your setup:
 - avoid real PR links
 - avoid customer data
 - avoid internal domains
-

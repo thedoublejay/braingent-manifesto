@@ -14,6 +14,7 @@ This memory repo must be safe to search and commit.
 - session cookies
 - customer secrets
 - sensitive personal data
+- real private task queues or dashboard screenshots
 
 ## Prefer Links And Summaries
 
@@ -44,8 +45,8 @@ Before publishing or sharing:
 ```bash
 rg -n "token|secret|password|api_key|apikey|private key" .
 rg -n "/Users/|/home/|C:\\\\" .
-rg -n "@|http|https|customer|client|internal" .
+rg -n "@|http|https|customer|client|internal|private" .
+rg -n "REG-[0-9]+|JIRA|Linear" .
 ```
 
 Review matches manually.
-

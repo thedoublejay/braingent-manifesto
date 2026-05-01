@@ -16,6 +16,7 @@ Optional but useful:
 - `jq` and `yq` for structured JSON/YAML inspection.
 - SQLite if you later build generated indexes.
 - GitHub CLI if you later want to index merged PRs.
+- Bun and Playwright if you later build or run the optional task dashboard.
 
 ## Step 1: Create A Repo
 
@@ -53,6 +54,15 @@ Your new repo should start with files like:
 - `imports/`
 - `inbox/`
 - `indexes/`
+
+The optional v3 live-work module also includes `tasks/`,
+`preferences/agent-task-protocol.md`, `templates/agent-task.md`, and optional
+`dashboard/tasks/` documentation. Keep it if you want active task coordination;
+delete it if you only want durable memory records.
+
+If you want the local dashboard app, copy `examples/task-dashboard/` into your
+memory repo as `dashboard/tasks/`. The sample app uses synthetic data by default
+and supports `BRAINGENT_MEMORY_ROOT=/path/to/your-braingent` for real task files.
 
 ## Step 3: Replace Placeholders
 
@@ -143,6 +153,14 @@ For every meaningful task:
 4. Capture outcome, decisions, verification, risks, and follow-ups.
 5. Commit the memory update.
 
+If the optional live-work module is enabled:
+
+1. Check `tasks/INDEX.md` or `scripts/task-list.sh --count` before starting.
+2. Create or claim a `BGT-NNNN` task when coordination matters.
+3. Append activity during the work.
+4. On completion, create or link the durable record with `agent_task: BGT-NNNN`.
+5. Regenerate indexes and archive closed tasks when appropriate.
+
 After setup, ask what the user wants to do next:
 
 - Index a codebase with `Index this repo to braingent`.
@@ -162,5 +180,9 @@ Later, you can add scripts for:
 - building a local search database
 - importing Git history
 - summarizing PRs or tickets
+- managing live task files
+- serving a read-only local dashboard
+
+The copyable dashboard sample lives at `examples/task-dashboard/`.
 
 Automation should support the memory model, not define it.

@@ -1,0 +1,32 @@
+{
+  "name": "@braingent/task-dashboard-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --host 127.0.0.1",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "5.100.6",
+    "@tanstack/react-router": "1.168.26",
+    "@tanstack/react-start": "1.167.52",
+    "@tanstack/react-table": "8.21.3",
+    "lucide-react": "1.14.0",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "yaml": "2.8.3",
+    "zod": "4.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1",
+    "@tanstack/router-plugin": "1.167.29",
+    "@types/node": "25.6.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "typescript": "6.0.3",
+    "vite": "8.0.10"
+  }
+}
