@@ -168,7 +168,31 @@ After setup, ask what the user wants to do next:
 - Capture a task or decision that already happened.
 - Tune preferences, workflows, or capture depth.
 
-## Step 9: Add Automation Later
+## Step 9: Use Token-Efficient Access
+
+As the memory repo grows, teach agents to retrieve in layers instead of reading
+everything up front:
+
+```text
+Search -> inspect compact results -> read summaries -> open full records only when evidence requires it
+```
+
+Use `TOKEN-EFFICIENT-ACCESS.md` as the setup guide. You can copy it into your
+memory repo as-is, or fold its rules into `WORKFLOW.md`, `AGENTS.md`,
+`CLAUDE.md`, and `CHATGPT_PROJECT_BRIEF.md`.
+
+Start with simple tools:
+
+- `rg` for keyword search;
+- generated Markdown indexes for record lists and follow-ups;
+- short summaries in durable records;
+- explicit full-record reads only when exact evidence matters.
+
+Later, you can add compact JSON indexes, SQLite search, MCP tools, embeddings,
+or dashboards. Those tools should implement the same retrieval ladder, not
+replace it.
+
+## Step 10: Add Automation Later
 
 This manifesto intentionally starts with Markdown only.
 
