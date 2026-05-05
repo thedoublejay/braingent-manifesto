@@ -217,7 +217,8 @@ After initialization:
 4. **Fill in repository profiles.** Open `repositories/repo--github--<owner>--<name>/README.md` and add the stack, common commands, and conventions.
 5. **Customize preferences.** Read through `preferences/` and adjust anything that does not match how you work.
 6. **Use live tasks only when coordination matters.** Start with `tasks/README.md` and `AGENT-TASK-COORDINATION.md`.
-7. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, task scripts, dashboard, and generated indexes if you want faster search later.
+7. **Use token-efficient access.** See `TOKEN-EFFICIENT-ACCESS.md`; search first, read summaries by default, and open full records only when evidence requires it.
+8. **Add optional tooling.** See `SETUP.md` for ripgrep, SQLite, task scripts, dashboard, and generated indexes if you want faster search later.
 
 The memory gets better with use. The first record is the hardest — everything after that is just the loop.
 
@@ -228,6 +229,7 @@ End setup by asking me:
 > - Index a codebase so future planning has repo context.
 > - Build a plan for a feature, bug fix, or cleanup.
 > - Capture a task or decision that already happened.
+> - Tune token-efficient retrieval for a larger memory repo.
 > - Tune preferences, workflows, or capture depth.
 
 ---

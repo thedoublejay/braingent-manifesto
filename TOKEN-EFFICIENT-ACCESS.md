@@ -32,6 +32,23 @@ This ladder does not require a specific database, MCP server, dashboard, or
 embedding system. It is a default access pattern: start with cheap retrieval,
 then hydrate more context only when the task needs it.
 
+## How To Use This During Setup
+
+When creating a new memory repo:
+
+1. Copy this guide, or copy its rules into your own `WORKFLOW.md` or agent
+   entrypoint files.
+2. Tell your agent: "Use token-efficient access. Search first, inspect compact
+   results, read summaries by default, and open full records only when evidence
+   requires it."
+3. Start with plain tools such as `rg`, generated Markdown indexes, and short
+   record summaries.
+4. Add scripts, SQLite, MCP tools, embeddings, or dashboards only after the
+   manual retrieval loop is useful.
+
+The first version can be simple. A table of record paths and summaries is
+enough to teach agents not to read every file.
+
 ## Recommended Defaults
 
 - Prefer `summary` over `full` when an agent opens a record or note.

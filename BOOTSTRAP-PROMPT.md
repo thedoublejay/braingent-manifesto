@@ -17,6 +17,7 @@ Use these files as source material:
 - CHATGPT_PROJECT_BRIEF.md
 - INDEX.md
 - CURRENT_STATE.md
+- TOKEN-EFFICIENT-ACCESS.md
 - preferences/
 - templates/
 - workflows/
@@ -38,9 +39,10 @@ Tasks:
 8. Ask whether to keep the optional live-work module:
    - keep it if I want `BGT-NNNN` active task files, agent activity, dependencies, and optional dashboard views;
    - remove it if I only want durable records for now.
-9. Run a privacy pass before finishing.
-10. After the first commit, remind me to delete or archive the cloned `braingent-manifesto` setup repo so future `AGENTS.md` / `CLAUDE.md` searches do not query the public starter kit by mistake.
-11. Ask what I want to use Braingent for next: indexing a codebase, planning a feature or fix, capturing prior work, using live tasks, or tuning preferences.
+9. Keep token-efficient access enabled by default: search first, inspect compact results, read summaries, and open full records only when evidence requires it.
+10. Run a privacy pass before finishing.
+11. After the first commit, remind me to delete or archive the cloned `braingent-manifesto` setup repo so future `AGENTS.md` / `CLAUDE.md` searches do not query the public starter kit by mistake.
+12. Ask what I want to use Braingent for next: indexing a codebase, planning a feature or fix, capturing prior work, using live tasks, tuning token-efficient retrieval, or tuning preferences.
 
 Rules:
 - Markdown only unless I explicitly approve automation.
@@ -57,6 +59,7 @@ When finished, summarize:
 - files created or updated
 - placeholders still needing my input
 - recommended first commit
+- how agents should use token-efficient access as the memory grows
 - how to index my first repo (`Index this repo to braingent` from inside a repo, or `Index <specific-repo> to braingent` from elsewhere)
 - next useful record to add
 - a prompt asking what I want to use Braingent for next
@@ -67,5 +70,5 @@ When finished, summarize:
 Use this if you already copied the starter pack and want a quick agent instruction:
 
 ```text
-Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. Ask whether to keep the optional live-work module for `BGT-NNNN` agent tasks and dashboard views. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo, show me how to index my first repo, and ask what I want to use Braingent for next: planning a feature or fix, capturing prior work, using live tasks, or tuning preferences. Markdown only. No secrets, no local paths, no sensitive personal data.
+Read this Braingent-style memory repo. Personalize placeholders, keep all content public-safe, create the first initialization task record, and make the repo ready for Claude, Codex, and ChatGPT to use as durable engineering memory. Keep token-efficient access enabled by default: search first, read summaries, and open full records only when evidence requires it. Ask whether to keep the optional live-work module for `BGT-NNNN` agent tasks and dashboard views. After setup, remind me to delete or archive the cloned `braingent-manifesto` setup repo, show me how to index my first repo, and ask what I want to use Braingent for next: planning a feature or fix, capturing prior work, using live tasks, tuning token-efficient retrieval, or tuning preferences. Markdown only. No secrets, no local paths, no sensitive personal data.
 ```
