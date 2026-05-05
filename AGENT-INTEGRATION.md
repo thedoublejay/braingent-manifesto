@@ -81,11 +81,11 @@ Read entrypoints -> search relevant memory -> check live tasks -> plan -> execut
 For larger memory repos, make this loop token-efficient:
 
 ```text
-Read entrypoints -> search -> inspect compact results -> read summaries -> open full records only when needed
+Read entrypoints -> search -> inspect compact results -> read summaries -> open full records only when evidence requires it
 ```
 
-See `TOKEN-EFFICIENT-ACCESS.md` for the full retrieval ladder and compression
-guardrails.
+See `TOKEN-EFFICIENT-ACCESS.md` for a tool-agnostic retrieval ladder and
+summary-read guardrails.
 
 If a tool is working on a live task, append attributed activity with a concrete
 actor such as `agent--codex-cli` or `agent--claude-code`. Do not use vague

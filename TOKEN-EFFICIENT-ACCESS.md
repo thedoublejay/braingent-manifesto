@@ -1,8 +1,8 @@
 # Token-Efficient Agent Access
 
-Braingent works best when agents retrieve the smallest useful memory first and
-only expand when they need more evidence. This keeps sessions cheaper, faster,
-and less noisy without weakening the memory system.
+A Markdown memory repo works best when agents retrieve the smallest useful
+memory first and expand only when they need more evidence. This keeps sessions
+cheaper, faster, and less noisy without weakening the memory system.
 
 ## Plain Explanation
 
@@ -19,25 +19,29 @@ Use memory in this order:
 
 1. **Entrypoints:** read the short root files that explain how the repo works.
 2. **Search:** query frontmatter, generated indexes, or a local search database.
-3. **Compact results:** inspect small result rows with path, title, kind, date,
-   project, repository, ticket, and status.
-4. **Summary reads:** open summary-depth record bodies by default.
+3. **Compact results:** inspect small result rows with stable identifiers,
+   titles, dates, scopes, status, and source links.
+4. **Summary reads:** open summary-depth record bodies or generated summaries
+   by default.
 5. **Full reads:** open full records only when a decision, review, or exact
    evidence matters.
 6. **Raw imports:** read raw source material only when curated records are not
    enough.
 
-This is the same retrieval ladder as normal Braingent usage, with stricter
-defaults around how much text an agent should hydrate at once.
+This ladder does not require a specific database, MCP server, dashboard, or
+embedding system. It is a default access pattern: start with cheap retrieval,
+then hydrate more context only when the task needs it.
 
 ## Recommended Defaults
 
-- Prefer `summary` over `full` when an agent opens a record.
-- Keep compact indexes small enough to scan quickly.
+- Prefer `summary` over `full` when an agent opens a record or note.
+- Keep compact indexes small enough for first-pass scanning.
 - Track token baselines with committed, reproducible fixtures.
-- Treat lossy compression as optional and off by default.
-- Preserve critical markers during compression: headings, links, repository
-  keys, ticket IDs, commands, dates, and source references.
+- Use deterministic summaries, frontmatter filters, and capped result sets
+  before adding more complex processing.
+- Preserve critical markers during summary reads: headings, links, repository
+  names, issue or ticket IDs, commands, dates, decisions, and source
+  references.
 
 ## What To Measure
 
@@ -45,29 +49,34 @@ Size reduction alone is not enough. A token-efficient memory layer should prove
 both of these:
 
 - **Compactness:** repeated tasks consume fewer tokens than reading the root
-  files and every generated index.
-- **Recall:** compressed summaries still preserve the facts an agent needs to
-  make a correct decision.
+  files plus every generated index.
+- **Recall:** compact views still point the agent to the same relevant records
+  and preserve the facts needed for a correct decision.
 
 A useful test set includes several realistic questions, the expected records,
-and the specific facts that must survive summary or compression.
+and the specific facts that must survive summary reads. Keep the fixture data
+public-safe and synthetic when publishing an open starter kit.
 
 ## Common Pitfalls
 
 - **Making full reads the default.** Agents often omit optional parameters, so
   the default should be the cheaper path.
-- **Ignoring baselines.** If the pre-compression baseline is not committed or
+- **Ignoring baselines.** If the old and new retrieval paths are not
   reproducible, future contributors cannot verify the savings.
 - **Testing only length.** A shorter summary can still be wrong if it drops the
   ticket, repo, command, or evidence that made the record useful.
-- **Compressing secrets.** Compression is not redaction. Sensitive data should
-  never enter the memory repo in the first place.
+- **Hard-coding one organization's schema.** Public examples should show the
+  pattern, not require another team to copy project, ticket, or repository
+  names.
+- **Treating summarization as redaction.** Summaries are not redaction.
+  Sensitive data should never enter the memory repo in the first place.
 
 ## Public Starter-Pack Guidance
 
 For a public starter kit, document the pattern rather than shipping private
 memory data or private measurements. Example values should use placeholders such
-as `repo--github--example--service`, `<ticket-id>`, and `example.com`.
+as `repo--github--example--service`, `<scope-id>`, `<ticket-id>`, and
+`example.com`.
 
 Private teams can then implement the same pattern with their own scripts,
 indexes, MCP tools, or local databases.
