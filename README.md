@@ -63,6 +63,7 @@ Detailed setup lives in `INITIALIZE.md` and `SETUP.md`.
 | Preferences | Keeps standing rules outside individual chats: naming, capture policy, privacy, planning, review, and workflow defaults. | `preferences/` |
 | Workflows | Gives agents repeatable procedures for repo indexing, cleanup, retrieval, and capture. | `workflows/` |
 | Generated indexes | Summarize records, follow-ups, stale candidates, and current memory health. | Rebuilt from Markdown |
+| Token-efficient access | Keeps agent sessions small by searching first, reading summaries by default, and opening full records only when needed. | `TOKEN-EFFICIENT-ACCESS.md` |
 | Live tasks | Coordinates active work with `BGT-NNNN` task files, status, owners, dependencies, and append-only activity. | `tasks/active/*.md` |
 | Local dashboard | Shows the live task queue, filters, task detail, dependency graph, activity, raw Markdown, and guide. | Read-only over task Markdown |
 
@@ -201,6 +202,7 @@ BRAINGENT_MEMORY_ROOT=/path/to/your-memory-repo bun run dev
 | `STRUCTURE.md` | Recommended directory layout and naming. |
 | `WORKFLOW.md` | Day-to-day search, work, capture, and cleanup loop. |
 | `AGENT-INTEGRATION.md` | How to connect Claude, Codex, ChatGPT, and Gemini CLI. |
+| `TOKEN-EFFICIENT-ACCESS.md` | Retrieval-first guidance for reducing agent token usage without losing recall. |
 | `AGENT-TASK-COORDINATION.md` | Optional Markdown-based live task coordination. |
 | `PRIVACY-AND-SAFETY.md` | What must never be captured and how to review before publishing. |
 | `PUBLISHING-CHECKLIST.md` | Public-release checklist for examples and docs. |
@@ -257,6 +259,7 @@ Braingent starts as plain Markdown. Add tools when they help:
 | `jq` / `yq` | Structured JSON/YAML inspection. |
 | Shell scripts | Record creation, validation, reindexing, task helpers. |
 | SQLite | Rebuildable local search cache for structured queries. |
+| Compact indexes | Small generated projections for fast agent scanning before full record reads. |
 | GitHub CLI | Import pull requests and issues when authenticated. |
 | Bun + React | Local dashboard over active task Markdown. |
 
