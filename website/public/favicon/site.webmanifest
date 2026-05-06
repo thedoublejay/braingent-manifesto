@@ -1,0 +1,14 @@
+{
+  "name": "Braingent",
+  "short_name": "Braingent",
+  "icons": [
+    {
+      "src": "/favicon/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#3a3221",
+  "background_color": "#f4ead5",
+  "display": "standalone"
+}

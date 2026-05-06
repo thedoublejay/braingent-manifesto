@@ -1,0 +1,27 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+import Nav from '../components/landing/Nav.astro';
+import Hero from '../components/landing/Hero.astro';
+import MemorySystem from '../components/landing/MemorySystem.astro';
+import Principles from '../components/landing/Principles.astro';
+import SetupPath from '../components/landing/SetupPath.astro';
+import DocsPreview from '../components/landing/DocsPreview.astro';
+import CTA from '../components/landing/CTA.astro';
+import Footer from '../components/landing/Footer.astro';
+---
+
+<LandingLayout
+  title="Braingent | Engineering memory for humans and AI agents"
+  description="Braingent is a Git-backed engineering memory system for decisions, setup, repo profiles, agent workflows, and retrieval-first planning."
+>
+  <Nav />
+  <main>
+    <Hero />
+    <MemorySystem />
+    <Principles />
+    <SetupPath />
+    <DocsPreview />
+    <CTA />
+  </main>
+  <Footer />
+</LandingLayout>

@@ -1,0 +1,29 @@
+---
+const docs = [
+  ['Getting started', '/guides/getting-started/'],
+  ['Installation', '/guides/installation/'],
+  ['CLI workflows', '/guides/cli-workflows/'],
+  ['MCP tools', '/reference/mcp-tools/'],
+];
+---
+
+<section class="section docs-preview" id="docs">
+  <div class="section__heading">
+    <p class="eyebrow" data-index="V">Docs shell</p>
+    <h2>Content can mature without changing the plumbing.</h2>
+    <p>
+      Starlight is in place now. The first docs pages are intentionally concise
+      so the scaffold can build before the content pass.
+    </p>
+  </div>
+  <div class="docs-grid">
+    {
+      docs.map(([label, href]) => (
+        <a class="doc-link" href={href}>
+          <span>{label}</span>
+          <small>Open</small>
+        </a>
+      ))
+    }
+  </div>
+</section>

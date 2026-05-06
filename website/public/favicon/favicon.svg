@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Braingent">
+  <rect width="64" height="64" rx="32" fill="#f4ead5"/>
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#3a3221" stroke-width="3"/>
+  <path d="M25 18h11c6 0 10 3 10 8 0 3-2 6-5 7 4 1 6 4 6 8 0 6-5 9-12 9H22V18h3Zm5 13h6c3 0 5-2 5-4s-2-4-5-4h-6v8Zm0 14h7c3 0 5-2 5-5s-2-5-6-5h-6v10Z" fill="#8b2e1f"/>
+</svg>

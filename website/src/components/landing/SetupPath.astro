@@ -1,0 +1,40 @@
+---
+const steps = [
+  {
+    title: 'Install required tools',
+    detail: 'Git, GitHub CLI, ripgrep, jq, sqlite, uv, Python, and Bun.',
+  },
+  {
+    title: 'Bootstrap the memory repo',
+    detail: 'Link agent entrypoints, configure hooks, and validate the local shape.',
+  },
+  {
+    title: 'Expose retrieval',
+    detail: 'Use scripts or MCP tools so agents search Braingent before planning.',
+  },
+];
+---
+
+<section class="section" id="setup">
+  <div class="section__heading">
+    <p class="eyebrow" data-index="IV">Setup first</p>
+    <h2>The docs start from the CLI path.</h2>
+    <p>
+      Setup and CLI pages are scaffolded now. The exact prose can be synthesized
+      from the current manifesto records later.
+    </p>
+  </div>
+  <div class="timeline">
+    {
+      steps.map((step, index) => (
+        <article class="timeline__item">
+          <span>{String(index + 1).padStart(2, '0')}</span>
+          <div>
+            <h3>{step.title}</h3>
+            <p>{step.detail}</p>
+          </div>
+        </article>
+      ))
+    }
+  </div>
+</section>
