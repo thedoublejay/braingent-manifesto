@@ -27,6 +27,37 @@ Recommended behavior:
 
 If your Codex setup supports global instructions, copy the root `AGENTS.md` content into that global location, or make the global file point to your memory repo.
 
+### Codex MCP And `uv` Cache
+
+If you add a Braingent-style MCP server for token-efficient retrieval, prefer a
+repo-local Python environment instead of launching the MCP server through
+`uv run` every time Codex starts.
+
+Recommended shape:
+
+```toml
+[mcp_servers.braingent]
+command = "/path/to/your-memory-repo/.venv/bin/python"
+args = ["/path/to/your-memory-repo/scripts/mcp_server.py"]
+```
+
+Install the MCP dependencies into `.venv` during setup, then point Codex at that
+interpreter. This avoids making every Codex session write into the user's global
+`uv` cache.
+
+For helper scripts that still use `uv run --script` as a fallback, set the cache
+inside the memory repo before invoking `uv`:
+
+```sh
+export UV_CACHE_DIR="${UV_CACHE_DIR:-${repo_root}/.cache/uv}"
+exec uv run --script "$script" <command> "$@"
+```
+
+Do not tell open source users to whitelist `~/.cache` or another home-directory
+cache in Codex just to run Braingent. That can be a personal-machine workaround,
+but public setup docs should keep writes inside the memory repo whenever
+possible.
+
 ## Claude
 
 Use `CLAUDE.md` as the Claude entrypoint.

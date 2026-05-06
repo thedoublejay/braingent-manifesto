@@ -28,6 +28,18 @@ No.
 
 Scripts are useful later for validation, indexing, and search, but the public starter kit is Markdown-only. Start manually, then automate what becomes repetitive.
 
+## Do Codex Users Need To Whitelist `~/.cache` For `uv`?
+
+No.
+
+If you use Codex with a Braingent-style MCP server, prefer a repo-local `.venv`
+and configure Codex to launch `.venv/bin/python scripts/mcp_server.py`. If a
+helper script uses `uv run --script` as a fallback, set `UV_CACHE_DIR` to a
+repo-local path such as `.cache/uv` before invoking `uv`.
+
+Whitelisting a global home-directory cache can work on one machine, but it
+should not be the default open source setup.
+
 ## Do I Need Live Tasks?
 
 No.
