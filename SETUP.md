@@ -196,7 +196,7 @@ replace it.
 
 This manifesto intentionally starts with Markdown only.
 
-Later, you can add scripts for:
+Later, you can add scripts or a small optional CLI for:
 
 - creating dated record files
 - validating frontmatter
@@ -208,5 +208,28 @@ Later, you can add scripts for:
 - serving a read-only local dashboard
 
 The copyable dashboard sample lives at `examples/task-dashboard/`.
+
+For a first CLI version, keep the scope intentionally small:
+
+| Command | Scope |
+| --- | --- |
+| `braingent init` | Copy `starter-pack/`, replace placeholders, and ask whether to include live tasks, dashboard docs, MCP snippets, and token-efficient access guidance. |
+| `braingent doctor` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
+| `braingent print-prompts` | Print Codex, Claude, ChatGPT, and Gemini setup snippets without mutating files. |
+| `braingent update` | Compare starter-pack versions and show a patch plan before changing user files. |
+
+Avoid putting product state in the CLI. The CLI is the moving truck, not the
+house: it can copy, validate, and upgrade files, but Markdown remains the source
+of truth.
+
+For setup tooling, prefer:
+
+- no required server;
+- no required database;
+- no hosted account;
+- repo-local caches and generated files;
+- explicit diffs before overwriting user-edited files;
+- CI-friendly `validate`, `reindex --check`, `doctor`, lint, and typecheck
+  commands.
 
 Automation should support the memory model, not define it.
