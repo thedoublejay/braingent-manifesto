@@ -52,6 +52,20 @@ your real memory repo.
 
 Detailed setup lives in `INITIALIZE.md` and `SETUP.md`.
 
+### Setup Paths
+
+Braingent should keep one manual path and three optional CLI-assisted paths:
+
+| Path | Command or artifact | Purpose |
+| --- | --- | --- |
+| Manual path | `starter-pack/` + `BOOTSTRAP-PROMPT.md` | Zero-install setup that proves Braingent is still just Markdown. |
+| Fast path | future `braingent init` | Optional CLI setup that copies files, replaces placeholders, and asks setup questions once. |
+| Health path | future `braingent doctor` | Optional checks for missing files, stale placeholders, invalid frontmatter, path leaks, and stale generated indexes. |
+| Upgrade path | future `braingent update` | Optional starter-pack upgrade helper that shows what changed before editing. |
+
+The product line is: **Braingent is Markdown-first. Automation only removes
+setup friction.**
+
 ---
 
 ## What Braingent Gives You
@@ -258,6 +272,7 @@ Braingent starts as plain Markdown. Add tools when they help:
 | `rg` | Fast full-text search. |
 | `jq` / `yq` | Structured JSON/YAML inspection. |
 | Shell scripts | Record creation, validation, reindexing, task helpers. |
+| Optional setup CLI | Repeatable `init`, `doctor`, `print-prompts`, and `update` paths without replacing manual setup. |
 | SQLite | Rebuildable local search cache for structured queries. |
 | Compact indexes | Small generated projections for fast agent scanning before full record reads. |
 | GitHub CLI | Import pull requests and issues when authenticated. |
@@ -265,6 +280,16 @@ Braingent starts as plain Markdown. Add tools when they help:
 
 Automation should support the memory model, not define it. Markdown remains the
 source of truth.
+
+Recent implementation lessons from real Braingent usage:
+
+- exact metadata queries should use generated indexes or SQLite instead of
+  reparsing every Markdown record;
+- token-efficient MCP/search helpers should return compact records first and
+  hydrate full records only when evidence requires it;
+- validation, reindex, and doctor checks should be repeatable from CI and local
+  scripts;
+- helper tooling should keep caches and writes repo-local where possible.
 
 ---
 

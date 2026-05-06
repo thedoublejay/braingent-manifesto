@@ -12,9 +12,9 @@ Braingent organizes memory into five surfaces:
 2. **Durable memory:** task, review, decision, learning, summary, version, and
    profile records. Markdown files with YAML frontmatter. These are canonical.
    Agents search and cite this layer.
-3. **Derived retrieval:** generated indexes, optional local databases, and
-   future recall packs. These are aids — not source of truth. Rebuild from
-   durable records on demand.
+3. **Derived retrieval:** generated indexes, optional local databases, MCP
+   retrieval helpers, and future recall packs. These are aids — not source of
+   truth. Rebuild from durable records on demand.
 4. **Optional live work:** mutable `BGT-NNNN` task files under `tasks/active/`
    for current agent coordination. These are not final records. Close them by
    promoting important outcomes into durable memory.
@@ -307,3 +307,15 @@ You do not need:
 - a custom app
 
 Those can be added later. The first useful version is a folder of well-written Markdown files.
+
+When code is added, it should sit at the edges:
+
+- setup code copies the starter pack and replaces placeholders;
+- validation code checks frontmatter and structure;
+- index code rebuilds Markdown, compact JSON, or SQLite from records;
+- retrieval code searches indexes first and opens full Markdown only when
+  evidence requires it;
+- dashboard code reads Markdown and generated indexes without owning state.
+
+That is the line: code can move, inspect, and index the house, but the house is
+still the Markdown repo.
