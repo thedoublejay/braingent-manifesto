@@ -15,7 +15,7 @@ export default defineConfig({
     starlight({
       title: siteTitle,
       description: siteDescription,
-      favicon: '/favicon/favicon.svg',
+      favicon: '/braingent_logo.svg',
       head: [
         {
           tag: 'meta',
@@ -36,7 +36,7 @@ export default defineConfig({
           attrs: {
             rel: 'icon',
             type: 'image/svg+xml',
-            href: '/favicon/favicon.svg',
+            href: '/braingent_logo.svg',
           },
         },
         {

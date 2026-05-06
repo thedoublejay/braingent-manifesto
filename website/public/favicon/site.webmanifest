@@ -3,8 +3,8 @@
   "short_name": "Braingent",
   "icons": [
     {
-      "src": "/favicon/favicon.svg",
-      "sizes": "64x64",
+      "src": "/braingent_logo.svg",
+      "sizes": "1254x1254",
       "type": "image/svg+xml"
     }
   ],

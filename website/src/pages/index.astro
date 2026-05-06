@@ -1,27 +1,241 @@
 ---
 import LandingLayout from '../layouts/LandingLayout.astro';
-import Nav from '../components/landing/Nav.astro';
-import Hero from '../components/landing/Hero.astro';
-import MemorySystem from '../components/landing/MemorySystem.astro';
-import Principles from '../components/landing/Principles.astro';
-import SetupPath from '../components/landing/SetupPath.astro';
-import DocsPreview from '../components/landing/DocsPreview.astro';
-import CTA from '../components/landing/CTA.astro';
-import Footer from '../components/landing/Footer.astro';
 ---
 
 <LandingLayout
   title="Braingent | Engineering memory for humans and AI agents"
   description="Braingent is a Git-backed engineering memory system for decisions, setup, repo profiles, agent workflows, and retrieval-first planning."
 >
-  <Nav />
+  <header class="nav">
+    <a class="nav-brand" href="/" aria-label="Braingent home">
+      <img class="mark" src="/braingent_logo.svg" alt="" width="28" height="28" />
+      Braingent
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#problem">Problem</a>
+      <a href="#loop">The loop</a>
+      <a href="#records">Records</a>
+      <a href="#privacy">Privacy</a>
+      <a href="/docs/">Docs</a>
+      <a class="nav-cta" href="#start">Get started &rarr;</a>
+    </nav>
+  </header>
+
   <main>
-    <Hero />
-    <MemorySystem />
-    <Principles />
-    <SetupPath />
-    <DocsPreview />
-    <CTA />
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow no-num">A manifesto for AI-assisted engineering</p>
+          <h1>A shared memory for AI-assisted engineering.</h1>
+          <p class="lede">
+            Braingent is a Git-backed, Markdown-first memory repo. It gives Claude,
+            Codex, ChatGPT, and Gemini CLI the same engineering context: what to
+            read before planning, which decisions matter, and what work is already
+            underway.
+          </p>
+          <div class="hero-cta">
+            <a class="btn" href="#start">Start the memory loop</a>
+            <a class="btn btn-ghost" href="/docs/">Read the docs</a>
+          </div>
+          <div class="hero-meta" aria-label="Braingent scope">
+            <span><i class="dot"></i>Plain Markdown</span>
+            <span><i class="dot"></i>Git history</span>
+            <span><i class="dot"></i>Agent-ready retrieval</span>
+          </div>
+        </div>
+
+        <div class="hero-map" aria-label="Braingent memory map">
+          <div class="map-frame">
+            <span class="corner corner-tl"></span>
+            <span class="corner corner-tr"></span>
+            <span class="corner corner-bl"></span>
+            <span class="corner corner-br"></span>
+            <div class="map-title">N — the memory repo —</div>
+            <svg class="map-routes" viewBox="0 0 520 520" aria-hidden="true">
+              <path class="route r1" d="M86 112 C180 76 292 100 412 78 C456 70 474 114 434 148 C356 214 286 164 234 238 C186 306 108 286 86 386" />
+              <path class="route r2" d="M430 406 C372 330 304 382 254 312 C214 256 132 252 108 164" />
+              <path class="route r3" d="M144 430 C194 382 196 326 262 286 C334 244 390 262 452 210" />
+            </svg>
+            <div class="map-center">
+              <span class="map-halo"></span>
+              <span class="map-halo halo-2"></span>
+              <img class="map-logo" src="/braingent_logo.svg" alt="Braingent logo" width="132" height="132" />
+              <p class="map-caption">Braingent <span>source of truth</span></p>
+            </div>
+            <div class="agent agent-tl"><span class="agent-num">01</span><span class="agent-name">Claude</span></div>
+            <div class="agent agent-tr"><span class="agent-num">02</span><span class="agent-name">Codex</span></div>
+            <div class="agent agent-bl"><span class="agent-num">03</span><span class="agent-name">ChatGPT</span></div>
+            <div class="agent agent-br"><span class="agent-num">04</span><span class="agent-name">Gemini CLI</span></div>
+            <span class="landmark lm-1">preferences</span>
+            <span class="landmark lm-2">records</span>
+            <span class="landmark lm-3">indexes</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="problem" id="problem">
+      <div class="container">
+        <p class="eyebrow" data-num="I">The problem</p>
+        <span class="chapter-rule"></span>
+        <h2>Agents forget. Engineers repeat. Decisions vanish.</h2>
+        <div class="problem-grid">
+          <div class="problem-list">
+            <article class="problem-item">
+              <h4>Agents start every session from zero.</h4>
+              <p>Without durable context, every tool asks for the same repo tour, the same rules, and the same warnings.</p>
+            </article>
+            <article class="problem-item">
+              <h4>You re-explain the same context, again.</h4>
+              <p>Important setup and conventions hide in old chats, local memory, and half-remembered decisions.</p>
+            </article>
+            <article class="problem-item">
+              <h4>Decisions disappear into chat logs.</h4>
+              <p>The reason behind a change matters more than the change itself, but it is rarely captured where future work starts.</p>
+            </article>
+            <article class="problem-item">
+              <h4>Every tool wants its own walled garden.</h4>
+              <p>Braingent keeps the memory in files you own, not inside one model vendor or app account.</p>
+            </article>
+          </div>
+          <aside class="problem-note">
+            <p>What future work needs is not more transcript. It needs a small, searchable body of records with dates, source links, and status.</p>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section id="loop" class="loop-section">
+      <div class="container">
+        <p class="eyebrow" data-num="II">The loop</p>
+        <span class="chapter-rule"></span>
+        <h2>Search first. Plan second. Capture after.</h2>
+        <div class="loop-grid">
+          <article class="loop-step">
+            <span class="marker"><span class="num">01</span></span>
+            <h3>Retrieve context</h3>
+            <p>Agents search Braingent before planning so old decisions and repo conventions shape the next move.</p>
+          </article>
+          <article class="loop-step">
+            <span class="marker"><span class="num">02</span></span>
+            <h3>Do the work</h3>
+            <p>Plans, reviews, and implementation stay grounded in source files instead of memory drift.</p>
+          </article>
+          <article class="loop-step">
+            <span class="marker"><span class="num">03</span></span>
+            <h3>Capture the result</h3>
+            <p>Meaningful outcomes become durable records with frontmatter, evidence, and follow-ups.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="records" class="code-section">
+      <div class="container code-grid">
+        <div class="code-side">
+          <p class="eyebrow" data-num="III">Records</p>
+          <span class="chapter-rule"></span>
+          <h2>Markdown is the source of truth.</h2>
+          <p class="lede">Plain files. YAML frontmatter for search. Git for history. Nothing your editor cannot open and your eyes cannot read.</p>
+          <ul>
+            <li>Typed records for tasks, decisions, reviews, learnings, versions, and profiles.</li>
+            <li>Generated indexes are derivable, not canonical.</li>
+            <li>Context packs cite the records they summarize.</li>
+          </ul>
+        </div>
+        <div class="code-block">
+          <div class="filename">records/2026-05-06--task--website-scaffold.md</div>
+          <pre class="code-pane active"><code>---
+title: Scaffold Braingent website
+record_kind: task
+status: completed
+date: 2026-05-06
+project: project--personal--braingent
+repositories:
+  - repo--github--thedoublejay--braingent-manifesto
+ai_tools:
+  - Codex
+---
+
+## Goal
+
+Create the public website foundation.
+
+## Evidence
+
+- Astro build passed.
+- Landing and docs routes returned 200.
+</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="privacy" class="privacy-section">
+      <div class="container">
+        <p class="eyebrow" data-num="IV">Privacy</p>
+        <span class="chapter-rule"></span>
+        <h2>Local first. Public safe. No secrets.</h2>
+        <div class="privacy-grid">
+          <article class="principle">
+            <h3>You own the memory.</h3>
+            <p>It lives in a Git repository with reviewable diffs and ordinary file permissions.</p>
+          </article>
+          <article class="principle">
+            <h3>Public docs stay generic.</h3>
+            <p>Starter-pack content avoids private names, local paths, customer data, and realistic ticket IDs.</p>
+          </article>
+          <article class="principle">
+            <h3>Secrets never enter memory.</h3>
+            <p>Redaction is not a recovery plan. Tokens and credentials should not be captured in the first place.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="not-section">
+      <div class="container">
+        <p class="eyebrow" data-num="V">What it is not</p>
+        <span class="chapter-rule"></span>
+        <div class="not-grid">
+          <div class="not-item"><span class="x">×</span><p>Not a chat archive.</p></div>
+          <div class="not-item"><span class="x">×</span><p>Not a vendor memory account.</p></div>
+          <div class="not-item"><span class="x">×</span><p>Not a dashboard hiding your source of truth.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="start" class="start-section">
+      <div class="container start-grid">
+        <div class="start-side">
+          <p class="eyebrow" data-num="VI">Get started</p>
+          <span class="chapter-rule"></span>
+          <h2>Four steps. Roughly ten minutes.</h2>
+          <p>Start with the public manifesto, then synthesize your own setup, preferences, and capture workflow.</p>
+        </div>
+        <div class="start-steps">
+          <article class="start-step"><span class="step-num">01</span><h4>Clone the starter pack</h4><p>Copy the public-safe files into a private memory repo.</p></article>
+          <article class="start-step"><span class="step-num">02</span><h4>Write your rules</h4><p>Capture repo conventions, planning defaults, and what agents should read first.</p></article>
+          <article class="start-step"><span class="step-num">03</span><h4>Search before planning</h4><p>Make retrieval the first step for every non-trivial task.</p></article>
+          <article class="start-step"><span class="step-num">04</span><h4>Capture meaningful work</h4><p>Save outcomes, decisions, evidence, and follow-ups as Markdown records.</p></article>
+        </div>
+      </div>
+    </section>
   </main>
-  <Footer />
+
+  <footer class="footer">
+    <div class="container">
+      <div class="brand-block">
+        <a class="nav-brand" href="/">
+          <img class="mark" src="/braingent_logo.svg" alt="" width="28" height="28" />
+          Braingent
+        </a>
+        <p>A Markdown memory system for AI-assisted engineering.</p>
+      </div>
+      <div class="footer-bottom">
+        <span>braingent.dev</span>
+        <a href="/docs/">Docs</a>
+        <a href="https://github.com/thedoublejay/braingent-manifesto">GitHub</a>
+      </div>
+    </div>
+  </footer>
 </LandingLayout>
