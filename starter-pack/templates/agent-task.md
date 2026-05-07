@@ -3,19 +3,40 @@ id: BGT-0000
 record_kind: agent-task
 title: "<task title>"
 status: triage
+status_category: triage
+resolution: null
+type: task
 priority: medium
-owner: null
+visibility: private
+assignee: null
+reviewer: null
+observers: []
+claimed_by: null
+claimed_at: null
+date: <yyyy-mm-dd>
+timezone: <timezone>
 created: <yyyy-mm-dd>
 updated: <yyyy-mm-dd>
+closed: null
+organization: <org-key-or-null>
+project: <project-key-or-null>
+repositories: []
+ticket: null
+prs: []
+commits: []
+ai_tools: []
+people: []
+topics: []
+tools: []
+parent: null
 depends_on: []
-blocked_by: []
+duplicate_of: null
 related_records: []
-external_links: []
 ---
 
 # BGT-0000: <task title>
 
-## Goal
+## Description
 
 <What should be true when this task is done?>
 
@@ -31,12 +52,25 @@ external_links: []
 
 1. <Step>
 
+## Dependencies
+
+- Depends on: none
+- Derived blockers: none
+
 ## Activity
 
-- <yyyy-mm-ddThh:mm:ssZ> <agent-id>: Created task.
+- <yyyy-mm-ddThh:mm:ssZ> | <agent-id> | role:assignee | event:created |
+  Created task.
+
+## Linked Evidence
+
+- Durable records:
+- PRs:
+- Commits:
+- Commands:
 
 ## Closeout
 
-- Resolution: <completed | closed | superseded>
+- Resolution: <completed | wont_do | duplicate | superseded>
 - Durable record: <path-or-null>
 - Verification: <commands-or-evidence>

@@ -35,16 +35,16 @@ The file has four canonical sections:
 ```markdown
 ---
 id: BGT-0142
-kind: task
 title: Backfill repo profile for acme/api
-status: in_progress
-priority: P2
-owner: claude
-authors: [claude, codex, jj]
+record_kind: agent-task
+type: task
+status: in-progress
+status_category: active
+priority: high
+claimed_by: agent--claude-code
+ai_tools: [Claude, Codex]
 created: 2026-04-28T09:14Z
-repos: [acme/api]
-links:
-  - decisions/2026-04-12-jobs-runtime.md
+repositories: [repo--acme--api]
 ---
 
 ## Goal
@@ -99,17 +99,15 @@ append-only convention does most of the work.
 ## Lifecycle
 
 ```
-tasks/active/BGT-0142.md   →   tasks/done/BGT-0142.md
-       (in_progress)              (status: done)
+tasks/active/BGT-0142.md   ->   tasks/archive/BGT-0142.md
+       (in-progress)              (status: closed)
 ```
 
 When work finishes:
 
-1. The closing agent updates `status: done` and adds a final status log
-   entry.
-2. The file moves from `tasks/active/` to `tasks/done/` (or stays in
-   place with `status: done` — preference is set in
-   `preferences/capture-policy.md`).
+1. The closing agent updates `status: closed`, sets a `resolution`, and adds a final status log entry.
+2. `scripts/task-archive.sh` moves the file from `tasks/active/` to
+   `tasks/archive/`.
 3. Any captured decisions or learnings get linked from the task's
    `links:` frontmatter.
 
@@ -132,19 +130,19 @@ same Markdown manipulation.
 
 ```bash
 # create a new live task
-braingent task-new "Backfill repo profile for acme/api" --priority P2
+scripts/task-new.sh "Backfill repo profile for acme/api" --priority high
 
 # claim it (sets owner)
-braingent task-claim BGT-0142 --as claude
+scripts/task-claim.sh BGT-0142 --as agent--claude-code
 
 # append a status update
-braingent task-status BGT-0142 "drafted profile, 14 sections"
+scripts/task-comment.sh BGT-0142 "drafted profile, 14 sections" --as agent--claude-code
 
-# add an open question
-braingent task-question BGT-0142 "include deprecated /v1/login?"
+# move it to review
+scripts/task-status.sh BGT-0142 in-review --as agent--claude-code --note "Ready for review"
 
-# close it
-braingent task-close BGT-0142 --status done
+# close and archive it
+scripts/task-archive.sh BGT-0142 --as agent--claude-code --resolution completed
 ```
 
 All of these are optional. Editing the file directly works the same.
@@ -164,8 +162,7 @@ directly through their normal flow.
 ## Pitfalls and how to avoid them
 
 - **Forgetting to claim.** Two agents claim simultaneously → both think
-  they own it. Mitigation: have agents `task-status BGT-NNNN "claiming"`
-  before they start.
+  they own it. Mitigation: have agents run `scripts/task-claim.sh` before they start.
 - **Skipping the status log.** Tempting when you're moving fast. Don't —
   the log is the only thing the next agent will read.
 - **Over-using live tasks.** Solo work doesn't need one. If you're the

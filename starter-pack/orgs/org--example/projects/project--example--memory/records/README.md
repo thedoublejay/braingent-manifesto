@@ -1,3 +1,16 @@
+---
+title: Project Records
+record_kind: note
+status: draft
+date: 2026-05-07
+timezone: UTC
+organization: org--example
+project: project--example--memory
+repositories: []
+topics: []
+tools: []
+---
+
 # Records
 
 Project-specific durable records live here.
@@ -16,4 +29,3 @@ Examples:
 ```
 
 Copy templates from `templates/`.
-

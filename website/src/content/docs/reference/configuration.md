@@ -13,7 +13,7 @@ never touch any of these knobs. If you do, here's what's available.
 
 Higher in this list wins.
 
-1. **CLI flags** (`--path`, `--strict`, etc.).
+1. **Helper flags** (`--json`, `--limit`, `--paths`, etc.).
 2. **Environment variables** (`BRAINGENT_PATH`, `BRAINGENT_NO_COLOR`).
 3. **Repo-local config** (`.braingent/config.toml` inside the memory
    repo).
@@ -57,7 +57,7 @@ auto_capture_on_pr     = true
 auto_capture_on_ticket = true
 
 [indexes]
-# Which indexes to regenerate on `braingent reindex`.
+# Which indexes to regenerate when running `scripts/reindex.sh`.
 generate = ["by-topic", "by-repo", "by-tool", "decisions-index", "recent"]
 recent_count = 50
 
@@ -72,7 +72,7 @@ allowed_status = ["planned", "in_progress", "done", "abandoned", "blocked"]
 read_only = false
 ```
 
-`braingent doctor` validates this file at startup.
+`scripts/doctor.sh` validates this file when health checks run.
 
 ## User-level config
 
@@ -82,8 +82,8 @@ commit.
 
 ```toml
 [ui]
-editor    = "code"           # what `braingent open <id>` launches
-clipboard = "pbcopy"          # for `--copy` flags
+editor    = "code"           # editor for future open helpers
+clipboard = "pbcopy"          # for future clipboard helpers
 
 [print_prompts]
 default_agent = "claude"
@@ -94,7 +94,7 @@ default_agent = "claude"
 ```toml
 [safety]
 # Paths that should never appear inside committed Markdown.
-# `braingent doctor` flags violations.
+# `scripts/doctor.sh` flags violations.
 forbid_paths = ["~/private", "/Users/secrets"]
 
 # Patterns that should never appear in record bodies.
@@ -117,7 +117,7 @@ moment, if it exists.
 | --- | --- |
 | `pre-capture.sh` | Before a record is written. Receives the draft frontmatter on stdin. Exit non-zero to abort. |
 | `post-capture.sh` | After capture commits. Receives the commit SHA. |
-| `pre-update.sh` | Before `braingent update` applies changes. |
+| `pre-update.sh` | Before a future packaged update helper applies changes. |
 | `post-doctor.sh` | After `doctor` runs. Receives the report on stdin. |
 
 Hooks are plain shell scripts. Keep them small. If you find yourself

@@ -224,7 +224,7 @@ optional or future work.
 
 ### Phase 1: Stabilize Maintenance Checks
 
-Add a first-class `braingent doctor` or equivalent script that reports:
+Add or run a first-class health helper such as `scripts/doctor.sh` that reports:
 
 - validation failures;
 - stale indexes;
@@ -242,7 +242,7 @@ not dependent on memory.
 
 ### Phase 2: Add Recall Packs
 
-Add `braingent recall --md --json` that returns:
+Add or run `scripts/recall.sh --json` so agents can retrieve:
 
 - `must_read`;
 - `supporting`;

@@ -204,23 +204,29 @@ Later, you can add scripts or a small optional CLI for:
 - building a local search database
 - importing Git history
 - summarizing PRs or tickets
+- generating traceable QA plans from tickets, memory, and Gather Step evidence
 - managing live task files
 - serving a read-only local dashboard
 
 The copyable dashboard sample lives at `examples/task-dashboard/`.
 
-For the v4 CLI, keep the scope intentionally small and make every mutation
-diff-first. The CLI should never become the source of truth; it should copy,
-personalize, validate, and upgrade the Markdown repo.
+For the v4 helper surface, keep the scope intentionally small and make every
+mutation visible in Git. The helpers should never become the source of truth;
+they should create, validate, search, index, and summarize the Markdown repo.
 
 | Command | Scope |
 | --- | --- |
-| `braingent init` | Create or update a target memory repo from `starter-pack/`, replace placeholders from a short questionnaire, ask whether to include live tasks, dashboard docs, MCP snippets, and token-efficient access guidance, then run validation and print the first commit command. |
-| `braingent doctor` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
-| `braingent print-prompts` | Print Codex, Claude, ChatGPT, and Gemini setup snippets without mutating files. |
-| `braingent update` | Compare the installed starter-pack version with the current template, classify changes as safe auto-merge, manual review, or skipped local edits, show a patch plan before changing files, then run validation and reindex checks. |
+| `scripts/doctor.sh` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
+| `scripts/validate.sh` | Validate record frontmatter and taxonomy values. |
+| `scripts/reindex.sh` | Rebuild generated indexes and the local derived cache from Markdown records. |
+| `scripts/find.sh` / `scripts/recall.sh` | Search frontmatter and build focused context packs. |
+| `scripts/new-record.sh` | Create a dated, frontmatter-stamped durable record from a template. |
+| `scripts/task-*.sh` | Create, claim, comment on, update, list, and archive live `BGT-*` task files. |
+| `python3 scripts/mcp_server.py` | Serve read-only MCP tools for token-efficient agent retrieval. |
+| `scripts/qa-generate.sh` | Generate strict, reviewable QA plans from tickets, Braingent memory, and Gather Step `qa-evidence`; keep a lenient default evidence budget and emit Markdown, Xray JSON, TestRail CSV, or Gherkin from the same traceable case model. |
 
-`braingent init` should be an interactive bootstrap, not a hidden migration:
+A future packaged `braingent init` should be an interactive bootstrap, not a
+hidden migration:
 
 1. Resolve the target directory and refuse to overwrite non-Braingent repos
    unless the user passes an explicit force flag.
@@ -229,12 +235,12 @@ personalize, validate, and upgrade the Markdown repo.
 3. Copy the starter pack, preserving file modes and leaving generated indexes
    reproducible from Markdown.
 4. Replace known placeholders only; leave unknown user prose untouched.
-5. Run `doctor`, `validate`, and `reindex --check` when the copied scripts are
-   present.
+5. Run `scripts/doctor.sh`, `scripts/validate.sh`, and
+   `scripts/reindex.sh --check` when the copied scripts are present.
 6. Print a concise handoff: files created, optional modules included, first
    commit command, and the next suggested workflow.
 
-`braingent update` should be conservative:
+A future packaged `braingent update` should be conservative:
 
 1. Read the installed template/version marker and the current starter-pack
    manifest.
@@ -243,7 +249,8 @@ personalize, validate, and upgrade the Markdown repo.
 3. Auto-apply only files that are unchanged locally or have conflict-free
    mechanical updates.
 4. Write conflicts to a review report with exact file paths and reasons.
-5. Re-run `doctor`, `validate`, and `reindex --check` after any accepted change.
+5. Re-run `scripts/doctor.sh`, `scripts/validate.sh`, and
+   `scripts/reindex.sh --check` after any accepted change.
 
 Avoid putting product state in the CLI. The CLI is the moving truck, not the
 house: it can copy, validate, and upgrade files, but Markdown remains the source

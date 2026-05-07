@@ -15,6 +15,8 @@ Use it as a durable memory layer for AI-assisted software engineering work. Clau
 - Ticket stubs for cross-cutting work.
 - Optional live `BGT-NNNN` agent tasks for active coordination.
 - Optional dashboard docs for a read-only live task UI.
+- Runnable helper scripts for search, validation, reindexing, task files, MCP retrieval, and QA generation.
+- The `tools/tool--test-plan/` QA generator for Markdown, Xray JSON, TestRail CSV, and Gherkin outputs.
 - Raw imports before they are summarized.
 - Preferences that guide future AI agents.
 
@@ -58,7 +60,14 @@ Start with free-text search:
 rg -n "<query>" .
 ```
 
-When you add structured search automation later, use frontmatter fields such as:
+With Python available, use the included structured search helper:
+
+```bash
+scripts/find.sh kind=decision
+scripts/recall.sh repo=repo--example--owner--repo
+```
+
+You can also search frontmatter fields directly:
 
 - `record_kind`
 - `status`

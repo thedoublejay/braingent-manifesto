@@ -29,33 +29,33 @@ versioned migrations.
 - Deterministic precheck for AC coverage, duplicates, weak expected
   results, evidence truncation.
 - Native [Gather Step](https://gatherstep.dev) integration via
-  `--gatherstep`.
+  `--gather-workspace` and `--gather-target`.
 
 ### `2026-04-15` — Live multi-agent tasks
 
 - `tasks/active/BGT-NNNN.md` convention for parallel agent coordination.
-- `task-*` CLI commands for create, claim, status, question, block,
-  close, list, archive.
+- `scripts/task-*.sh` helpers for create, claim, comment, status, list,
+  and archive.
 - Optional local Bun + Astro dashboard renders the live queue.
 
 ### `2026-04-01` — Source-indexed synthesis
 
-- `braingent synthesize` produces synthesis pages with inline citations
+- `scripts/synthesize.sh` produces synthesis pages with inline citations
   back to source records.
 - Topic / repo / project synthesis modes.
 
 ### `2026-03-15` — MCP server
 
-- `braingent mcp serve` exposes `braingent_guide`, `braingent_find`, and
-  `braingent_get` over MCP.
+- `python3 scripts/mcp_server.py` exposes `braingent_guide`,
+  `braingent_find`, and `braingent_get` over MCP.
 - Token-efficient retrieval for Claude, Codex, and any MCP-aware agent.
 
-### `2026-03-01` — CLI v3
+### `2026-03-01` — Helper scripts v3
 
-- `braingent doctor` health checks (entrypoints, placeholders,
+- `scripts/doctor.sh` health checks (entrypoints, placeholders,
   frontmatter, indexes, tooling).
-- `braingent find` / `recall` / `search` / `get`.
-- `braingent capture` / `validate` / `reindex`.
+- `scripts/find.sh` / `scripts/recall.sh`.
+- `scripts/new-record.sh` / `scripts/validate.sh` / `scripts/reindex.sh`.
 
 ### `2026-02-15` — Starter pack v1.0
 
@@ -72,6 +72,7 @@ versioned migrations.
 
 ## Upgrade notes
 
-Run `braingent update --path <your-memory-repo>` to apply starter-pack
-changes. The command always shows a plan before mutating files; local
-edits win unless you explicitly accept a template change.
+Until a packaged update helper exists, compare your memory repo against the
+latest `starter-pack/` and copy only the files you want. Always review the Git
+diff, then run `scripts/doctor.sh`, `scripts/validate.sh`, and
+`scripts/reindex.sh --check`.

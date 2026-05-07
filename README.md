@@ -113,14 +113,15 @@ Detailed setup lives in `INITIALIZE.md` and `SETUP.md`.
 
 ### Setup Paths
 
-Braingent should keep one manual path and three optional CLI-assisted paths:
+Braingent should keep one manual path and four optional CLI-assisted paths:
 
 | Path | Command or artifact | Purpose |
 | --- | --- | --- |
 | Manual path | `starter-pack/` + `BOOTSTRAP-PROMPT.md` | Zero-install setup that proves Braingent is still just Markdown. |
 | Fast path | future `braingent init` | Optional CLI setup that copies files, replaces placeholders, and asks setup questions once. |
-| Health path | future `braingent doctor` | Optional checks for missing files, stale placeholders, invalid frontmatter, path leaks, and stale generated indexes. |
+| Health path | `scripts/doctor.sh` | Optional checks for missing files, stale placeholders, invalid frontmatter, path leaks, and stale generated indexes. |
 | Upgrade path | future `braingent update` | Optional starter-pack upgrade helper that shows what changed before editing. |
+| QA path | `scripts/qa-generate.sh` | Optional QA planning helper that turns tickets, Braingent memory, and Gather Step evidence into traceable Markdown, Xray JSON, TestRail CSV, or Gherkin. |
 
 The product line is: **Braingent is Markdown-first. Automation only removes
 setup friction.**

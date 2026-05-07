@@ -5,9 +5,13 @@ status: active
 date: <yyyy-mm-dd>
 timezone: <timezone>
 organization: org--example
+project: null
+repo: null
 projects: [project--example--memory]
+repositories: []
 topics: []
 tools: []
+last_reviewed: 2026-05-07
 ---
 
 # Organization: <Organization Name>
@@ -27,4 +31,3 @@ tools: []
 ## Important Records
 
 - <links>
-

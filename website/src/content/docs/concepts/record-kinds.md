@@ -1,12 +1,13 @@
 ---
 title: Record Kinds
-description: The eight record kinds Braingent uses, what each one contains, and when to write each.
+description: The record kinds Braingent uses, what each one contains, and when to write each.
 section: Core Concepts
 order: 3
 ---
 
-Braingent recognizes eight record kinds. Each has a directory, a template,
-a frontmatter shape, and a clear answer to *when do I write one of these?*
+Braingent recognizes durable record kinds plus a live `agent-task` kind. Each
+has a directory, a template, a frontmatter shape, and a clear answer to *when
+do I write one of these?*
 
 This page is the field guide.
 
@@ -25,12 +26,12 @@ learnings — not in a separate top-level `decisions/` directory.
 | Decision | `decision` | The relevant context dir (repo / project / topic) | A non-obvious choice is made. |
 | Review | `review` | The relevant context dir | A PR or code review surfaces something durable. |
 | Learning | `learning` | The relevant context dir | A reusable lesson is identified. |
-| Repo profile | `repo` | `repositories/<repo-slug>/profile.md` | A repo's local conventions need to be captured. |
-| Project brief | `project` | `orgs/<org>/projects/<project>/brief.md` | A project starts or pivots. |
-| Topic page | `topic` | `topics/<topic-slug>/<file>.md` | A topic spans multiple repos and needs synthesis. |
-| Tool / version note | `tool` | `tools/<tool-slug>/<version>.md` | A tool upgrade has gotchas worth remembering. |
-| Ticket stub | `ticket` | `tickets/ticket--<source>--<id>/` | An upstream ticket needs a home in memory. |
-| Person | `person` | `people/<slug>.md` | A reviewer/stakeholder/team member matters across work. |
+| Profile | `profile` | `repositories/<repo-slug>/README.md` or another entity README | A repo, org, project, or topic needs current local context. |
+| Version note | `version` | `tools/<tool-slug>/records/` | A tool upgrade has gotchas worth remembering. |
+| Summary | `summary` | `imports/summaries/` or a context records dir | An import or batch needs a compact durable summary. |
+| Ticket stub | `ticket-stub` | `tickets/ticket--<source>--<id>/` | An upstream ticket needs a home in memory. |
+| Interaction | `interaction` | `people/` or a context records dir | A stakeholder exchange changes future work. |
+| Note | `note` | `inbox/` or a context records dir | Temporary or mixed context does not fit yet. |
 
 ## I. Task records
 
@@ -42,23 +43,21 @@ follow-ups.
 id: BGT-0142
 record_kind: agent-task
 title: Backfill repo profile for acme/api
-status: done            # planned | in_progress | done | abandoned
-priority: P2
-owner: claude
-repos: [acme/api]
-projects: [acme-platform]
-topics: [repo-profiles, backfill]
-created: 2026-04-28T09:14Z
-closed: 2026-04-28T11:02Z
-links:
-  - decisions/2026-04-12-jobs-runtime.md
-  - reviews/2026-04-28-backfill-pr.md
+status: in-progress
+status_category: active
+priority: high
+claimed_by: agent--claude-code
+repositories: [repo--acme--api]
+project: project--acme--platform
+topics: [topic--repo-profiles]
+created: 2026-04-28
+closed: null
 ---
 
-## Goal
+## Description
 Generate `repos/acme-api/profile.md` from local docs, git history, open PRs.
 
-## What was done
+## Activity
 - Scanned README + ADRs (3 ADRs surfaced).
 - Drafted profile, 14 sections.
 - jj flagged auth section as stale; rewrote.
@@ -108,8 +107,8 @@ record_kind: review
 title: PR #428 review — Temporal migration first slice
 date: 2026-04-28
 reviewer: jj
-repos: [acme/api]
-links: [decisions/2026-04-12-jobs-runtime.md, tasks/done/BGT-0142.md]
+repositories: [repo--acme--api]
+links: [decisions/2026-04-12-jobs-runtime.md, tasks/archive/BGT-0142.md]
 tags: [temporal, jobs, pr-review]
 ---
 ```
@@ -128,9 +127,9 @@ id: LRN-2026-04-bullmq-process-churn
 record_kind: learning
 title: BullMQ silent retries under process churn
 date: 2026-04-12
-tags: [jobs, reliability, runtime]
-applies_to: [bullmq, fly.io]
-links: [decisions/2026-04-12-jobs-runtime.md]
+topics: [topic--jobs, topic--reliability]
+tools: [tool--bullmq, tool--fly-io]
+repositories: [repo--acme--api]
 ---
 ```
 
@@ -146,17 +145,16 @@ agent guidance.
 ```yaml
 ---
 id: repo-acme-api
-record_kind: repo
+record_kind: profile
 title: acme/api
-slug: acme-api
-maintainers: [jj]
-languages: [typescript, sql]
-runtime: node-20
-frameworks: [fastify, drizzle]
-tags: [billing, api, jobs]
-links:
-  - decisions/2026-04-12-jobs-runtime.md
-  - learnings/2026-04-bullmq-process-churn.md
+status: active
+repo: repo--acme--api
+organization: org--acme
+project: project--acme--platform
+last_reviewed: 2026-04-28
+primary_languages: [typescript, sql]
+topics: [topic--jobs]
+tools: [tool--sqlite]
 ---
 ```
 
@@ -170,14 +168,14 @@ One file per project: goal, stakeholders, current phase, key decisions.
 ```yaml
 ---
 id: proj-acme-platform
-record_kind: project
+record_kind: profile
 title: acme-platform
-status: active          # active | paused | done | abandoned
-phase: GA               # discovery | mvp | beta | GA | maintenance
-started: 2026-01-15
-stakeholders: [jj, ada, sam]
-repos: [acme/api, acme/web, acme/jobs]
-tags: [platform, multi-repo]
+status: active
+organization: org--acme
+project: project--acme--platform
+repo: null
+repositories: [repo--acme--api, repo--acme--web, repo--acme--jobs]
+last_reviewed: 2026-04-28
 ---
 ```
 
@@ -192,14 +190,15 @@ The "we always do X for Y" pattern.
 ```yaml
 ---
 id: topic-auth
-record_kind: topic
+record_kind: profile
 title: Authentication across acme repos
-last_updated: 2026-04-30
-repos: [acme/api, acme/web, acme/jobs, acme/admin]
-tags: [auth, security, sessions]
-links:
-  - decisions/2025-09-04-jwt-rotation.md
-  - decisions/2026-02-11-session-store-redis.md
+status: active
+topic: topic--auth
+organization: null
+project: null
+repo: null
+repositories: [repo--acme--api, repo--acme--web, repo--acme--jobs, repo--acme--admin]
+last_reviewed: 2026-04-30
 ---
 ```
 
@@ -213,13 +212,16 @@ Quirks tied to a specific tool version. Especially useful for upgrades.
 ```yaml
 ---
 id: tool-sqlite-3.46
-record_kind: tool
+record_kind: version
 title: SQLite 3.46 upgrade notes
-tool: sqlite
+status: active
+tool: tool--sqlite
 version: '3.46'
 date: 2026-04-15
-tags: [sqlite, upgrade, indexes]
-applies_to_repos: [acme/api]
+scope: upgrade
+source_of_truth: release notes
+last_checked: 2026-04-15
+repositories: [repo--acme--api]
 ---
 ```
 
@@ -234,7 +236,7 @@ Two mechanisms:
 2. **Markdown links in the body** — for prose context.
 
 A well-linked record has both. Frontmatter `links` are how
-`braingent_find` walks the graph; Markdown links are how a human reading
+`braingent_find` and `scripts/recall.sh` use for retrieval; Markdown links are how a human reading
 the page gets to the next thing.
 
 ## Where to go next

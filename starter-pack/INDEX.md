@@ -36,7 +36,14 @@ This is the manually curated map of the memory repo.
 
 ## Tools
 
-- Add tool pages under `tools/tool--<slug>/README.md`.
+- `tools/tool--test-plan/README.md` - runnable QA test-plan generator.
+- Add more tool pages under `tools/tool--<slug>/README.md`.
+
+## Scripts
+
+- `scripts/find.sh`, `scripts/recall.sh`, `scripts/validate.sh`, `scripts/reindex.sh`, `scripts/doctor.sh`.
+- `scripts/qa-generate.sh` - generate QA plans from tickets, memory, and optional Gather Step evidence.
+- `scripts/mcp_server.py` - MCP server exposing token-efficient Braingent retrieval.
 
 ## People
 

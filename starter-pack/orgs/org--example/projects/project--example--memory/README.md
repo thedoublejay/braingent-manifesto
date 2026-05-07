@@ -6,9 +6,11 @@ date: <yyyy-mm-dd>
 timezone: <timezone>
 organization: org--example
 project: project--example--memory
+repo: null
 repositories: []
 topics: [topic--ai-memory]
 tools: []
+last_reviewed: 2026-05-07
 ---
 
 # Project: <Project Name>
@@ -29,8 +31,7 @@ tools: []
 
 - <links>
 
-## Follow-Ups
+## Suggested First Steps
 
-- [ ] Add first task record.
-- [ ] Add repository profile.
-
+- Add a first task record when real work is completed.
+- Replace the example repository profile with a real repository profile.

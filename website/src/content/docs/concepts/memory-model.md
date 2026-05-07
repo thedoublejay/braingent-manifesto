@@ -84,7 +84,7 @@ fast:
   task.
 
 You can delete every byte of derived lookup and lose nothing. Run
-`braingent reindex` and it all comes back from the records.
+`scripts/reindex.sh` and it all comes back from the records.
 
 This is the part of the system that lets you scale to thousands of records
 without forcing agents to re-read everything every session.
@@ -104,8 +104,8 @@ A live task file holds:
 
 Multiple Claude sessions, a Codex run, and you typing notes can all
 update the same file. Git handles the conflicts. The dashboard renders
-the live view. When work is done, the file moves from `tasks/active/` to
-`tasks/done/` (or just lives in `tasks/` with `status: done`).
+the live view. When work is done, `scripts/task-archive.sh` moves the file
+from `tasks/active/` to `tasks/archive/` and marks it `status: closed`.
 
 This is how Braingent supports multi-agent coordination without a
 synchronization layer. See [Multi-Agent

@@ -75,12 +75,16 @@ A minimal task record looks like this:
 ```yaml
 ---
 id: BGT-0143
-kind: task
+record_kind: task
 title: Fix billing webhook race
-status: done
+status: completed
 date: 2026-04-29
-repos: [acme/api]
-tags: [billing, webhooks, fix]
+timezone: UTC
+organization: org--acme
+project: project--acme--platform
+repositories: [repo--acme--api]
+topics: [topic--billing]
+tools: []
 ---
 
 ## Goal

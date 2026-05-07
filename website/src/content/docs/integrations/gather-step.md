@@ -46,7 +46,7 @@ Together, they cover both the **why** (engineering memory) and the
 between a QA plan that re-derives everything and a QA plan that
 inherits the team's actual work.
 
-## Where they meet — `braingent qa-generate`
+## Where they meet — `scripts/qa-generate.sh`
 
 Braingent's flagship workflow, [`qa-generate`](/guides/qa-test-planning/),
 is built to consume both:
@@ -59,16 +59,18 @@ is built to consume both:
   natively, so the pairing is one flag away.
 
 ```bash
-braingent qa-generate \
-  --ticket ./tickets/ACME-1492.md \
-  --gatherstep \
-  --memory ~/Documents/repos/braingent \
-  --format markdown \
-  --out ./qa-plans/ACME-1492.md
+scripts/qa-generate.sh \
+  --ticket-key ACME-1492 \
+  --implementation-state post-implementation \
+  --gather-workspace ~/Documents/repos/acme-app \
+  --gather-target ChangedSymbol \
+  --emit-format markdown \
+  --output ./qa-plans/ACME-1492.md \
+  ./tickets/ACME-1492.md
 ```
 
-`--gatherstep` tells `qa-generate` to call Gather Step's
-`qa-evidence --json` command and merge the result into the precheck
+`--gather-workspace` plus `--gather-target` tells `qa-generate` to call
+Gather Step's `qa-evidence --json` command and merge the result into the precheck
 inputs. Every test case in the output cites evidence rows by file path
 and line range — and decisions or learnings by record `id`.
 
@@ -92,7 +94,7 @@ and line range — and decisions or learnings by record `id`.
    background.
 2. **Engineer captures to Braingent.** Decisions, learnings, the task
    record itself.
-3. **PR opens.** `braingent qa-generate --gatherstep` runs in CI, writes
+3. **PR opens.** `scripts/qa-generate.sh` runs in CI, writes
    a draft QA plan into the PR.
 4. **Reviewer reads the plan.** Approves or asks for changes — both
    the code and the QA plan are reviewed together.
@@ -116,15 +118,17 @@ Then:
 gatherstep --version
 
 # generate a QA plan with both inputs
-braingent qa-generate \
-  --ticket ./tickets/<TICKET>.md \
-  --gatherstep \
-  --memory ~/Documents/repos/braingent \
-  --format markdown
+scripts/qa-generate.sh \
+  --ticket-key <TICKET> \
+  --implementation-state post-implementation \
+  --gather-workspace ~/Documents/repos/acme-app \
+  --gather-target ChangedSymbol \
+  --emit-format markdown \
+  ./tickets/<TICKET>.md
 ```
 
-If `--gatherstep` is omitted, `qa-generate` falls back to a
-`--evidence ./build/qa-evidence.json` flag — useful if you produce the
+If Gather Step is omitted, `qa-generate` falls back to an
+`--evidence-pack ./build/qa-evidence.json` flag — useful if you produce the
 manifest from your own build pipeline.
 
 ## Why we recommend Gather Step specifically

@@ -188,10 +188,14 @@ that follow-up calls are needed for the rest.
 
 ## Read-only mode
 
-`braingent mcp serve --read-only` ensures the server cannot ever expose
-write tools. Today every tool is already read-only; the flag is
-forward-looking, for environments where future write tools must be
-disabled by policy.
+The starter-pack MCP server is read-only today:
+
+```bash
+python3 scripts/mcp_server.py
+```
+
+It exposes retrieval tools only. Future write tools should be guarded by an
+explicit read-only mode before they are shipped.
 
 ## Where to go next
 

@@ -17,3 +17,7 @@ Capture:
 - verification command
 - related repositories
 
+Runnable starter-pack tools:
+
+- [`tool--test-plan/`](tool--test-plan/) - local QA test-plan generation from
+  tickets, Braingent memory, and optional Gather Step evidence.
