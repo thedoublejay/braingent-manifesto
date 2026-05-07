@@ -1,3 +1,13 @@
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" bgcolor="#ffffff">
+        <img src="website/public/braingent_logo.svg" alt="Braingent logo" width="160" />
+      </td>
+    </tr>
+  </table>
+</div>
+
 # Braingent Manifesto
 
 Braingent is a Markdown-first memory system for software engineers who work
