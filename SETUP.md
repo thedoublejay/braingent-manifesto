@@ -204,6 +204,7 @@ Later, you can add scripts or a small optional CLI for:
 - building a local search database
 - importing Git history
 - summarizing PRs or tickets
+- generating traceable QA plans from tickets, memory, and Gather Step evidence
 - managing live task files
 - serving a read-only local dashboard
 
@@ -219,6 +220,7 @@ personalize, validate, and upgrade the Markdown repo.
 | `braingent doctor` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
 | `braingent print-prompts` | Print Codex, Claude, ChatGPT, and Gemini setup snippets without mutating files. |
 | `braingent update` | Compare the installed starter-pack version with the current template, classify changes as safe auto-merge, manual review, or skipped local edits, show a patch plan before changing files, then run validation and reindex checks. |
+| `braingent qa-generate` | Generate strict, reviewable QA plans from tickets, Braingent memory, and Gather Step `qa-evidence`; keep a lenient default evidence budget and emit Markdown, Xray JSON, TestRail CSV, or Gherkin from the same traceable case model. |
 
 `braingent init` should be an interactive bootstrap, not a hidden migration:
 
