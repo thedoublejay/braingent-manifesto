@@ -10,7 +10,7 @@ project: project--example--memory
 remote: <repo-url>
 local_path: null
 primary_languages: []
-last_reviewed: <yyyy-mm-dd>
+last_reviewed: 2026-05-07
 topics: []
 tools: []
 ---
@@ -50,4 +50,3 @@ tools: []
 ## Important Records
 
 - <links>
-

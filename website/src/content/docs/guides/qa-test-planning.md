@@ -12,7 +12,7 @@ hallucinate the acceptance criteria. There's no link back to the engineering
 evidence, no link back to prior decisions, and no way to tell why a test
 was included.
 
-`braingent qa-generate` is built differently. It produces a strict,
+`scripts/qa-generate.sh` is built differently. It produces a strict,
 reviewable QA plan from three real inputs: the ticket, your Braingent
 memory, and concrete implementation evidence. Every test case is traceable
 back to the source that produced it.
@@ -21,7 +21,7 @@ This is Braingent's flagship workflow.
 
 ## What it produces
 
-`braingent qa-generate` emits a single QA plan in your chosen format. All
+`scripts/qa-generate.sh` emits a single QA plan in your chosen format. All
 formats share the same case model:
 
 - **Markdown** — for human review, PR comments, and Confluence pastes.
@@ -35,7 +35,7 @@ Same cases, four exports. Pick whichever your team's QA tool wants.
 
 - **Acceptance criteria are required.** No silent fallback to
   hallucinated AC. If they're missing, the command refuses unless you
-  pass `--allow-missing-ac` with explicit product intent.
+  pass `--allow-missing-ac` for clear product-intent-derived cases.
 - **Memory-grounded.** It pulls compact Braingent memory for prior
   decisions, known misses, and repo context — so test plans inherit the
   team's accumulated knowledge.
@@ -91,12 +91,12 @@ You'll need:
 Then run:
 
 ```bash
-braingent qa-generate \
-  --ticket ./tickets/ACME-1492.md \
-  --evidence ./build/qa-evidence.json \
-  --memory ~/Documents/repos/braingent \
-  --format markdown \
-  --out ./qa-plans/ACME-1492.md
+scripts/qa-generate.sh \
+  --ticket-key ACME-1492 \
+  --evidence-pack ./build/qa-evidence.json \
+  --emit-format markdown \
+  --output ./qa-plans/ACME-1492.md \
+  ./tickets/ACME-1492.md
 ```
 
 Open the output. Every test case will look like this:
@@ -137,17 +137,17 @@ Each case carries:
 
 | Flag | What it does |
 | --- | --- |
-| `--ticket <path or URL>` | Source ticket. Required. |
-| `--allow-missing-ac` | Bypass the AC requirement. Requires `--intent <text>`. |
-| `--intent <text>` | Free-text product intent when AC is missing. |
-| `--evidence <path>` | `qa-evidence.v1` manifest from your build. |
-| `--gatherstep` | Pull native evidence rows via Gather Step's `qa-evidence --json`. |
-| `--memory <path>` | Path to your Braingent memory repo. |
+| `<ticket-path-or-inline-ticket-text>` | Source ticket text or path. Required. |
+| `--ticket-key <key>` | Ticket key used in the output title and filename. |
+| `--allow-missing-ac` | Allow product-intent-derived `REQ-*` cases when explicit AC is missing. |
+| `--source <path-or-text>` | Supporting spec, PRD, note, design source, or pasted text. Repeatable. |
+| `--evidence-pack <path>` | Existing `qa-evidence.v1` manifest from Gather Step or your build. |
+| `--gather-workspace <path>` | Workspace where Gather Step should run. |
+| `--gather-target <target>` | Symbol, route, or event target for Gather Step `qa-evidence`. |
 | `--budget-tokens <n>` | Evidence envelope budget. Default `160000`. |
-| `--format <md\|xray\|testrail\|gherkin>` | Output format. |
-| `--out <path>` | Output path. |
-| `--strict` | Fail on any precheck warning, not just errors. |
-| `--include-risks` | Add the "Risk surfaced" line per case. Default on. |
+| `--emit-format <markdown\|xray-json\|testrail-csv\|gherkin>` | Output format. |
+| `--output <path>` | Explicit output path. |
+| `--output-dir <path>` | Output directory. Defaults to `.test-plans/`. |
 
 ## How the precheck works
 
@@ -165,14 +165,16 @@ same way every time. It checks:
 5. **Orphan evidence.** Evidence rows that no case references → warning,
    often a sign of missed coverage.
 
-`--strict` upgrades all warnings to errors.
+Input errors fail the command before output is written. Warnings and evidence
+gaps are rendered in the plan for review.
 
 ## Integration with Gather Step
 
 [Gather Step](https://gatherstep.dev) is QA-evidence-aware by design.
-When `--gatherstep` is passed, `qa-generate` calls Gather Step's
-`qa-evidence --json` to collect native evidence rows: which tests have
-already been written, which have been run, which have flaked.
+When `--gather-workspace` and `--gather-target` are supplied,
+`qa-generate` calls Gather Step's `qa-evidence --json` to collect native
+evidence rows: which tests have already been written, which have been run,
+which have flaked.
 
 The result is a QA plan that knows what's already covered, so it can
 focus generation on the gaps.
@@ -187,7 +189,7 @@ They miss the regression that bit you last quarter. They re-introduce
 the antipattern you decided against. They lack the context that lives in
 your decisions and learnings — because the LLM has never seen them.
 
-`qa-generate` reads that context for you and uses it to ground every test
+`scripts/qa-generate.sh` reads that context for you and uses it to ground every test
 case. The output is a plan a senior engineer would write — because it's
 informed by the same evidence a senior engineer would have.
 

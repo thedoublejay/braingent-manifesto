@@ -10,6 +10,21 @@ Copy this directory into a new memory repo.
 |-- CHATGPT_PROJECT_BRIEF.md
 |-- INDEX.md
 |-- CURRENT_STATE.md
+|-- .python-version
+|-- pyproject.toml
+|-- requirements.txt
+|-- requirements-dev.txt
+|-- scripts/
+|   |-- braingent.py
+|   |-- find.sh
+|   |-- recall.sh
+|   |-- validate.sh
+|   |-- reindex.sh
+|   |-- doctor.sh
+|   |-- qa-generate.sh
+|   |-- mcp_server.py
+|   |-- mcp_tools.py
+|   `-- task-*.sh
 |-- preferences/
 |   |-- agent-workflow.md
 |   |-- agent-task-protocol.md
@@ -24,7 +39,8 @@ Copy this directory into a new memory repo.
 |   |-- privacy-and-safety.md
 |   |-- project-conventions.md
 |   |-- search-recipes.md
-|   `-- taxonomy.md
+|   |-- taxonomy.md
+|   `-- taxonomy.yml
 |-- templates/
 |   |-- code-review-record.md
 |   |-- decision-record.md
@@ -70,7 +86,18 @@ Copy this directory into a new memory repo.
 |   `-- topic--ai-memory/
 |       `-- README.md
 |-- tools/
-|   `-- README.md
+|   |-- README.md
+|   `-- tool--test-plan/
+|       |-- README.md
+|       |-- test_plan.py
+|       |-- qa_evidence.py
+|       |-- qa-evidence.schema.json
+|       |-- test-plan.sh
+|       |-- templates/
+|       |-- prompts/
+|       `-- examples/
+|-- tests/
+|   `-- test_test_plan_tool.py
 |-- people/
 |   `-- README.md
 |-- tickets/

@@ -6,9 +6,9 @@ order: 4
 ---
 
 Frontmatter is the index. Every durable record carries a small block of
-YAML at the top. That block is what `braingent find`, `braingent recall`,
-and the MCP tools actually filter on. The body of the record is for
-humans; the frontmatter is for retrieval.
+YAML at the top. That block is what `scripts/find.sh`,
+`scripts/recall.sh`, and the MCP tools actually filter on. The body of
+the record is for humans; the frontmatter is for retrieval.
 
 This page is the canonical schema.
 
@@ -18,11 +18,10 @@ Every record, regardless of kind, has these.
 
 | Field | Type | Notes |
 | --- | --- | --- |
-| `id` | string | Unique. Pattern depends on kind: `BGT-0142`, `DEC-0218`, `REV-...`, `LRN-...`. |
-| `record_kind` | string | One of: `task`, `agent-task`, `decision`, `review`, `learning`, `repo`, `project`, `topic`, `tool`, `ticket`, `person`. |
+| `record_kind` | string | One of: `task`, `agent-task`, `decision`, `review`, `learning`, `interaction`, `version`, `note`, `summary`, `profile`, `ticket-stub`. |
 | `title` | string | Short, descriptive, sentence case. |
 | `status` | string | Kind-specific (see below). |
-| `date` | date or datetime | When the record was created (or finalized). |
+| `date` | date or datetime | Required for most durable records; summaries use `date_imported`. |
 
 ## Common optional fields
 
@@ -30,14 +29,14 @@ Every record, regardless of kind, has these.
 | --- | --- | --- |
 | `tags` | string[] | Free-form tags, lowercase, kebab-case. |
 | `topics` | string[] | Slugs that match files in `topics/`. |
-| `repos` | string[] | `<owner>/<repo>` or repo slugs in `repos/`. |
-| `projects` | string[] | Slugs that match files in `projects/`. |
+| `repositories` | string[] | Repo slugs under `repositories/`, such as `repo--example--owner--repo`. |
+| `projects` | string[] | Project slugs under `orgs/*/projects/`. |
 | `tools` | string[] | Slugs that match files in `tools/`. |
 | `authors` | string[] | Humans + agents. `claude`, `codex`, `gpt`, `gemini`, `jj`. |
 | `links` | string[] | Relative paths to other records. |
 | `supersedes` | string | Record `id` that this one replaces. |
 | `superseded_by` | string | Filled in when *this* record is replaced. |
-| `priority` | string | `P0`–`P4` (mostly used by tasks). |
+| `priority` | string | `critical`, `high`, `medium`, or `low` for live agent tasks. |
 | `created` / `closed` | datetime | For tasks. ISO-8601. |
 
 ## Status vocabularies by kind
@@ -46,18 +45,19 @@ Different record kinds have different valid `status` values.
 
 | Kind | Allowed `status` |
 | --- | --- |
-| Task / agent-task | `planned`, `in_progress`, `done`, `abandoned`, `blocked` |
+| Task | `planned`, `active`, `blocked`, `completed`, `superseded` |
+| Agent-task | `triage`, `todo`, `in-progress`, `in-review`, `blocked`, `closed` |
 | Decision | `proposed`, `accepted`, `rejected`, `superseded` |
-| Review | `open`, `addressed`, `informational` |
-| Learning | `draft`, `published`, `archived` |
-| Repo | `active`, `archived` |
-| Project | `active`, `paused`, `done`, `abandoned` |
-| Topic | `living`, `frozen` |
-| Tool | `active`, `deprecated` |
-| Ticket | `open`, `in_progress`, `done`, `archived` |
-| Person | `active`, `inactive` |
+| Review | `draft`, `completed`, `superseded` |
+| Learning | `active`, `superseded` |
+| Interaction | `active`, `superseded` |
+| Version | `active`, `superseded` |
+| Note | `draft`, `active`, `completed`, `superseded` |
+| Summary | `draft`, `completed` |
+| Profile | `active`, `archived`, `superseded` |
+| Ticket-stub | `active`, `completed`, `abandoned` |
 
-`braingent doctor` will warn you if a record uses a value outside its
+`scripts/doctor.sh` will warn you if a record uses a value outside its
 kind's vocabulary.
 
 ## A complete example
@@ -69,32 +69,29 @@ A task record with most of the optional fields.
 id: BGT-0142
 record_kind: agent-task
 title: Backfill repo profile for acme/api
-status: done
-priority: P2
-owner: claude
-authors: [claude, jj]
-repos: [acme/api]
-projects: [acme-platform]
-topics: [repo-profiles, backfill]
+status: in-progress
+status_category: active
+priority: high
+claimed_by: agent--claude-code
+ai_tools: [Claude]
+repositories: [repo--acme--api]
+project: project--acme--platform
+topics: [topic--repo-profiles]
 tools: [sqlite, ripgrep]
-tags: [profile, indexing, agent-driven]
 created: 2026-04-28T09:14Z
-closed: 2026-04-28T11:02Z
-links:
-  - repositories/repo--acme--api/2026-04-12-jobs-runtime.md
-  - repositories/repo--acme--api/2026-04-28-backfill-pr.md
-  - topics/topic--reliability/2026-04-bullmq-process-churn.md
+closed: null
+resolution: null
 ---
 ```
 
 ## How retrieval uses each field
 
-- **`id`** — primary key for `braingent_get(id)`.
+- **`id`** — primary key for live `agent-task` records.
 - **`kind`** — coarse filter: "give me all decisions in 2026".
 - **`status`** — filter open vs done work, accepted vs rejected
   decisions.
 - **`tags`, `topics`** — semantic filters used by `braingent_find`.
-- **`repos`, `projects`, `tools`** — scoped queries: "what decisions
+- **`repositories`, `projects`, `tools`** — scoped queries: "what decisions
   affected `acme/api` last quarter?"
 - **`authors`** — filter by who wrote (or co-wrote) the record.
 - **`links`** — graph walks. "Show me all reviews that link to this
@@ -104,7 +101,7 @@ links:
 
 ## Validation
 
-`braingent doctor` and `braingent validate` check frontmatter for:
+`scripts/doctor.sh` and `scripts/validate.sh` check frontmatter for:
 
 - Missing required fields.
 - `status` values outside the kind's vocabulary.
@@ -124,13 +121,12 @@ or CI.
   them everywhere; otherwise put them in the body, not the frontmatter.
 - **Quote dates.** YAML's date parsing has surprised more than one person.
   ISO-8601 strings are always safe.
-- **Run `doctor` before commits.** It's the cheapest way to keep memory
+- **Run `scripts/doctor.sh` before commits.** It's the cheapest way to keep memory
   clean.
 
 ## Where to go next
 
 - [Record Kinds](/concepts/record-kinds/) — full examples per kind.
-- [CLI Reference](/reference/cli/) — `braingent doctor`, `validate`,
-  `find`.
+- [CLI Reference](/reference/cli/) — `doctor`, `validate`, and `find`.
 - [Search & Recall](/guides/search-and-recall/) — using frontmatter at
   query time.

@@ -4,11 +4,14 @@ record_kind: profile
 status: active
 date: <yyyy-mm-dd>
 timezone: <timezone>
+organization: null
+project: null
+repo: null
 topic: topic--ai-memory
 repositories: []
 projects: []
 tools: []
-last_reviewed: <yyyy-mm-dd>
+last_reviewed: 2026-05-07
 ---
 
 # Topic: AI Memory
@@ -28,4 +31,3 @@ Patterns, decisions, and learnings about durable memory for AI-assisted software
 ## Important Records
 
 - <links>
-

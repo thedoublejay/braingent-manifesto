@@ -63,7 +63,7 @@ Create your memory repo wherever you keep code. The convention is
 
 ```bash
 mkdir -p ~/Documents/repos/braingent
-cp -R starter-pack/* ~/Documents/repos/braingent/
+cp -R starter-pack/. ~/Documents/repos/braingent/
 cd ~/Documents/repos/braingent
 git init
 git add .
@@ -92,9 +92,9 @@ Open the entrypoint files and replace the obvious placeholders:
 Keep it small. You're not building a profile — you're seeding signal that
 the agent will reference *before* planning.
 
-> **Tip:** If you also use Braingent's optional CLI, you can run
-> `braingent init` to walk through these prompts interactively and stamp
-> the placeholders for you. See [Installation](/guides/installation/).
+> **Tip:** A future packaged setup helper can walk through these prompts
+> interactively. Today the starter pack is explicit: copy files, replace
+> placeholders, run `scripts/doctor.sh`, and commit the result.
 
 ## Step 4 — Wire up your agents
 

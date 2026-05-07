@@ -73,9 +73,10 @@ rg --version && jq --version && sqlite3 --version && gh --version
 ## Install Python (≥ 3.14) and `uv`
 
 The Braingent helper scripts (`doctor.sh`, `find.sh`, `recall.sh`,
-`validate.sh`, `reindex.sh`, `synthesize.sh`, `task-*.sh`) are thin
-shell wrappers around Python. They expect **Python 3.14+** and
-**PyYAML 6.0.3**. The fastest way to install both is `uv`:
+`validate.sh`, `reindex.sh`, `synthesize.sh`, `qa-generate.sh`,
+`task-*.sh`) are thin shell wrappers around Python. They expect
+**Python 3.14+** and **PyYAML 6.0.3**. The fastest way to install both
+is `uv`:
 
 ```bash
 # install uv (cross-platform)
@@ -177,7 +178,7 @@ starter pack lives in the manifesto repo. Copy it manually:
 ```bash
 git clone https://github.com/thedoublejay/braingent-manifesto
 mkdir -p ~/Documents/repos/braingent
-cp -R braingent-manifesto/starter-pack/* ~/Documents/repos/braingent/
+cp -R braingent-manifesto/starter-pack/. ~/Documents/repos/braingent/
 cd ~/Documents/repos/braingent
 git init && git add . && git commit -m "feat: bootstrap from braingent starter pack"
 ```
@@ -196,8 +197,10 @@ git -C ~/Documents/repos/braingent status
 
 # if you installed Python helpers
 ~/Documents/repos/braingent/scripts/doctor.sh
-~/Documents/repos/braingent/scripts/find.sh --kind decision --limit 1
+~/Documents/repos/braingent/scripts/find.sh kind=decision --limit 1
 ~/Documents/repos/braingent/scripts/recall.sh "first task"
+~/Documents/repos/braingent/scripts/qa-generate.sh --ticket-key SYN-001 --no-diff \
+  ~/Documents/repos/braingent/tools/tool--test-plan/examples/synthetic-ticket.md
 
 # if you installed Bun for the dashboard
 cd ~/Documents/repos/braingent-manifesto/examples/task-dashboard && bun install
@@ -208,16 +211,17 @@ most common failure is Python < 3.14 — install via `uv` and re-run.
 
 ## Upgrading later
 
-Pull the manifesto, then patch your memory repo against the latest
-starter pack:
+Pull the manifesto, compare the latest `starter-pack/` against your memory
+repo, then copy the specific template or script changes you want:
 
 ```bash
 git -C ~/Documents/repos/braingent-manifesto pull
-~/Documents/repos/braingent-manifesto/scripts/update.sh ~/Documents/repos/braingent
+diff -ru ~/Documents/repos/braingent ~/Documents/repos/braingent-manifesto/starter-pack
 ```
 
-The update tool always shows a plan before mutating files — your local
-edits win unless you explicitly accept a template change.
+The packaged `update` helper is intentionally not shipped yet. Until it is,
+upgrade by reviewing diffs and copying only the generic files you want to
+adopt.
 
 ## Where to go next
 

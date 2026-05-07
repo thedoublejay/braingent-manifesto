@@ -1,0 +1,25 @@
+[project]
+name = "braingent"
+version = "0.0.0"
+requires-python = ">=3.14"
+
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+src = ["scripts", "tests", "tools"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "A"]
+ignore = ["D", "E402", "E501"]
+
+[tool.mypy]
+python_version = "3.14"
+files = ["scripts", "tests", "tools/tool--test-plan/test_plan.py"]
+mypy_path = ["."]
+explicit_package_bases = true
+namespace_packages = true
+warn_unused_configs = true
+ignore_missing_imports = false
+disable_error_code = ["attr-defined", "assignment", "import-not-found"]
+exclude = ["build", "dist", "__pycache__"]
+plugins = []

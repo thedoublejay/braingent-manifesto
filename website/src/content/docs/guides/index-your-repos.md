@@ -97,7 +97,7 @@ work it doesn't already see in the memory repo.
 - **Repos with frequent rewrites.** If `git log` is mostly squash-merges
   to a 50-commit-per-day branch, the signal-to-noise is too low.
 - **Repos that already have an active Braingent profile.** Update the
-  profile by hand or with `braingent capture --kind repo`; don't
+  profile by hand or create a profile record with `scripts/new-record.sh`; don't
   re-index.
 
 ## What you do *after* indexing
@@ -106,8 +106,8 @@ Search what the agent wrote. Read the repo profile. Skim the new
 records. If anything is wrong, fix it — the records are plain Markdown.
 
 ```bash
-braingent find --repo acme/api --since 2026-04-01
-braingent get repo-acme-api --depth full
+scripts/find.sh repo=repo--acme--api q=2026-04 --paths
+scripts/recall.sh repo=repo--acme--api
 ```
 
 Then go back to your normal flow. Next session, every time the agent

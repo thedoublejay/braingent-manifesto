@@ -54,8 +54,8 @@ The chat is ephemeral. The records are durable. That's the contract.
 
 ## A small CLI on top of files, not a service that owns them
 
-Braingent ships a thin CLI (`braingent init`, `doctor`, `find`, `recall`,
-`update`, `qa-generate`, `task-*`) and an MCP server. None of them are
+Braingent ships thin helper scripts (`doctor`, `find`, `recall`, `reindex`,
+`qa-generate`, `task-*`) and an MCP server. None of them are
 required to *use* Braingent — they speed up things you'd otherwise do by
 hand.
 
