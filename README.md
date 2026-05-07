@@ -1,14 +1,6 @@
-<div align="center">
-  <table cellpadding="16" cellspacing="0">
-    <tr>
-      <td align="center" bgcolor="#ffffff">
-        <br />
-        <img src="website/public/braingent_logo.svg" alt="Braingent logo" width="128" />
-        <br />
-      </td>
-    </tr>
-  </table>
-</div>
+<p align="center">
+  <img src="website/public/favicon/favicon-96x96.png" alt="Braingent logo" width="96" />
+</p>
 
 <h1 align="center">Braingent</h1>
 
