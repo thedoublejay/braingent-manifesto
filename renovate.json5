@@ -1,0 +1,119 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  // Use Renovate's curated recommended preset as the baseline.
+  extends: [
+    "config:recommended",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    "schedule:weekly",
+    "group:allNonMajor",
+    "helpers:pinGitHubActionDigests",
+  ],
+
+  // Speak the same language we use in commit messages and PR titles
+  // (matches CLAUDE.md global guidance: lowercase Conventional Commits).
+  commitMessagePrefix: "chore(deps):",
+  prTitle: "chore(deps): {{depName}} {{currentValue}} -> {{newValue}}",
+  prHourlyLimit: 4,
+  prConcurrentLimit: 8,
+  rangeStrategy: "bump",
+
+  // Don't fail loudly on internal/private packages we don't publish.
+  ignoreUnstable: true,
+  internalChecksFilter: "strict",
+
+  // Only the workspaces we actually maintain.
+  // Each `package.json` is treated as an isolated workspace.
+  packageRules: [
+    {
+      // Group all website non-major bumps into one weekly PR.
+      matchFileNames: ["website/package.json"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "website (minor + patch)",
+      groupSlug: "website-minor-patch",
+    },
+    {
+      // Major Astro / sitemap bumps deserve their own PRs and changelog read.
+      matchFileNames: ["website/package.json"],
+      matchPackageNames: ["astro", "@astrojs/sitemap"],
+      matchUpdateTypes: ["major"],
+      groupName: "astro major",
+      groupSlug: "astro-major",
+      labels: ["dependencies", "major", "review"],
+      addLabels: ["needs-changelog-read"],
+    },
+    {
+      // Group dashboard non-major bumps separately so PRs stay scoped.
+      matchFileNames: ["examples/task-dashboard/package.json"],
+      matchUpdateTypes: ["minor", "patch"],
+      groupName: "task-dashboard (minor + patch)",
+      groupSlug: "task-dashboard-minor-patch",
+    },
+    {
+      // TanStack ecosystem moves together; keep them aligned.
+      matchFileNames: ["examples/task-dashboard/package.json"],
+      matchPackagePrefixes: ["@tanstack/"],
+      groupName: "tanstack",
+      groupSlug: "tanstack",
+    },
+    {
+      // React 19 + types: align across the dashboard.
+      matchFileNames: ["examples/task-dashboard/package.json"],
+      matchPackageNames: ["react", "react-dom", "@types/react", "@types/react-dom"],
+      groupName: "react",
+      groupSlug: "react",
+    },
+    {
+      // Pin GitHub Actions to SHA digests for supply-chain hygiene.
+      matchManagers: ["github-actions"],
+      pinDigests: true,
+      groupName: "github-actions",
+      groupSlug: "gha",
+    },
+    {
+      // Auto-merge low-risk patch updates after Renovate's own checks pass.
+      // No CI exists yet, but when it lands these will respect required checks.
+      matchUpdateTypes: ["pin", "digest", "patch"],
+      matchCurrentVersion: "!/^0/",
+      automerge: true,
+      automergeType: "pr",
+      platformAutomerge: true,
+    },
+    {
+      // Never auto-merge majors — always require human review.
+      matchUpdateTypes: ["major"],
+      automerge: false,
+      labels: ["dependencies", "major"],
+    },
+    {
+      // Bun runtime lives in `packageManager` — keep an eye on it but
+      // don't auto-merge: bumping the runtime pinning has lockfile fallout.
+      matchManagers: ["npm"],
+      matchDepTypes: ["packageManager"],
+      groupName: "bun runtime",
+      groupSlug: "bun-runtime",
+      automerge: false,
+    },
+  ],
+
+  // Future-proof: when we add Python tooling at the repo root.
+  pip_requirements: { enabled: true },
+  "pep621": { enabled: true },
+
+  // Optional vulnerability alerts as separate fast-track PRs.
+  vulnerabilityAlerts: {
+    labels: ["security"],
+    automerge: false,
+    schedule: ["at any time"],
+  },
+
+  // Lock file maintenance keeps transitive deps fresh without bumping
+  // the manifest. Once weekly is plenty.
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on monday"],
+    commitMessageAction: "Lock file maintenance",
+  },
+}

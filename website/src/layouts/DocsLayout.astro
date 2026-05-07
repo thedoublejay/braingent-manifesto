@@ -1,0 +1,205 @@
+---
+import '../styles/landing.css';
+import '../styles/docs.css';
+import { docsNav, findAdjacent, findSectionFor, type NavItem } from '../lib/nav.ts';
+
+export interface Props {
+  title: string;
+  description?: string;
+  slug: string;
+  headings?: { depth: number; slug: string; text: string }[];
+}
+
+const { title, description = 'Braingent documentation.', slug, headings = [] } = Astro.props;
+const { prev, next } = findAdjacent(slug);
+const section = findSectionFor(slug);
+
+const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://braingent.dev').toString();
+const ogImage = new URL('/og-image.webp', Astro.site ?? 'https://braingent.dev').toString();
+
+const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} — Braingent Docs</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#f4ead5" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="author" content="JJ Adonis" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content={`${title} — Braingent Docs`} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="Braingent" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={`${title} — Braingent Docs`} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="/favicon/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/favicon/site.webmanifest" />
+  </head>
+  <body class="docs-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <header class="nav">
+      <a class="nav-brand" href="/" aria-label="Braingent home">
+        <img class="mark" src="/braingent_logo.svg" alt="" width="32" height="32" />
+        Braingent
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/" class={Astro.url.pathname === '/' ? 'is-active' : ''}>Home</a>
+        <a href="/intro/what-is-braingent/" class="is-active">Docs</a>
+        <a href="https://gatherstep.dev" target="_blank" rel="noopener noreferrer">Gather Step</a>
+        <a class="nav-cta" href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
+      </nav>
+      <button class="docs-sidebar-toggle" type="button" aria-controls="docs-sidebar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+      </button>
+    </header>
+
+    <div class="docs-shell">
+      <aside id="docs-sidebar" class="docs-sidebar" aria-label="Documentation">
+        <nav>
+          {docsNav.map((s) => (
+            <div class="docs-nav-section">
+              <h5>{s.title}</h5>
+              <ul>
+                {s.items.map((item: NavItem) => (
+                  <li>
+                    <a
+                      href={`/${item.slug}/`}
+                      class={item.slug === slug ? 'is-current' : ''}
+                      aria-current={item.slug === slug ? 'page' : undefined}
+                    >
+                      <span class="title">{item.title}</span>
+                      {item.badge && <span class="docs-nav-badge">{item.badge}</span>}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      </aside>
+
+      <main id="main-content" class="docs-main">
+        <article class="docs-article">
+          <p class="docs-eyebrow">{section?.title ?? 'Documentation'}</p>
+          <h1 class="docs-title">{title}</h1>
+          {description && <p class="docs-lede">{description}</p>}
+          <span class="chapter-rule"></span>
+
+          <div class="docs-prose">
+            <slot />
+          </div>
+
+          <nav class="docs-pager" aria-label="Pagination">
+            {prev ? (
+              <a class="docs-pager-link prev" href={`/${prev.slug}/`}>
+                <span class="dir">← Previous</span>
+                <span class="pager-title">{prev.title}</span>
+              </a>
+            ) : <span></span>}
+            {next ? (
+              <a class="docs-pager-link next" href={`/${next.slug}/`}>
+                <span class="dir">Next →</span>
+                <span class="pager-title">{next.title}</span>
+              </a>
+            ) : <span></span>}
+          </nav>
+
+          <footer class="docs-foot">
+            <p>
+              Found a typo or want to improve a page?
+              <a href="https://github.com/thedoublejay/braingent-manifesto/tree/main/website/src/content/docs" target="_blank" rel="noopener noreferrer">
+                Edit on GitHub
+              </a>.
+            </p>
+          </footer>
+        </article>
+
+        {tocHeadings.length > 0 && (
+          <aside class="docs-toc" aria-label="On this page">
+            <h6>On this page</h6>
+            <ul>
+              {tocHeadings.map((h) => (
+                <li class={`depth-${h.depth}`}>
+                  <a href={`#${h.slug}`}>{h.text}</a>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        )}
+      </main>
+    </div>
+
+    <footer class="footer footer-compact">
+      <div class="container">
+        <div class="brand-block">
+          <a class="nav-brand" href="/">
+            <img class="mark" src="/braingent_logo.svg" alt="" width="32" height="32" />
+            Braingent
+          </a>
+          <p>Mischief managed — for engineers who'd rather their agents remembered.</p>
+        </div>
+        <div>
+          <h5>Project</h5>
+          <ul>
+            <li><a href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="/guides/getting-started/">Quickstart</a></li>
+            <li><a href="/guides/qa-test-planning/">QA Planning</a></li>
+            <li><a href="/integrations/gather-step/">Gather Step</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5>Reference</h5>
+          <ul>
+            <li><a href="/reference/cli/">CLI</a></li>
+            <li><a href="/reference/mcp-tools/">MCP Tools</a></li>
+            <li><a href="/reference/configuration/">Configuration</a></li>
+            <li><a href="/changelog/">Changelog</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom-wrap">
+        <div class="footer-bottom">
+          <span>© 2026 Braingent · Markdown · Git · Local-First</span>
+          <span>Built by <a href="https://josejai.me" target="_blank" rel="noopener noreferrer">JJ Adonis</a></span>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      const toggle = document.querySelector('.docs-sidebar-toggle');
+      const sidebar = document.getElementById('docs-sidebar');
+      if (toggle && sidebar) {
+        toggle.addEventListener('click', () => {
+          const open = sidebar.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', String(open));
+        });
+        sidebar.addEventListener('click', (e) => {
+          if (e.target instanceof HTMLAnchorElement) {
+            sidebar.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
