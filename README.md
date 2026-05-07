@@ -463,4 +463,4 @@ MIT — see `LICENSE`.
 
 ---
 
-Created by JJ Adonis.
+Created by [JJ Adonis](https://josejai.me/).
