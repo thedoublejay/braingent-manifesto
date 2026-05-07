@@ -10,6 +10,8 @@
 
 # Braingent Manifesto
 
+> **Website:** [braingent.dev](https://braingent.dev) — landing page, features, and the loop in one place.
+
 Braingent is a Markdown-first memory system for software engineers who work
 with AI agents. It gives Claude, Codex, ChatGPT, Gemini CLI, and future tools
 one durable place to read before planning, one consistent structure for
@@ -24,6 +26,12 @@ server, or required install is needed on day one.
 Braingent stays simple: Markdown is the source of truth. Optional scripts,
 generated indexes, local search databases, live task files, and dashboards are
 helpers built around the Markdown, not replacements for it.
+
+## Links
+
+- **Website:** [braingent.dev](https://braingent.dev)
+- **Source:** [github.com/thedoublejay/braingent-manifesto](https://github.com/thedoublejay/braingent-manifesto)
+- **Built by:** [JJ Adonis](https://josejai.me)
 
 ---
 
