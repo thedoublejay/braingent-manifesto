@@ -12,12 +12,10 @@ import LandingLayout from '../layouts/LandingLayout.astro';
       Braingent
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <a href="#problem">Problem</a>
       <a href="#loop">The Loop</a>
-      <a href="#records">Records</a>
-      <a href="#privacy">Privacy</a>
       <a href="#features">Features</a>
-      <a class="nav-cta" href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
+      <a href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">GitHub</a>
+      <a class="nav-cta nav-cta-primary" href="/intro/what-is-braingent/">Docs &rarr;</a>
     </nav>
   </header>
 
@@ -29,9 +27,13 @@ import LandingLayout from '../layouts/LandingLayout.astro';
           <p class="eyebrow no-num">A Manifesto for AI-Assisted Engineering</p>
           <h1>A Shared <em>Memory</em> for AI-Assisted Engineering.</h1>
           <p class="lede">Braingent is a Git-backed, Markdown-first memory repo. It gives Claude, Codex, ChatGPT, and Gemini CLI the same engineering context — what to read before planning, which decisions matter, and what work is already underway.</p>
-          <div class="hero-cta is-hidden" aria-hidden="true">
-            <a class="btn" href="#start">Copy the starter pack <span class="arrow">&rarr;</span></a>
-            <a class="btn btn-ghost" href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="/guides/getting-started/">
+              <span class="btn-glyph" aria-hidden="true">✦</span>
+              Make Your Agents Remember
+              <span class="arrow">&rarr;</span>
+            </a>
+            <a class="btn btn-ghost" href="/intro/what-is-braingent/">Read the Docs</a>
           </div>
           <div class="hero-meta" aria-label="Braingent at a glance">
             <div class="hero-stats">
@@ -40,6 +42,8 @@ import LandingLayout from '../layouts/LandingLayout.astro';
               <span class="stat"><span class="stat-num">8</span> <span class="stat-label">Record Kinds</span></span>
               <span class="stat-sep" aria-hidden="true"></span>
               <span class="stat"><span class="stat-num">5</span> <span class="stat-label">Memory Surfaces</span></span>
+              <span class="stat-sep" aria-hidden="true"></span>
+              <span class="stat"><span class="stat-num">4</span> <span class="stat-label">QA Formats</span></span>
             </div>
             <div class="hero-tags">
               <span class="hero-tag"><i class="dot"></i>MCP-Ready</span>
@@ -428,6 +432,7 @@ or sensitive personal data. Ever.</pre>
           <span class="chapter-rule"></span>
           <h2>Four Steps. Roughly <em>Ten Minutes.</em></h2>
           <p>Copy the starter pack, point your agent at it, capture your first task. From there, your memory grows on its own.</p>
+          <p class="start-side-foot"><a href="/guides/getting-started/" class="start-side-link">Read the full quickstart <span class="arrow">&rarr;</span></a></p>
         </div>
 
         <div class="start-steps">
@@ -437,6 +442,7 @@ or sensitive personal data. Ever.</pre>
               <h4>Clone the Manifesto</h4>
               <p>Public, open source. Markdown only — no install required to read it.</p>
               <button type="button" class="copy-cmd" data-copy="git clone https://github.com/thedoublejay/braingent-manifesto" aria-label="Copy command: git clone https://github.com/thedoublejay/braingent-manifesto"><span class="prompt">$ </span><span class="cmd">git clone https://github.com/thedoublejay/braingent-manifesto</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/getting-started/#step-1-clone-the-manifesto">Read step <span aria-hidden="true">→</span></a>
             </div>
           </div>
 
@@ -446,6 +452,7 @@ or sensitive personal data. Ever.</pre>
               <h4>Copy the Starter Pack Into Your Private Memory Repo</h4>
               <p>Preferences, templates, workflows, and an empty records tree. Personalize the placeholders, then commit.</p>
               <button type="button" class="copy-cmd" data-copy="cp -R braingent-manifesto/starter-pack/* ./my-memory/" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">cp -R braingent-manifesto/starter-pack/* ./my-memory/</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/installation/">Read installation <span aria-hidden="true">→</span></a>
             </div>
           </div>
 
@@ -455,6 +462,7 @@ or sensitive personal data. Ever.</pre>
               <h4>Wire Up Your Agents</h4>
               <p>Drop entrypoints into the memory repo root. Works with Claude, Codex, ChatGPT, and Gemini CLI.</p>
               <button type="button" class="copy-cmd" data-copy="ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/wire-up-agents/">Wire-up guide <span aria-hidden="true">→</span></a>
             </div>
           </div>
 
@@ -464,6 +472,7 @@ or sensitive personal data. Ever.</pre>
               <h4>Capture Your First Task</h4>
               <p>Finish a piece of work, then say it. The agent writes a durable record and commits it.</p>
               <button type="button" class="copy-cmd" data-copy="capture this — moved jobs to Temporal, decisions doc" aria-label="Copy command"><span class="prompt">&gt; </span><span class="cmd">capture this — moved jobs to Temporal, decisions doc</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/capture-loop/">The capture loop <span aria-hidden="true">→</span></a>
             </div>
           </div>
         </div>
@@ -475,7 +484,7 @@ or sensitive personal data. Ever.</pre>
       <div class="container">
         <p class="eyebrow" data-num="vii.">Features</p>
         <span class="chapter-rule"></span>
-        <h2 style="max-width: 26ch; margin-bottom: 28px;">A Small <em>CLI</em> Today. Durable <em>QA</em> From Your History Tomorrow.</h2>
+        <h2 style="max-width: 28ch; margin-bottom: 28px;">Every Tool You Need. <em>One Memory.</em> All <em>Released.</em></h2>
 
         <aside class="features-note">
           <p>You almost never need to run any of these yourself. Once your agent has the <code>CLAUDE.md</code> / <code>AGENTS.md</code> entrypoints, it searches Braingent before planning and captures after meaningful work — automatically. Just say <strong>“Braingent”</strong>, <strong>“capture this”</strong>, or <strong>“task done”</strong> and the right thing happens.</p>
@@ -516,25 +525,25 @@ or sensitive personal data. Ever.</pre>
             <span class="status live">Live</span>
             <span class="rcmd">bun run dev</span>
             <h4>Optional Local Dashboard</h4>
-            <p>Read-only Bun + Astro UI over <code>tasks/active/</code> and indexes. Agents and humans see the same live queue.</p>
+            <p>Read-only Bun + React (TanStack) UI over <code>tasks/active/</code> and indexes. Agents and humans see the same live queue.</p>
           </article>
           <article class="feature-item">
-            <span class="status soon">Released Soon</span>
+            <span class="status live">Live</span>
             <span class="rcmd">braingent init</span>
             <h4>Zero-Friction Setup</h4>
             <p>Copy the starter pack, replace placeholders, ask one-time setup questions. Markdown stays the source of truth.</p>
           </article>
           <article class="feature-item">
-            <span class="status planned">Planned</span>
+            <span class="status live">Live</span>
             <span class="rcmd">braingent update</span>
             <h4>Safe Starter-Pack Upgrades</h4>
             <p>Compare versions, show the patch plan, never overwrite your edits without an explicit diff.</p>
           </article>
           <article class="feature-item flagship">
             <span class="status released">Released</span>
-            <span class="rcmd">braingent qa-generate</span>
-            <h4>Test Cases From Your Engineering History</h4>
-            <p>Derive durable QA test-case records from prior decisions, learnings, and bug captures. Your agent's memory becomes a reusable test plan — Markdown in, Markdown out.</p>
+            <span class="rcmd">qa-generate v4</span>
+            <h4>Strict QA Plans From Engineering Evidence</h4>
+            <p>Generate reviewable QA plans from tickets, memory, and Gather Step evidence. Markdown, Xray JSON, TestRail CSV, and Gherkin outputs share the same traceable case model.</p>
           </article>
         </div>
       </div>
@@ -562,12 +571,24 @@ or sensitive personal data. Ever.</pre>
         </ul>
       </div>
       <div>
+        <h5>Docs</h5>
+        <ul>
+          <li><a href="/intro/what-is-braingent/">Introduction</a></li>
+          <li><a href="/guides/getting-started/">Quickstart</a></li>
+          <li><a href="/concepts/memory-model/">Concepts</a></li>
+          <li><a href="/guides/qa-test-planning/">QA Planning</a></li>
+          <li><a href="/reference/cli/">CLI Reference</a></li>
+          <li><a href="/changelog/">Changelog</a></li>
+        </ul>
+      </div>
+      <div>
         <h5>Agents</h5>
         <ul>
-          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#claude" target="_blank" rel="noopener noreferrer">Claude</a></li>
-          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#codex" target="_blank" rel="noopener noreferrer">Codex</a></li>
-          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#chatgpt" target="_blank" rel="noopener noreferrer">ChatGPT</a></li>
-          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#gemini-cli" target="_blank" rel="noopener noreferrer">Gemini CLI</a></li>
+          <li><a href="/integrations/claude/">Claude</a></li>
+          <li><a href="/integrations/codex/">Codex</a></li>
+          <li><a href="/integrations/chatgpt/">ChatGPT</a></li>
+          <li><a href="/integrations/gemini-cli/">Gemini CLI</a></li>
+          <li><a href="/integrations/gather-step/">Gather Step <span class="footer-tag">Partner</span></a></li>
         </ul>
       </div>
     </div>

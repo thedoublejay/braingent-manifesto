@@ -214,6 +214,36 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
 }
 .nav-cta:hover { background: var(--ink-900); color: var(--parchment-100) !important; border-color: var(--ink-900); }
 
+/* primary maroon GitHub CTA */
+.nav-cta-primary {
+  background: var(--oxblood);
+  border-color: var(--oxblood);
+  color: var(--parchment-50) !important;
+  box-shadow: 0 1px 0 rgba(110, 36, 24, 0.6);
+}
+.nav-cta-primary:hover {
+  background: var(--oxblood-dark) !important;
+  border-color: var(--oxblood-dark) !important;
+  color: var(--parchment-50) !important;
+  box-shadow: 0 2px 0 rgba(110, 36, 24, 0.7);
+}
+
+/* in-nav docs link with roman numeral */
+.nav-link-cta {
+  color: var(--ink-900) !important;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.nav-link-cta .num {
+  font-family: var(--font-display);
+  font-style: italic;
+  color: var(--oxblood);
+  font-size: 14px;
+}
+.nav-link-cta:hover { color: var(--oxblood) !important; }
+
 /* ─── hero ─── */
 .hero {
   padding: clamp(40px, 6vw, 80px) 0 clamp(60px, 8vw, 120px);
@@ -263,6 +293,50 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
 .btn .arrow { transition: transform 0.15s; }
 .btn:hover .arrow { transform: translateX(3px); }
 
+/* primary CTA — maroon wax-seal feel */
+.btn-primary {
+  background: var(--oxblood);
+  border-color: var(--oxblood);
+  color: var(--parchment-50);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  padding: 16px 26px;
+  font-size: 13px;
+  text-transform: uppercase;
+  position: relative;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 2px 0 rgba(110, 36, 24, 0.6),
+    0 0 0 1px rgba(58, 50, 33, 0.1);
+  transition: background 0.15s, transform 0.12s, box-shadow 0.15s, border-color 0.15s;
+}
+.btn-primary:hover {
+  background: var(--oxblood-dark);
+  border-color: var(--oxblood-dark);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 3px 0 rgba(110, 36, 24, 0.8),
+    0 0 0 1px rgba(58, 50, 33, 0.12);
+}
+.btn-primary:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(110, 36, 24, 0.8); }
+.btn-primary .btn-glyph {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--parchment-200);
+  margin-right: 4px;
+  display: inline-block;
+  animation: cta-shimmer 3.4s ease-in-out infinite;
+}
+@keyframes cta-shimmer {
+  0%, 100% { opacity: 0.7; transform: rotate(0deg); }
+  50% { opacity: 1; transform: rotate(20deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary .btn-glyph { animation: none; }
+}
+
 .hero-meta {
   margin-top: 32px;
   display: flex;
@@ -273,9 +347,10 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
 .hero-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
+  gap: 10px 16px;
   align-items: center;
   color: var(--ink-700);
+  max-width: 100%;
 }
 .hero-stats .stat {
   display: inline-flex;
@@ -292,9 +367,14 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 500;
-  font-size: 30px;
+  font-size: 24px;
   line-height: 1;
   color: var(--oxblood);
+}
+.hero-stats .stat { font-size: 12px; }
+@media (max-width: 1100px) {
+  .hero-stats .stat-num { font-size: 20px; }
+  .hero-stats { gap: 8px 12px; }
 }
 .hero-stats .stat-label {
   color: var(--ink-700);
@@ -303,9 +383,12 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
 }
 .hero-stats .stat-sep {
   width: 1px;
-  height: 20px;
+  height: 18px;
   background: rgba(58, 50, 33, 0.22);
   display: inline-block;
+}
+@media (max-width: 720px) {
+  .hero-stats .stat-sep { display: none; }
 }
 .hero-tags {
   display: flex;
@@ -928,6 +1011,44 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
 .start-step .copy-cmd.copied .copy-icon { opacity: 0; }
 .start-step .copy-cmd.copied .copy-feedback { opacity: 1; }
 
+/* "Read step →" link under each start step's command */
+.start-step-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--oxblood);
+  border-bottom: 1px solid rgba(139, 46, 31, 0.25);
+}
+.start-step-link:hover { border-bottom-color: var(--oxblood); }
+.start-step-link span { transition: transform 0.15s; display: inline-block; }
+.start-step-link:hover span { transform: translateX(3px); }
+
+/* "Read the full quickstart →" link in start-side foot */
+.start-side-foot { margin-top: 18px; }
+.start-side-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  background: var(--ink-900);
+  color: var(--parchment-50);
+  border: 1px solid var(--ink-800);
+}
+.start-side-link:hover {
+  background: var(--oxblood-dark);
+  border-color: var(--oxblood-dark);
+  color: var(--parchment-50);
+}
+.start-side-link .arrow { transition: transform 0.15s; }
+.start-side-link:hover .arrow { transform: translateX(3px); }
+
 /* ─── features ─── */
 .features-section {
   background: var(--parchment-100);
@@ -1113,14 +1234,35 @@ a:focus-visible { outline-offset: 4px; }
 }
 .footer .container {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1.4fr 1fr 1.1fr 1fr;
+  gap: 44px;
 }
-@media (max-width: 800px) {
+@media (max-width: 1000px) {
+  .footer .container { grid-template-columns: 1fr 1fr 1fr; }
+  .footer .brand-block { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
   .footer .container { grid-template-columns: 1fr 1fr; }
+  .footer .brand-block { grid-column: 1 / -1; }
 }
 @media (max-width: 500px) {
   .footer .container { grid-template-columns: 1fr; }
+}
+
+.footer-tag {
+  display: inline-block;
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--parchment-50);
+  background: var(--oxblood);
+  border: 1px solid var(--oxblood-dark);
+  padding: 2px 7px;
+  line-height: 1;
+  vertical-align: middle;
+  font-weight: 500;
 }
 .footer h5 {
   font-family: var(--font-mono);
