@@ -1,0 +1,614 @@
+---
+import LandingLayout from '../layouts/LandingLayout.astro';
+---
+
+<LandingLayout
+  title="Braingent — A shared memory for AI-assisted engineering"
+  description="Braingent is a Git-backed, Markdown-first memory repo for Claude, Codex, ChatGPT, and Gemini CLI."
+>
+  <header class="nav">
+    <a class="nav-brand" href="/" aria-label="Braingent home">
+      <img class="mark" src="/braingent_logo.svg" alt="" width="32" height="32" />
+      Braingent
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#problem">Problem</a>
+      <a href="#loop">The Loop</a>
+      <a href="#records">Records</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#features">Features</a>
+      <a class="nav-cta" href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">GitHub &rarr;</a>
+    </nav>
+  </header>
+
+  <main id="main-content">
+    <!-- ───────── HERO ───────── -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow no-num">A Manifesto for AI-Assisted Engineering</p>
+          <h1>A Shared <em>Memory</em> for AI-Assisted Engineering.</h1>
+          <p class="lede">Braingent is a Git-backed, Markdown-first memory repo. It gives Claude, Codex, ChatGPT, and Gemini CLI the same engineering context — what to read before planning, which decisions matter, and what work is already underway.</p>
+          <div class="hero-cta is-hidden" aria-hidden="true">
+            <a class="btn" href="#start">Copy the starter pack <span class="arrow">&rarr;</span></a>
+            <a class="btn btn-ghost" href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+          </div>
+          <div class="hero-meta" aria-label="Braingent at a glance">
+            <div class="hero-stats">
+              <span class="stat"><span class="stat-num">4</span> <span class="stat-label">Agents</span></span>
+              <span class="stat-sep" aria-hidden="true"></span>
+              <span class="stat"><span class="stat-num">8</span> <span class="stat-label">Record Kinds</span></span>
+              <span class="stat-sep" aria-hidden="true"></span>
+              <span class="stat"><span class="stat-num">5</span> <span class="stat-label">Memory Surfaces</span></span>
+            </div>
+            <div class="hero-tags">
+              <span class="hero-tag"><i class="dot"></i>MCP-Ready</span>
+              <span class="hero-tag"><i class="dot gold"></i>Markdown · Git</span>
+              <span class="hero-tag"><i class="dot oxblood"></i>Local-First</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Living map — brain-with-map logo as the centerpiece -->
+        <div class="hero-map" aria-hidden="true">
+          <div class="map-frame">
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+
+            <svg class="compass" viewBox="0 0 60 60" aria-hidden="true">
+              <circle cx="30" cy="30" r="24" fill="none" stroke="#3a3221" stroke-width="0.6" opacity="0.55"/>
+              <circle cx="30" cy="30" r="16" fill="none" stroke="#3a3221" stroke-width="0.4" opacity="0.4"/>
+              <path d="M30,6 L33,30 L30,54 L27,30 Z" fill="#2a2418" opacity="0.85"/>
+              <path d="M6,30 L30,33 L54,30 L30,27 Z" fill="#5a4e36" opacity="0.75"/>
+              <text x="30" y="4" text-anchor="middle" font-family="Cormorant Garamond" font-style="italic" font-size="8" fill="#3a3221">N</text>
+            </svg>
+
+            <p class="map-title">— The Memory Repo —</p>
+
+            <div class="map-center">
+              <div class="map-halo"></div>
+              <div class="map-halo halo-2"></div>
+              <img src="/braingent_logo.svg" alt="" class="map-logo" />
+              <p class="map-caption">Memory Repo · <span>.git/</span></p>
+            </div>
+
+            <div class="agent agent-tl">
+              <span class="agent-num">i.</span>
+              <span class="agent-name">Claude</span>
+            </div>
+            <div class="agent agent-tr">
+              <span class="agent-num">ii.</span>
+              <span class="agent-name">Codex</span>
+            </div>
+            <div class="agent agent-bl">
+              <span class="agent-num">iii.</span>
+              <span class="agent-name">ChatGPT</span>
+            </div>
+            <div class="agent agent-br">
+              <span class="agent-num">iv.</span>
+              <span class="agent-name">Gemini CLI</span>
+            </div>
+
+            <svg class="map-routes" viewBox="0 0 600 600" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <g id="foot2">
+                  <ellipse cx="0" cy="4" rx="3" ry="3.6" fill="#2a2418"/>
+                  <ellipse cx="0" cy="-3.5" rx="3.6" ry="4.4" fill="#2a2418"/>
+                </g>
+                <path id="route-tl" d="M125,135 C170,180 195,200 215,215"/>
+                <path id="route-tr" d="M475,135 C430,180 405,200 385,215"/>
+                <path id="route-bl" d="M125,465 C170,420 195,400 215,385"/>
+                <path id="route-br" d="M475,465 C430,420 405,400 385,385"/>
+              </defs>
+
+              <g fill="none" stroke="#3a3221" stroke-width="1" opacity="0.45" stroke-dasharray="3 4">
+                <use href="#route-tl"/>
+                <use href="#route-tr"/>
+                <use href="#route-bl"/>
+                <use href="#route-br"/>
+              </g>
+
+              <g class="footsteps">
+                <!-- Top-left agent → center → back -->
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="14s" begin="0s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-tl"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="14s" begin="0s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="14s" begin="7s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-tl"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="14s" begin="7s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+
+                <!-- Top-right agent → center → back -->
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="15s" begin="2s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-tr"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="15s" begin="2s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="15s" begin="9.5s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-tr"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="15s" begin="9.5s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+
+                <!-- Bottom-left agent → center → back -->
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="13s" begin="4s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-bl"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="13s" begin="4s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="13s" begin="10.5s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-bl"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="13s" begin="10.5s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+
+                <!-- Bottom-right agent → center → back -->
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="14.5s" begin="6s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-br"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="14.5s" begin="6s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+                <use href="#foot2" opacity="0">
+                  <animateMotion dur="14.5s" begin="13.25s" repeatCount="indefinite" rotate="auto" calcMode="linear"
+                    keyTimes="0;0.42;0.5;0.92;1" keyPoints="0;1;1;0;0">
+                    <mpath href="#route-br"/>
+                  </animateMotion>
+                  <animate attributeName="opacity" dur="14.5s" begin="13.25s" repeatCount="indefinite"
+                    keyTimes="0;0.06;0.42;0.5;0.92;0.96;1" values="0;0.8;0.8;0.8;0.8;0;0"/>
+                </use>
+              </g>
+            </svg>
+
+            <span class="landmark lm-1"><i></i>decisions/</span>
+            <span class="landmark lm-2"><i></i>reviews/</span>
+            <span class="landmark lm-3"><i></i>learnings/</span>
+            <span class="landmark lm-4 teal"><i></i>tasks/BGT-0142</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── PROBLEM ───────── -->
+    <section class="problem" id="problem">
+      <div class="container problem-grid">
+        <div>
+          <p class="eyebrow" data-num="i.">The Problem</p>
+          <span class="chapter-rule"></span>
+          <h2>Agents <em>Forget.</em> Engineers Repeat. Decisions Vanish.</h2>
+        </div>
+        <div class="problem-list">
+          <div class="problem-item">
+            <h4>Agents start every session from zero.</h4>
+            <p>Even capable models have no idea what your repo looked like yesterday, what you decided last sprint, or which approach you already tried and rejected.</p>
+          </div>
+          <div class="problem-item">
+            <h4>You re-explain the same context, again.</h4>
+            <p>Architecture, conventions, constraints, that one weird quirk in the deployment script. Pasted into a fresh chat. Lost the moment it closes.</p>
+          </div>
+          <div class="problem-item">
+            <h4>Decisions disappear into chat logs.</h4>
+            <p>The reasoning behind a non-obvious choice — buried somewhere between message #47 and a tangent about TypeScript generics. Unsearchable, uncitable, gone.</p>
+          </div>
+          <div class="problem-item">
+            <h4>Every tool wants its own walled garden.</h4>
+            <p>Memory you can't read, can't diff, can't move. Tied to one vendor's roadmap and one vendor's outage.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── THE LOOP ───────── -->
+    <section id="loop">
+      <div class="container">
+        <div class="loop-header">
+          <p class="eyebrow" data-num="ii.">The Loop</p>
+          <h2>Search. Work. <em>Capture.</em> Better Next Session.</h2>
+        </div>
+
+        <div class="loop-grid">
+          <article class="loop-step">
+            <span class="marker">01 / Before</span>
+            <span class="num">i.</span>
+            <h3>Search</h3>
+            <p>Before planning, the agent reads the memory repo — prior records, decisions, repo profiles, known risks.</p>
+          </article>
+          <article class="loop-step">
+            <span class="marker">02 / During</span>
+            <span class="num">ii.</span>
+            <h3>Work</h3>
+            <p>You and the agent ship like normal. Evidence, commands, tradeoffs and links accrue along the way.</p>
+          </article>
+          <article class="loop-step">
+            <span class="marker">03 / After</span>
+            <span class="num">iii.</span>
+            <h3>Capture</h3>
+            <p>Say <code>capture this</code> or <code>task done</code>. The agent writes a durable Markdown record and commits it.</p>
+          </article>
+          <article class="loop-step">
+            <span class="marker">04 / Forever</span>
+            <span class="num">iv.</span>
+            <h3>Inherit</h3>
+            <p>Future sessions — and future agents — search that memory first instead of starting from zero.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── CODE / RECORDS ───────── -->
+    <section class="code-section" id="records">
+      <div class="container code-grid">
+        <div class="code-side">
+          <p class="eyebrow" data-num="iii.">Records</p>
+          <span class="chapter-rule"></span>
+          <h2>Markdown Is the Source of <em>Truth.</em></h2>
+          <p class="lede">Plain files. YAML frontmatter for search. Git for history. Nothing your editor can't open and your eyes can't read.</p>
+          <ul>
+            <li>Eight record kinds — tasks, decisions, reviews, learnings, profiles, versions, summaries, ticket stubs.</li>
+            <li>Five memory surfaces — pinned context, durable records, derived retrieval, live <code>BGT-NNNN</code> tasks, optional dashboard.</li>
+            <li>Indexes, search, and MCP retrieval all derive from the same Markdown.</li>
+            <li>No server. No vendor lock-in. No hosted account.</li>
+          </ul>
+        </div>
+
+        <div class="code-tabs-wrap">
+          <div class="code-tabs" role="tablist">
+            <button class="code-tab active" data-tab="record">decision-record.md</button>
+            <button class="code-tab" data-tab="task">BGT-0142.md</button>
+            <button class="code-tab" data-tab="entry">CLAUDE.md</button>
+          </div>
+
+          <div class="code-pane active" data-pane="record">
+            <pre class="code-block"><span class="filename">memory/decisions/2026-04-12-jobs-runtime.md</span><span class="md-h">---</span>
+<span class="yaml-key">id</span>: <span class="yaml-val">DEC-0218</span>
+<span class="yaml-key">title</span>: <span class="yaml-val">Move job runtime from BullMQ to Temporal</span>
+<span class="yaml-key">status</span>: <span class="yaml-val">accepted</span>
+<span class="yaml-key">date</span>: <span class="yaml-val">2026-04-12</span>
+<span class="yaml-key">authors</span>: [<span class="yaml-val">jj</span>, <span class="yaml-val">claude</span>]
+<span class="yaml-key">tags</span>: [<span class="yaml-val">runtime</span>, <span class="yaml-val">jobs</span>, <span class="yaml-val">reliability</span>]
+<span class="yaml-key">supersedes</span>: <span class="yaml-val">DEC-0091</span>
+<span class="md-h">---</span>
+
+<span class="md-h"># Move job runtime from BullMQ to Temporal</span>
+
+<span class="md-bullet">##</span> Context
+We hit a third silent retry loop in two weeks. <span class="comment"># incident link</span>
+BullMQ's failure model doesn't survive process churn on Fly.io.
+
+<span class="md-bullet">##</span> Decision
+Adopt Temporal. Migrate `billing` first, `webhooks` second.
+
+<span class="md-bullet">##</span> Consequences
++ Durable workflows, deterministic replay
+- Operator must run a Temporal cluster (1 dev, 1 prod)
+- 2-week migration, freeze new BullMQ jobs starting <span class="yaml-val">2026-04-15</span></pre>
+          </div>
+
+          <div class="code-pane" data-pane="task">
+            <pre class="code-block"><span class="filename">memory/tasks/BGT-0142.md</span><span class="md-h">---</span>
+<span class="yaml-key">id</span>: <span class="yaml-val">BGT-0142</span>
+<span class="yaml-key">title</span>: <span class="yaml-val">Backfill repo profile for `acme/api`</span>
+<span class="yaml-key">status</span>: <span class="yaml-val">in_progress</span>
+<span class="yaml-key">priority</span>: <span class="yaml-val">P2</span>
+<span class="yaml-key">owner</span>: <span class="yaml-val">claude</span>
+<span class="yaml-key">depends_on</span>: [<span class="yaml-val">BGT-0138</span>]
+<span class="yaml-key">created</span>: <span class="yaml-val">2026-04-28T09:14Z</span>
+<span class="md-h">---</span>
+
+<span class="md-bullet">##</span> Goal
+Generate `repos/acme-api/profile.md` from local docs,
+git history, and open PRs.
+
+<span class="md-bullet">##</span> Activity
+- <span class="comment">2026-04-28 09:14</span> claude — opened, scanned README + ADRs
+- <span class="comment">2026-04-28 09:31</span> claude — drafted profile, 14 sections
+- <span class="comment">2026-04-28 10:02</span> jj    — flagged auth section as stale
+- <span class="comment">2026-04-28 10:18</span> claude — re-read `auth/*`, rewrote section</pre>
+          </div>
+
+          <div class="code-pane" data-pane="entry">
+            <pre class="code-block"><span class="filename">CLAUDE.md  ·  agent entrypoint</span><span class="comment"># Braingent entrypoint for Claude</span>
+
+You are working inside a repo that is paired with a
+<span class="md-bullet">**Braingent**</span> memory repo at <span class="yaml-val">../braingent</span>.
+
+<span class="md-bullet">## Before you plan</span>
+1. Read <span class="yaml-val">../braingent/preferences/*.md</span>
+2. Search <span class="yaml-val">../braingent/decisions/</span> and
+   <span class="yaml-val">../braingent/learnings/</span> for this area
+3. Check <span class="yaml-val">../braingent/repos/&lt;name&gt;/profile.md</span>
+
+<span class="md-bullet">## When the user says "capture this"</span>
+- Write to <span class="yaml-val">../braingent/&lt;type&gt;/&lt;slug&gt;.md</span>
+- Include YAML frontmatter (id, title, status, date, tags)
+- Commit with message: <span class="yaml-val">capture: &lt;slug&gt;</span>
+
+<span class="md-bullet">## Never store</span>
+secrets, tokens, credentials, raw chat transcripts,
+or sensitive personal data. Ever.</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── PRIVACY & PORTABILITY ───────── -->
+    <section id="privacy">
+      <div class="container">
+        <p class="eyebrow" data-num="iv.">Privacy &amp; Portability</p>
+        <span class="chapter-rule"></span>
+        <h2 style="max-width: 18ch; margin-bottom: 56px;">Yours. <em>Local.</em> In Files You Can Read, Diff, and Move.</h2>
+
+        <div class="privacy-grid">
+          <div class="principle">
+            <h3>
+              <svg class="seal" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                <circle cx="18" cy="18" r="16" stroke="#8b2e1f" stroke-width="1.5"/>
+                <path d="M12 18 L16 22 L24 14" stroke="#8b2e1f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              What Braingent Stores
+            </h3>
+            <p>Durable, intentional, human-readable. Things worth keeping for next time.</p>
+            <ul>
+              <li>Decisions and their reasoning</li>
+              <li>Reviews, learnings, and follow-ups</li>
+              <li>Repo profiles and tool notes</li>
+              <li>Standing preferences and workflows</li>
+              <li>Active task files (optional)</li>
+            </ul>
+          </div>
+          <div class="principle warn">
+            <h3>
+              <svg class="seal" viewBox="0 0 36 36" fill="none" aria-hidden="true">
+                <circle cx="18" cy="18" r="16" stroke="#8b2e1f" stroke-width="1.5"/>
+                <path d="M12 12 L24 24 M24 12 L12 24" stroke="#8b2e1f" stroke-width="2" stroke-linecap="round" fill="none"/>
+              </svg>
+              What It Never Touches
+            </h3>
+            <p>If it shouldn't sit on disk in plain text, it doesn't belong here.</p>
+            <ul>
+              <li>Secrets, API keys, tokens</li>
+              <li>Credentials of any kind</li>
+              <li>Raw chat transcripts</li>
+              <li>Sensitive personal data</li>
+              <li>Anything you wouldn't commit to a repo</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── NOT ───────── -->
+    <section class="not-section">
+      <div class="container">
+        <p class="eyebrow" data-num="v.">What It Isn't</p>
+        <span class="chapter-rule"></span>
+        <h2 style="max-width: 22ch;">A Clear-Eyed List of Things <em>Braingent Is Not.</em></h2>
+
+        <div class="not-grid">
+          <div class="not-item"><span class="x">i.</span><h4>Not a Hosted SaaS.</h4><p>Your memory lives in your repo. No accounts, no dashboards behind a login.</p></div>
+          <div class="not-item"><span class="x">ii.</span><h4>Not a Git Replacement.</h4><p>Braingent runs <em>on top</em> of Git. History, diffs, sync, review — Git already does that.</p></div>
+          <div class="not-item"><span class="x">iii.</span><h4>Not a Project Manager.</h4><p>Live tasks are optional. Linear, Jira, GitHub Issues stay where they are.</p></div>
+          <div class="not-item"><span class="x">iv.</span><h4>Not a Chat Archive.</h4><p>Records are the durable signal. Full transcripts don't belong on disk.</p></div>
+          <div class="not-item"><span class="x">v.</span><h4>Not Vendor-Bound.</h4><p>Markdown reads in any editor. Any agent. Any future tool you'll use in five years.</p></div>
+          <div class="not-item"><span class="x">vi.</span><h4>Not a Hosted Index.</h4><p>The filesystem is the index. Optional local search and dashboards stay local to your machine.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── GET STARTED ───────── -->
+    <section class="start-section" id="start">
+      <div class="container start-grid">
+        <div class="start-side">
+          <p class="eyebrow" data-num="vi.">Get Started</p>
+          <span class="chapter-rule"></span>
+          <h2>Four Steps. Roughly <em>Ten Minutes.</em></h2>
+          <p>Copy the starter pack, point your agent at it, capture your first task. From there, your memory grows on its own.</p>
+        </div>
+
+        <div class="start-steps">
+          <div class="start-step">
+            <span class="step-num">i.</span>
+            <div>
+              <h4>Clone the Manifesto</h4>
+              <p>Public, open source. Markdown only — no install required to read it.</p>
+              <button type="button" class="copy-cmd" data-copy="git clone https://github.com/thedoublejay/braingent-manifesto" aria-label="Copy command: git clone https://github.com/thedoublejay/braingent-manifesto"><span class="prompt">$ </span><span class="cmd">git clone https://github.com/thedoublejay/braingent-manifesto</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+            </div>
+          </div>
+
+          <div class="start-step">
+            <span class="step-num">ii.</span>
+            <div>
+              <h4>Copy the Starter Pack Into Your Private Memory Repo</h4>
+              <p>Preferences, templates, workflows, and an empty records tree. Personalize the placeholders, then commit.</p>
+              <button type="button" class="copy-cmd" data-copy="cp -R braingent-manifesto/starter-pack/* ./my-memory/" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">cp -R braingent-manifesto/starter-pack/* ./my-memory/</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+            </div>
+          </div>
+
+          <div class="start-step">
+            <span class="step-num">iii.</span>
+            <div>
+              <h4>Wire Up Your Agents</h4>
+              <p>Drop entrypoints into the memory repo root. Works with Claude, Codex, ChatGPT, and Gemini CLI.</p>
+              <button type="button" class="copy-cmd" data-copy="ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+            </div>
+          </div>
+
+          <div class="start-step">
+            <span class="step-num">iv.</span>
+            <div>
+              <h4>Capture Your First Task</h4>
+              <p>Finish a piece of work, then say it. The agent writes a durable record and commits it.</p>
+              <button type="button" class="copy-cmd" data-copy="capture this — moved jobs to Temporal, decisions doc" aria-label="Copy command"><span class="prompt">&gt; </span><span class="cmd">capture this — moved jobs to Temporal, decisions doc</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── FEATURES ───────── -->
+    <section class="features-section" id="features">
+      <div class="container">
+        <p class="eyebrow" data-num="vii.">Features</p>
+        <span class="chapter-rule"></span>
+        <h2 style="max-width: 26ch; margin-bottom: 28px;">A Small <em>CLI</em> Today. Durable <em>QA</em> From Your History Tomorrow.</h2>
+
+        <aside class="features-note">
+          <p>You almost never need to run any of these yourself. Once your agent has the <code>CLAUDE.md</code> / <code>AGENTS.md</code> entrypoints, it searches Braingent before planning and captures after meaningful work — automatically. Just say <strong>“Braingent”</strong>, <strong>“capture this”</strong>, or <strong>“task done”</strong> and the right thing happens.</p>
+        </aside>
+
+        <div class="features-grid">
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">braingent doctor</span>
+            <h4>Health Checks</h4>
+            <p>Reports missing files, stale placeholders, malformed frontmatter, and generated-index drift before agents trip on them.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">braingent find</span>
+            <h4>Structured Search</h4>
+            <p>Filter records by topic, repo, project, ticket, kind, status, person, or tool. Frontmatter is the index.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">braingent recall</span>
+            <h4>Focused Context Packs</h4>
+            <p>Build a small, citation-ready context pack for one task instead of rereading the whole memory repo.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">braingent task-*</span>
+            <h4>Live Task Coordination</h4>
+            <p>Create, claim, comment, status, list, and archive <code>BGT-NNNN</code> tasks across multi-agent work — all just Markdown.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">braingent synthesize</span>
+            <h4>Source-Indexed Synthesis</h4>
+            <p>Generate synthesis pages from your records — every claim cited back to the Markdown it came from.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status live">Live</span>
+            <span class="rcmd">bun run dev</span>
+            <h4>Optional Local Dashboard</h4>
+            <p>Read-only Bun + Astro UI over <code>tasks/active/</code> and indexes. Agents and humans see the same live queue.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status soon">Released Soon</span>
+            <span class="rcmd">braingent init</span>
+            <h4>Zero-Friction Setup</h4>
+            <p>Copy the starter pack, replace placeholders, ask one-time setup questions. Markdown stays the source of truth.</p>
+          </article>
+          <article class="feature-item">
+            <span class="status planned">Planned</span>
+            <span class="rcmd">braingent update</span>
+            <h4>Safe Starter-Pack Upgrades</h4>
+            <p>Compare versions, show the patch plan, never overwrite your edits without an explicit diff.</p>
+          </article>
+          <article class="feature-item flagship">
+            <span class="status released">Released</span>
+            <span class="rcmd">braingent qa-generate</span>
+            <h4>Test Cases From Your Engineering History</h4>
+            <p>Derive durable QA test-case records from prior decisions, learnings, and bug captures. Your agent's memory becomes a reusable test plan — Markdown in, Markdown out.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <p class="divider" style="background:var(--parchment-100); padding: 40px 0;">✦ ✦ ✦</p>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="brand-block">
+        <a class="nav-brand" href="/">
+          <img class="mark" src="/braingent_logo.svg" alt="" width="32" height="32" />
+          Braingent
+        </a>
+        <p>Mischief managed — for the engineers who'd rather their agents remembered.</p>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="https://github.com/thedoublejay/braingent-manifesto" target="_blank" rel="noopener noreferrer">Manifesto on GitHub</a></li>
+          <li><a href="#start">Starter Pack</a></li>
+          <li><a href="#records">Record Formats</a></li>
+          <li><a href="#features">Features</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Agents</h5>
+        <ul>
+          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#claude" target="_blank" rel="noopener noreferrer">Claude</a></li>
+          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#codex" target="_blank" rel="noopener noreferrer">Codex</a></li>
+          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#chatgpt" target="_blank" rel="noopener noreferrer">ChatGPT</a></li>
+          <li><a href="https://github.com/thedoublejay/braingent-manifesto/blob/main/AGENT-INTEGRATION.md#gemini-cli" target="_blank" rel="noopener noreferrer">Gemini CLI</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom-wrap">
+      <div class="footer-bottom">
+        <span>© 2026 Braingent · Markdown · Git · Local-First</span>
+        <span>Built by <a href="https://josejai.me" target="_blank" rel="noopener noreferrer">JJ Adonis</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script is:inline>
+    // tab switching for the records section
+    document.querySelectorAll('.code-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab;
+        document.querySelectorAll('.code-tab').forEach((t) => t.classList.toggle('active', t === tab));
+        document.querySelectorAll('.code-pane').forEach((p) => p.classList.toggle('active', p.dataset.pane === target));
+      });
+    });
+
+    // click-to-copy for command blocks
+    document.querySelectorAll('.copy-cmd').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const text = btn.dataset.copy || btn.querySelector('.cmd')?.textContent || '';
+        try {
+          await navigator.clipboard.writeText(text);
+        } catch {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); } catch {}
+          document.body.removeChild(ta);
+        }
+        btn.classList.add('copied');
+        clearTimeout(btn._copyTimer);
+        btn._copyTimer = setTimeout(() => btn.classList.remove('copied'), 1500);
+      });
+    });
+  </script>
+</LandingLayout>

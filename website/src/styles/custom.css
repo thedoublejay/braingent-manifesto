@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  --bg-parchment: #f4ead5;
+  --bg-panel: #fffdf7;
+  --ink-900: #2b2518;
+  --ink-800: #3a3221;
+  --ink-700: #51462f;
+  --ink-600: #6b5f43;
+  --oxblood: #8b2e1f;
+  --gold: #a07d2a;
+  --teal-ink: #315f59;
+
+  --sl-font: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --sl-font-system: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --sl-font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --sl-color-white: #fffdf7;
+  --sl-color-black: #2b2518;
+  --sl-color-gray-1: #f8f0dc;
+  --sl-color-gray-2: #ead9b7;
+  --sl-color-gray-3: #d3c29e;
+  --sl-color-gray-4: #a89a78;
+  --sl-color-gray-5: #847756;
+  --sl-color-gray-6: #5d5237;
+  --sl-color-gray-7: #473d29;
+  --sl-color-gray-8: #342d1e;
+  --sl-color-gray-9: #261f15;
+  --sl-color-gray-10: #18140e;
+  --sl-color-accent-low: #ead9b7;
+  --sl-color-accent: var(--oxblood);
+  --sl-color-accent-high: #f4c8b7;
+  --sl-color-bg: var(--bg-parchment);
+  --sl-color-bg-nav: rgba(244, 234, 213, 0.92);
+  --sl-color-bg-sidebar: #efe0bf;
+  --sl-color-bg-inline-code: rgba(139, 46, 31, 0.08);
+  --sl-color-hairline-light: rgba(58, 50, 33, 0.1);
+  --sl-color-hairline: rgba(58, 50, 33, 0.2);
+  --sl-color-text: var(--ink-800);
+  --sl-color-text-accent: var(--oxblood);
+  --sl-color-text-invert: var(--bg-panel);
+}
+
+html {
+  background: var(--bg-parchment);
+}
+
+body {
+  background:
+    linear-gradient(90deg, rgba(58, 50, 33, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(58, 50, 33, 0.035) 1px, transparent 1px),
+    var(--bg-parchment);
+  background-size: 44px 44px;
+}
+
+.site-title {
+  color: var(--ink-900);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.35rem;
+}
+
+.sl-markdown-content h1,
+.sl-markdown-content h2,
+.sl-markdown-content h3 {
+  color: var(--ink-900);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0;
+}
+
+.sl-markdown-content h1 {
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1;
+}
+
+.sl-markdown-content h2 {
+  border-bottom: 1px solid var(--sl-color-hairline);
+  padding-bottom: 0.4rem;
+  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
+}
+
+.sl-markdown-content h3 {
+  font-size: 1.45rem;
+}
+
+.sl-markdown-content p,
+.sl-markdown-content li {
+  color: var(--ink-700);
+  line-height: 1.82;
+}
+
+.sl-markdown-content strong {
+  color: var(--ink-900);
+}
+
+.sl-markdown-content :not(pre) > code {
+  border: 1px solid rgba(139, 46, 31, 0.16);
+  border-radius: 6px;
+  padding: 0.15rem 0.35rem;
+  color: var(--oxblood);
+}
+
+.sl-markdown-content table,
+.sl-markdown-content pre,
+.sl-markdown-content blockquote,
+.card,
+.pagination-links a,
+.sl-link-card {
+  border: 1px solid rgba(58, 50, 33, 0.16);
+  border-radius: 8px;
+  background-color: rgba(255, 253, 247, 0.72);
+}
+
+.sl-markdown-content blockquote {
+  border-left: 3px solid var(--oxblood);
+  padding-left: 1rem;
+}
+
+.header,
+.sidebar-pane {
+  background-color: rgba(244, 234, 213, 0.92);
+  backdrop-filter: blur(12px);
+}

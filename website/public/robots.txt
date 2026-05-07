@@ -1,0 +1,6 @@
+# Allow all crawlers — search engines, AI assistants, and training bots.
+# Braingent is a public open-source manifesto; visibility is the point.
+User-agent: *
+Allow: /
+
+Sitemap: https://braingent.dev/sitemap-index.xml
