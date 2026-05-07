@@ -209,14 +209,41 @@ Later, you can add scripts or a small optional CLI for:
 
 The copyable dashboard sample lives at `examples/task-dashboard/`.
 
-For a first CLI version, keep the scope intentionally small:
+For the v4 CLI, keep the scope intentionally small and make every mutation
+diff-first. The CLI should never become the source of truth; it should copy,
+personalize, validate, and upgrade the Markdown repo.
 
 | Command | Scope |
 | --- | --- |
-| `braingent init` | Copy `starter-pack/`, replace placeholders, and ask whether to include live tasks, dashboard docs, MCP snippets, and token-efficient access guidance. |
+| `braingent init` | Create or update a target memory repo from `starter-pack/`, replace placeholders from a short questionnaire, ask whether to include live tasks, dashboard docs, MCP snippets, and token-efficient access guidance, then run validation and print the first commit command. |
 | `braingent doctor` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
 | `braingent print-prompts` | Print Codex, Claude, ChatGPT, and Gemini setup snippets without mutating files. |
-| `braingent update` | Compare starter-pack versions and show a patch plan before changing user files. |
+| `braingent update` | Compare the installed starter-pack version with the current template, classify changes as safe auto-merge, manual review, or skipped local edits, show a patch plan before changing files, then run validation and reindex checks. |
+
+`braingent init` should be an interactive bootstrap, not a hidden migration:
+
+1. Resolve the target directory and refuse to overwrite non-Braingent repos
+   unless the user passes an explicit force flag.
+2. Ask for owner/name, primary agent tools, privacy level, first org/project,
+   and whether live tasks and the dashboard belong in the initial repo.
+3. Copy the starter pack, preserving file modes and leaving generated indexes
+   reproducible from Markdown.
+4. Replace known placeholders only; leave unknown user prose untouched.
+5. Run `doctor`, `validate`, and `reindex --check` when the copied scripts are
+   present.
+6. Print a concise handoff: files created, optional modules included, first
+   commit command, and the next suggested workflow.
+
+`braingent update` should be conservative:
+
+1. Read the installed template/version marker and the current starter-pack
+   manifest.
+2. Build a three-way comparison between old template, new template, and the
+   user's current files.
+3. Auto-apply only files that are unchanged locally or have conflict-free
+   mechanical updates.
+4. Write conflicts to a review report with exact file paths and reasons.
+5. Re-run `doctor`, `validate`, and `reindex --check` after any accepted change.
 
 Avoid putting product state in the CLI. The CLI is the moving truck, not the
 house: it can copy, validate, and upgrade files, but Markdown remains the source
