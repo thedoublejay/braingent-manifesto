@@ -1,12 +1,11 @@
 # Braingent Website
 
-Astro and Starlight scaffold for `https://braingent.dev`.
+Astro landing page for `https://braingent.dev`.
 
 This mirrors the Gather Step website setup:
 
 - Bun package manager.
 - Astro landing page at `/`.
-- Starlight docs under content-driven routes.
 - Static build output in `dist/`.
 - Cloudflare Pages deployment via Wrangler.
 
