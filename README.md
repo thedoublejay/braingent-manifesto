@@ -1,16 +1,45 @@
 <div align="center">
-  <table>
+  <table cellpadding="16" cellspacing="0">
     <tr>
       <td align="center" bgcolor="#ffffff">
-        <img src="website/public/braingent_logo.svg" alt="Braingent logo" width="160" />
+        <br />
+        <img src="website/public/braingent_logo.svg" alt="Braingent logo" width="128" />
+        <br />
       </td>
     </tr>
   </table>
 </div>
 
-# Braingent Manifesto
+<h1 align="center">Braingent</h1>
 
-> **Website:** [braingent.dev](https://braingent.dev) — landing page, features, and the loop in one place.
+<p align="center">
+  A Markdown-first engineering memory repo for humans and AI coding agents.
+</p>
+
+<p align="center">
+  Search before planning. Capture after meaningful work. Keep memory in Git.
+</p>
+
+<p align="center">
+  <a href="https://braingent.dev"><strong>Website</strong></a>
+  ·
+  <a href="#quick-start"><strong>Quick Start</strong></a>
+  ·
+  <a href="#what-braingent-gives-you"><strong>Features</strong></a>
+  ·
+  <a href="#contributing"><strong>Contributing</strong></a>
+</p>
+
+<p align="center">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="MIT license" />
+  </a>
+  <a href="https://braingent.dev">
+    <img src="https://img.shields.io/badge/docs-braingent.dev-blue.svg" alt="Documentation" />
+  </a>
+  <img src="https://img.shields.io/badge/storage-Markdown%20%2B%20Git-222222.svg" alt="Markdown and Git" />
+  <img src="https://img.shields.io/badge/server-not%20required-lightgrey.svg" alt="No server required" />
+</p>
 
 Braingent is a Markdown-first memory system for software engineers who work
 with AI agents. It gives Claude, Codex, ChatGPT, Gemini CLI, and future tools
@@ -27,15 +56,35 @@ Braingent stays simple: Markdown is the source of truth. Optional scripts,
 generated indexes, local search databases, live task files, and dashboards are
 helpers built around the Markdown, not replacements for it.
 
-## Links
+## Why Braingent
 
-- **Website:** [braingent.dev](https://braingent.dev)
-- **Source:** [github.com/thedoublejay/braingent-manifesto](https://github.com/thedoublejay/braingent-manifesto)
-- **Built by:** [JJ Adonis](https://josejai.me)
+Use Braingent when agent sessions keep losing the same context:
+
+- which files, repos, and decisions matter before planning;
+- what was already tried in a ticket, review, or incident;
+- which conventions should guide future edits;
+- what work should be captured after the PR, fix, or decision is done.
+
+It is deliberately plain: clone it, copy the starter pack, personalize the
+Markdown, and commit your memory repo like any other project.
+
+## Requirements
+
+Day one only requires Git and a text editor. The starter pack is plain Markdown.
+
+Optional tools unlock more automation:
+
+| Tool | Used for |
+| --- | --- |
+| `gh` | Importing GitHub PR and issue context when authenticated. |
+| `rg` | Fast search across records and preferences. |
+| `jq` / SQLite | Querying generated indexes and local search caches. |
+| Python / `uv` | Validation, indexing, and helper scripts. |
+| Bun | Running the optional dashboard example and website locally. |
 
 ---
 
-## Start Here
+## Quick Start
 
 1. **Copy the starter pack into a new memory repo.**
 
@@ -370,12 +419,44 @@ Everything else is adjustable.
 
 ---
 
+## Development
+
+Most changes are Markdown-only. Keep examples public-safe and generic enough
+for another user's setup.
+
+For the website:
+
+```bash
+cd website
+bun install --frozen-lockfile
+bun run build
+```
+
+For starter-pack or documentation changes, review:
+
+- `PRIVACY-AND-SAFETY.md`
+- `PUBLISHING-CHECKLIST.md`
+- `CONTRIBUTING.md`
+
+---
+
+## Security And Privacy
+
+Do not put secrets, credentials, tokens, private keys, customer data, or
+sensitive personal data in this repository or in examples. Use placeholders for
+all private organizations, repositories, people, and tickets.
+
+If you find an example that leaks private context, open a bug report or PR that
+removes the data and explains the replacement pattern.
+
+---
+
 ## Contributing
 
 Suggestions, fixes, and improvements are welcome.
 
-- **Bug or unclear docs?** [Open a bug report](../../issues/new?template=bug_report.md)
-- **Have an idea?** [Open a suggestion](../../issues/new?template=suggestion.md)
+- **Bug or unclear docs?** [Open a bug report](https://github.com/thedoublejay/braingent-manifesto/issues/new?template=bug_report.md)
+- **Have an idea?** [Open a suggestion](https://github.com/thedoublejay/braingent-manifesto/issues/new?template=suggestion.md)
 - **Want to contribute directly?** Open a pull request. The PR template includes the privacy checklist.
 
 The main contribution rule: no private data. Examples should use placeholders,
