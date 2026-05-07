@@ -1025,6 +1025,21 @@ section { padding: clamp(80px, 10vw, 140px) 0; }
   border-color: rgba(160, 125, 42, 0.4);
   background: rgba(160, 125, 42, 0.08);
 }
+.feature-item .status.soon {
+  color: var(--oxblood);
+  border-color: rgba(139, 46, 31, 0.4);
+  background: rgba(139, 46, 31, 0.08);
+}
+.feature-item .status.released {
+  color: var(--teal-ink);
+  border-color: rgba(62, 107, 102, 0.5);
+  background: rgba(62, 107, 102, 0.12);
+}
+.feature-item.flagship .status.released {
+  color: var(--parchment-50);
+  border-color: rgba(232, 220, 188, 0.4);
+  background: rgba(62, 107, 102, 0.45);
+}
 .feature-item.flagship {
   background: var(--ink-900);
   border-color: var(--ink-800);
