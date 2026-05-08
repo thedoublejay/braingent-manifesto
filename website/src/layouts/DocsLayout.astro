@@ -17,6 +17,33 @@ const section = findSectionFor(slug);
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://braingent.dev').toString();
 const ogImage = new URL('/og-image.webp', Astro.site ?? 'https://braingent.dev').toString();
 
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'TechArticle',
+  headline: title,
+  description,
+  url: canonical,
+  mainEntityOfPage: canonical,
+  inLanguage: 'en',
+  isPartOf: {
+    '@type': 'WebSite',
+    '@id': 'https://braingent.dev/#website',
+    name: 'Braingent',
+    url: 'https://braingent.dev/',
+  },
+  author: {
+    '@type': 'Person',
+    '@id': 'https://josejai.me/#person',
+    name: 'JJ Adonis',
+    url: 'https://josejai.me',
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Braingent',
+    url: 'https://braingent.dev/',
+  },
+};
+
 const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
 ---
 
@@ -53,6 +80,7 @@ const tocHeadings = headings.filter((h) => h.depth === 2 || h.depth === 3);
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon/favicon-96x96.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon/apple-touch-icon.png" />
     <link rel="manifest" href="/favicon/site.webmanifest" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
   </head>
   <body class="docs-body">
     <a class="skip-link" href="#main-content">Skip to main content</a>
