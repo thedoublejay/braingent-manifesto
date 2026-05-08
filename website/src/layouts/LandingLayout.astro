@@ -4,11 +4,13 @@ import '../styles/landing.css';
 export interface Props {
   title: string;
   description?: string;
+  robots?: string;
 }
 
 const {
   title,
   description = 'Git-backed engineering memory for humans and AI agents.',
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1',
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? 'https://braingent.dev').toString();
@@ -56,7 +58,7 @@ const jsonLd = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="robots" content={robots} />
     <meta name="theme-color" content="#f4ead5" />
     <meta name="author" content="JJ Adonis" />
     <meta name="generator" content={Astro.generator} />

@@ -7,5 +7,9 @@ const siteUrl = 'https://braingent.dev';
 // https://astro.build/config
 export default defineConfig({
   site: siteUrl,
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      lastmod: new Date(),
+    }),
+  ],
 });
