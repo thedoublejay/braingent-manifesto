@@ -57,7 +57,7 @@ auto_capture_on_pr     = true
 auto_capture_on_ticket = true
 
 [indexes]
-# Which indexes to regenerate when running `scripts/reindex.sh`.
+# Which indexes to regenerate when running `braingent reindex`.
 generate = ["by-topic", "by-repo", "by-tool", "decisions-index", "recent"]
 recent_count = 50
 
@@ -72,7 +72,7 @@ allowed_status = ["planned", "in_progress", "done", "abandoned", "blocked"]
 read_only = false
 ```
 
-`scripts/doctor.sh` validates this file when health checks run.
+`braingent doctor` validates this file when health checks run.
 
 ## User-level config
 
@@ -94,7 +94,7 @@ default_agent = "claude"
 ```toml
 [safety]
 # Paths that should never appear inside committed Markdown.
-# `scripts/doctor.sh` flags violations.
+# `braingent doctor` flags violations.
 forbid_paths = ["~/private", "/Users/secrets"]
 
 # Patterns that should never appear in record bodies.
@@ -117,7 +117,7 @@ moment, if it exists.
 | --- | --- |
 | `pre-capture.sh` | Before a record is written. Receives the draft frontmatter on stdin. Exit non-zero to abort. |
 | `post-capture.sh` | After capture commits. Receives the commit SHA. |
-| `pre-update.sh` | Before a future packaged update helper applies changes. |
+| `pre-update.sh` | Before `braingent update` applies changes. |
 | `post-doctor.sh` | After `doctor` runs. Receives the report on stdin. |
 
 Hooks are plain shell scripts. Keep them small. If you find yourself
@@ -127,7 +127,7 @@ instead.
 ## MCP server
 
 The MCP server reads its config from CLI args, not a file. See
-[Installation → MCP Server](/guides/installation/#install-the-mcp-server)
+[Installation → Enable MCP Retrieval](/guides/installation/#enable-mcp-retrieval)
 for the JSON config blocks per agent.
 
 ## Where to go next

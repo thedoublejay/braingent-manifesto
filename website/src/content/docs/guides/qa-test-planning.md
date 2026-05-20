@@ -12,16 +12,16 @@ hallucinate the acceptance criteria. There's no link back to the engineering
 evidence, no link back to prior decisions, and no way to tell why a test
 was included.
 
-`scripts/qa-generate.sh` is built differently. It produces a strict,
-reviewable QA plan from three real inputs: the ticket, your Braingent
-memory, and concrete implementation evidence. Every test case is traceable
-back to the source that produced it.
+`braingent qa generate` is built differently. It produces a strict, reviewable
+QA plan from three real inputs: the ticket, your Braingent memory, and concrete
+implementation evidence. Every test case is traceable back to the source that
+produced it.
 
 This is Braingent's flagship workflow.
 
 ## What it produces
 
-`scripts/qa-generate.sh` emits a single QA plan in your chosen format. All
+`braingent qa generate` emits a single QA plan in your chosen format. All
 formats share the same case model:
 
 - **Markdown** — for human review, PR comments, and Confluence pastes.
@@ -91,7 +91,7 @@ You'll need:
 Then run:
 
 ```bash
-scripts/qa-generate.sh \
+braingent qa generate \
   --ticket-key ACME-1492 \
   --evidence-pack ./build/qa-evidence.json \
   --emit-format markdown \
@@ -189,8 +189,8 @@ They miss the regression that bit you last quarter. They re-introduce
 the antipattern you decided against. They lack the context that lives in
 your decisions and learnings — because the LLM has never seen them.
 
-`scripts/qa-generate.sh` reads that context for you and uses it to ground every test
-case. The output is a plan a senior engineer would write — because it's
+`braingent qa generate` reads that context for you and uses it to ground every
+test case. The output is a plan a senior engineer would write — because it's
 informed by the same evidence a senior engineer would have.
 
 ## Where to go next

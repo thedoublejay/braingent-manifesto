@@ -26,21 +26,21 @@ Variants the agent recognizes: `cleanup braingent`, `tidy braingent`, and
 
 | Cadence | What runs | Time |
 | --- | --- | --- |
-| Daily (optional) | `scripts/doctor.sh`, list new records | 1 min |
-| Weekly | `scripts/validate.sh`, `scripts/reindex.sh --check`, archive closed tasks | 5-10 min |
+| Daily (optional) | `braingent doctor`, list new records | 1 min |
+| Weekly | `braingent validate`, `braingent reindex --check`, archive closed tasks | 5-10 min |
 | Monthly | Stale record review, dedup pass, link audit | 20-30 min |
 | Quarterly | Synthesis pass, broad review, frontmatter migration | 1-2 hours |
 
 You can run any of these out of order. The agent picks based on the trigger
 phrase and the time since the last cleanup commit.
 
-## Daily — `scripts/doctor.sh`
+## Daily — `braingent doctor`
 
 The fastest health check. Run it as part of your morning ritual or wire it
 into pre-commit.
 
 ```bash
-scripts/doctor.sh
+braingent doctor
 ```
 
 Checks for missing entrypoints, stale placeholders, malformed frontmatter,
@@ -52,13 +52,13 @@ Three steps:
 
 ```bash
 # 1. validate frontmatter across all records
-scripts/validate.sh
+braingent validate
 
 # 2. confirm indexes still match records
-scripts/reindex.sh --check
+braingent reindex --check
 
 # 3. archive closed tasks
-scripts/task-archive.sh BGT-0142 --as agent--codex-cli --resolution completed
+braingent task-archive BGT-0142 --as agent--codex-cli --resolution completed
 ```
 
 If any command reports issues, review the diff before fixing.
@@ -72,7 +72,7 @@ Records the system flags as candidates for review:
 - **Decisions without `superseded_by`** whose topics overlap newer decisions.
 - **Multiple records with near-identical `title`**, which may be dedup candidates.
 
-Use `scripts/doctor.sh` plus targeted `scripts/find.sh` and `rg` queries to
+Use `braingent doctor` plus targeted `braingent find` and `rg` queries to
 produce the list. Review by hand; update or supersede; never auto-delete.
 
 ## Quarterly — synthesis pass
@@ -81,7 +81,7 @@ Synthesize what the last quarter taught you. The output is a topic, repo, or
 project synthesis page with citations.
 
 ```bash
-scripts/synthesize.sh --topic auth
+braingent synthesize --topic auth
 ```
 
 After the synthesis lands, review which underlying records are still the best
@@ -104,7 +104,7 @@ Every cleanup pass should also run a quick check for things that should not be
 there:
 
 ```bash
-scripts/doctor.sh
+braingent doctor
 rg -n '/Users/|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|sk-[A-Za-z0-9]{40,}' .
 ```
 
@@ -127,10 +127,10 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
-      - run: pip install -r requirements.txt
-      - run: scripts/doctor.sh
-      - run: scripts/validate.sh
-      - run: scripts/reindex.sh --check
+      - run: python -m pip install braingent
+      - run: braingent doctor
+      - run: braingent validate
+      - run: braingent reindex --check
 ```
 
 Three commands, three exit codes, full coverage of the weekly cadence on every
@@ -146,4 +146,4 @@ issue, fix the underlying capture policy, not just the symptom.
 
 - [The Capture Loop](/guides/capture-loop/) — the cleanest way to keep cleanups boring.
 - [Configuration](/reference/configuration/) — privacy patterns and hooks.
-- [CLI Reference](/reference/cli/) — shipped helper scripts and flags.
+- [CLI Reference](/reference/cli/) — command flags.

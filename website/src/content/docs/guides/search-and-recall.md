@@ -13,16 +13,16 @@ context pack instead of dumping everything into an agent prompt.
 
 | Mode | Tool | Best for |
 | --- | --- | --- |
-| Structured filter | `scripts/find.sh` / `braingent_find()` MCP | "All accepted decisions for a repo" |
+| Structured filter | `braingent find` / `braingent_find()` MCP | "All accepted decisions for a repo" |
 | Direct fetch | `braingent_get()` MCP or opening the path from `find` | "Read one record in full" |
-| Context pack | `scripts/recall.sh` | "Everything directly relevant to this ticket or repo" |
+| Context pack | `braingent recall` | "Everything directly relevant to this ticket or repo" |
 | Full-text | `rg` | "Where did we mention Temporal idempotency?" |
 
 Use the most specific mode that answers your question. Frontmatter filters
 are cheap and precise; `rg` is the fallback when you do not know which
 metadata field carries the answer.
 
-## Structured filter — `scripts/find.sh`
+## Structured filter — `braingent find`
 
 Filter records by frontmatter fields. Filters are `key=value` pairs. Common
 aliases include `kind`, `org`, `project`, `repo`, `topic`, `tool`, `ticket`,
@@ -30,13 +30,13 @@ aliases include `kind`, `org`, `project`, `repo`, `topic`, `tool`, `ticket`,
 
 ```bash
 # all accepted decisions
-scripts/find.sh kind=decision status=accepted
+braingent find kind=decision status=accepted
 
 # every record that touches a specific repo slug
-scripts/find.sh repo=repo--example--owner--repo --limit 20
+braingent find repo=repo--example--owner--repo --limit 20
 
 # tasks captured for one topic
-scripts/find.sh kind=task topic=ai-memory --paths
+braingent find kind=task topic=ai-memory --paths
 ```
 
 Output is a sorted list of matching records. Add `--paths` for scriptable
@@ -48,25 +48,25 @@ volume check.
 For MCP-aware agents, use `braingent_get(path, depth="summary")` first and
 `depth="full"` only when exact evidence is needed.
 
-For humans, use the paths from `scripts/find.sh --paths`:
+For humans, use the paths from `braingent find --paths`:
 
 ```bash
-scripts/find.sh kind=decision status=accepted --paths
+braingent find kind=decision status=accepted --paths
 sed -n '1,120p' orgs/org--example/projects/project--example--memory/records/2026-05-07--decision--example.md
 ```
 
 Agents should prefer summaries first because they keep context small.
 
-## Context pack — `scripts/recall.sh`
+## Context pack — `braingent recall`
 
 `recall` builds a focused context pack for one scope. It classifies results
 into `must_read`, `supporting`, `stale_or_verify`, `do_not_use`, and
 `capture_target`.
 
 ```bash
-scripts/recall.sh repo=repo--example--owner--repo
-scripts/recall.sh ticket=ACME-123 --json
-scripts/recall.sh topic=qa --limit 8
+braingent recall repo=repo--example--owner--repo
+braingent recall ticket=ACME-123 --json
+braingent recall topic=qa --limit 8
 ```
 
 This is what the [`workflows/retrieve-context.md`](/concepts/repository-shape/#iii-workflows-named-procedures)
@@ -89,10 +89,10 @@ Prefer `rg` over broad file reads. It is fast, local, and transparent.
 
 A wired Braingent agent follows this order:
 
-1. **Skim by filter.** Use `braingent_find()` or `scripts/find.sh` with the tightest filter possible.
+1. **Skim by filter.** Use `braingent_find()` or `braingent find` with the tightest filter possible.
 2. **Read summaries.** Use `braingent_get(..., depth="summary")` or open only the top matching paths.
 3. **Escalate when needed.** Read full records only when the summary does not carry the evidence.
-4. **Build a pack.** Use `scripts/recall.sh` when the task spans several records.
+4. **Build a pack.** Use `braingent recall` when the task spans several records.
 5. **Stop early.** Once there is enough context to plan, stop searching.
 
 If an agent reads the whole repo before filtering, tighten the entrypoint
@@ -105,7 +105,7 @@ helpers map to read-only tools:
 
 | Shell helper | MCP tool |
 | --- | --- |
-| `scripts/find.sh kind=decision` | `braingent_find({"kind": "decision"})` |
+| `braingent find kind=decision` | `braingent_find({"kind": "decision"})` |
 | Open one returned path | `braingent_get(path, depth="summary")` |
 | Open exact evidence | `braingent_get(path, depth="full")` |
 | Read the thin entry chain | `braingent_guide()` |
@@ -117,7 +117,7 @@ parsed shell output.
 
 Search finds nothing because:
 
-- **The record exists but frontmatter is stale.** Run `scripts/doctor.sh` and fix it.
+- **The record exists but frontmatter is stale.** Run `braingent doctor` and fix it.
 - **The record never existed.** That is a capture gap; capture this time so next time it does.
 - **The query was too narrow.** Drop a filter, broaden a topic, or use `rg`.
 
@@ -127,5 +127,5 @@ fix is to capture it now.
 ## Where to go next
 
 - [The Capture Loop](/guides/capture-loop/) — the write half.
-- [CLI Reference](/reference/cli/) — shipped helper scripts and flags.
+- [CLI Reference](/reference/cli/) — command flags.
 - [MCP Tools Reference](/reference/mcp-tools/) — full inputs and outputs.

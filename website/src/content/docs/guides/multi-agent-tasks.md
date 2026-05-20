@@ -106,7 +106,7 @@ tasks/active/BGT-0142.md   ->   tasks/archive/BGT-0142.md
 When work finishes:
 
 1. The closing agent updates `status: closed`, sets a `resolution`, and adds a final status log entry.
-2. `scripts/task-archive.sh` moves the file from `tasks/active/` to
+2. `braingent task-archive` moves the file from `tasks/active/` to
    `tasks/archive/`.
 3. Any captured decisions or learnings get linked from the task's
    `links:` frontmatter.
@@ -125,24 +125,23 @@ of *what is being done*. Both have their place.
 
 ## CLI helpers
 
-The starter pack ships these commands. Each is a thin wrapper around the
-same Markdown manipulation.
+The package ships these commands. Each edits the same Markdown files.
 
 ```bash
 # create a new live task
-scripts/task-new.sh "Backfill repo profile for acme/api" --priority high
+braingent task-new "Backfill repo profile for acme/api" --priority high
 
 # claim it (sets owner)
-scripts/task-claim.sh BGT-0142 --as agent--claude-code
+braingent task-claim BGT-0142 --as agent--claude-code
 
 # append a status update
-scripts/task-comment.sh BGT-0142 "drafted profile, 14 sections" --as agent--claude-code
+braingent task-comment BGT-0142 "drafted profile, 14 sections" --as agent--claude-code
 
 # move it to review
-scripts/task-status.sh BGT-0142 in-review --as agent--claude-code --note "Ready for review"
+braingent task-status BGT-0142 in-review --as agent--claude-code --note "Ready for review"
 
 # close and archive it
-scripts/task-archive.sh BGT-0142 --as agent--claude-code --resolution completed
+braingent task-archive BGT-0142 --as agent--claude-code --resolution completed
 ```
 
 All of these are optional. Editing the file directly works the same.
@@ -162,7 +161,7 @@ directly through their normal flow.
 ## Pitfalls and how to avoid them
 
 - **Forgetting to claim.** Two agents claim simultaneously → both think
-  they own it. Mitigation: have agents run `scripts/task-claim.sh` before they start.
+  they own it. Mitigation: have agents run `braingent task-claim` before they start.
 - **Skipping the status log.** Tempting when you're moving fast. Don't —
   the log is the only thing the next agent will read.
 - **Over-using live tasks.** Solo work doesn't need one. If you're the

@@ -1,13 +1,15 @@
 # Setup Guide
 
-This guide creates a Braingent-style memory repo using only Markdown files.
+This guide creates a Braingent-style memory repo with Markdown as the source of
+truth and the installable Python CLI as the workflow surface.
 
 ## Prerequisites
 
 Required:
 
-- A text editor.
-- Git, if you want version history.
+- Python 3.11+.
+- `pipx` or `uv`.
+- Git.
 - One AI tool, such as Claude, Codex, or ChatGPT.
 
 Optional but useful:
@@ -18,21 +20,28 @@ Optional but useful:
 - GitHub CLI if you later want to index merged PRs.
 - Bun and Playwright if you later build or run the optional task dashboard.
 
-## Step 1: Create A Repo
-
-Create a new repository named `braingent` or any name you prefer. The public guide is named `braingent-manifesto`; your personal memory repo can have its own name.
+## Step 1: Install The CLI
 
 ```bash
-mkdir <your-memory-repo>
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+pipx install braingent
+```
+
+`uv` users can run `uv tool install braingent`.
+
+## Step 2: Initialize A Repo
+
+Create a new repository named `braingent` or any name you prefer.
+
+```bash
+braingent init <your-memory-repo>
 cd <your-memory-repo>
 git init
 ```
 
-Do not hardcode private paths into the files. Use placeholders or relative paths.
-
-## Step 2: Copy The Starter Pack
-
-Copy everything under `starter-pack/` into your new repo.
+Do not hardcode private paths into committed files. Use placeholders or relative
+paths where possible.
 
 Your new repo should start with files like:
 
@@ -65,6 +74,13 @@ memory repo as `dashboard/tasks/`. The sample app uses synthetic data by default
 and supports `BRAINGENT_MEMORY_ROOT=/path/to/your-braingent` for real task files.
 
 ## Step 3: Replace Placeholders
+
+Run the first checks:
+
+```bash
+braingent doctor
+braingent validate
+```
 
 Search for placeholder syntax:
 
@@ -155,7 +171,7 @@ For every meaningful task:
 
 If the optional live-work module is enabled:
 
-1. Check `tasks/INDEX.md` or `scripts/task-list.sh --count` before starting.
+1. Check `tasks/INDEX.md` or `braingent task-list --count` before starting.
 2. Create or claim a `BGT-NNNN` task when coordination matters.
 3. Append activity during the work.
 4. On completion, create or link the durable record with `agent_task: BGT-NNNN`.
@@ -192,13 +208,11 @@ Later, you can add compact JSON indexes, SQLite search, MCP tools, embeddings,
 or dashboards. Those tools should implement the same retrieval ladder, not
 replace it.
 
-## Step 10: Add Automation Later
+## Step 10: Use The Helper CLI
 
-This manifesto intentionally starts with Markdown only.
+This manifesto intentionally keeps Markdown as the source of truth. The helper
+CLI currently covers:
 
-Later, you can add scripts or a small optional CLI for:
-
-- creating dated record files
 - validating frontmatter
 - generating indexes
 - building a local search database
@@ -210,47 +224,43 @@ Later, you can add scripts or a small optional CLI for:
 
 The copyable dashboard sample lives at `examples/task-dashboard/`.
 
-For the v4 helper surface, keep the scope intentionally small and make every
+For the helper surface, keep the scope intentionally small and make every
 mutation visible in Git. The helpers should never become the source of truth;
 they should create, validate, search, index, and summarize the Markdown repo.
 
 | Command | Scope |
 | --- | --- |
-| `scripts/doctor.sh` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
-| `scripts/validate.sh` | Validate record frontmatter and taxonomy values. |
-| `scripts/reindex.sh` | Rebuild generated indexes and the local derived cache from Markdown records. |
-| `scripts/find.sh` / `scripts/recall.sh` | Search frontmatter and build focused context packs. |
-| `scripts/new-record.sh` | Create a dated, frontmatter-stamped durable record from a template. |
-| `scripts/task-*.sh` | Create, claim, comment on, update, list, and archive live `BGT-*` task files. |
-| `python3 scripts/mcp_server.py` | Serve read-only MCP tools for token-efficient agent retrieval. |
-| `scripts/qa-generate.sh` | Generate strict, reviewable QA plans from tickets, Braingent memory, and Gather Step `qa-evidence`; keep a lenient default evidence budget and emit Markdown, Xray JSON, TestRail CSV, or Gherkin from the same traceable case model. |
+| `braingent doctor` | Check required files, stale placeholders, malformed frontmatter, private path leaks, generated-index drift, and local runtime/tooling gaps. |
+| `braingent validate` | Validate record frontmatter and taxonomy values. |
+| `braingent reindex` | Rebuild generated indexes and the local derived cache from Markdown records. |
+| `braingent find` / `braingent recall` | Search frontmatter and build focused context packs. |
+| `braingent init` | Copy the packaged starter template into a new memory repo and rebuild indexes. |
+| `braingent update` | Report or apply conservative starter template updates. |
+| `braingent qa generate` | Generate strict, reviewable QA plans from tickets, Braingent memory, and Gather Step `qa-evidence`. |
+| `braingent mcp serve` | Serve read-only MCP tools for token-efficient agent retrieval. |
 
-A future packaged `braingent init` should be an interactive bootstrap, not a
-hidden migration:
+`braingent init` is a bootstrap, not a hidden migration:
 
 1. Resolve the target directory and refuse to overwrite non-Braingent repos
    unless the user passes an explicit force flag.
-2. Ask for owner/name, primary agent tools, privacy level, first org/project,
-   and whether live tasks and the dashboard belong in the initial repo.
-3. Copy the starter pack, preserving file modes and leaving generated indexes
+2. Copy the packaged starter template, preserving file modes and leaving generated indexes
    reproducible from Markdown.
-4. Replace known placeholders only; leave unknown user prose untouched.
-5. Run `scripts/doctor.sh`, `scripts/validate.sh`, and
-   `scripts/reindex.sh --check` when the copied scripts are present.
-6. Print a concise handoff: files created, optional modules included, first
+3. Write the template manifest used by future updates.
+4. Run reindex after copy.
+5. Print a concise handoff: files created, optional modules included, first
    commit command, and the next suggested workflow.
 
-A future packaged `braingent update` should be conservative:
+`braingent update` is conservative:
 
-1. Read the installed template/version marker and the current starter-pack
+1. Read the installed template/version marker and the current packaged template
    manifest.
 2. Build a three-way comparison between old template, new template, and the
    user's current files.
 3. Auto-apply only files that are unchanged locally or have conflict-free
    mechanical updates.
 4. Write conflicts to a review report with exact file paths and reasons.
-5. Re-run `scripts/doctor.sh`, `scripts/validate.sh`, and
-   `scripts/reindex.sh --check` after any accepted change.
+5. Re-run `braingent doctor`, `braingent validate`, and
+   `braingent reindex --check` after any accepted change.
 
 Avoid putting product state in the CLI. The CLI is the moving truck, not the
 house: it can copy, validate, and upgrade files, but Markdown remains the source

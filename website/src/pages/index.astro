@@ -431,7 +431,7 @@ or sensitive personal data. Ever.</pre>
           <p class="eyebrow" data-num="vi.">Get Started</p>
           <span class="chapter-rule"></span>
           <h2>Four Steps. Roughly <em>Ten Minutes.</em></h2>
-          <p>Copy the starter pack, point your agent at it, capture your first task. From there, your memory grows on its own.</p>
+          <p>Install the Python CLI, initialize your private memory repo, point your agents at it, and capture your first task.</p>
           <p class="start-side-foot"><a href="/guides/getting-started/" class="start-side-link">Read the full quickstart <span class="arrow">&rarr;</span></a></p>
         </div>
 
@@ -439,20 +439,20 @@ or sensitive personal data. Ever.</pre>
           <div class="start-step">
             <span class="step-num">i.</span>
             <div>
-              <h4>Clone the Manifesto</h4>
-              <p>Public, open source. Markdown only — no install required to read it.</p>
-              <button type="button" class="copy-cmd" data-copy="git clone https://github.com/thedoublejay/braingent-manifesto" aria-label="Copy command: git clone https://github.com/thedoublejay/braingent-manifesto"><span class="prompt">$ </span><span class="cmd">git clone https://github.com/thedoublejay/braingent-manifesto</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
-              <a class="start-step-link" href="/guides/getting-started/#step-1-clone-the-manifesto">Read step <span aria-hidden="true">→</span></a>
+              <h4>Install the Python CLI</h4>
+              <p>Use <code>pipx</code> so <code>braingent</code> runs as a clean command outside your project environments.</p>
+              <button type="button" class="copy-cmd" data-copy="pipx install braingent" aria-label="Copy command: pipx install braingent"><span class="prompt">$ </span><span class="cmd">pipx install braingent</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/installation/">Read installation <span aria-hidden="true">→</span></a>
             </div>
           </div>
 
           <div class="start-step">
             <span class="step-num">ii.</span>
             <div>
-              <h4>Copy the Starter Pack Into Your Private Memory Repo</h4>
-              <p>Preferences, templates, workflows, and an empty records tree. Personalize the placeholders, then commit.</p>
-              <button type="button" class="copy-cmd" data-copy="cp -R braingent-manifesto/starter-pack/* ./my-memory/" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">cp -R braingent-manifesto/starter-pack/* ./my-memory/</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
-              <a class="start-step-link" href="/guides/installation/">Read installation <span aria-hidden="true">→</span></a>
+              <h4>Initialize Your Memory Repo</h4>
+              <p>The package creates the entrypoints, templates, workflows, indexes, and empty records tree for you.</p>
+              <button type="button" class="copy-cmd" data-copy="braingent init my-memory" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">braingent init my-memory</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
+              <a class="start-step-link" href="/guides/getting-started/#step-2-create-your-memory-repo">Read step <span aria-hidden="true">→</span></a>
             </div>
           </div>
 
@@ -460,7 +460,7 @@ or sensitive personal data. Ever.</pre>
             <span class="step-num">iii.</span>
             <div>
               <h4>Wire Up Your Agents</h4>
-              <p>Drop entrypoints into the memory repo root. Works with Claude, Codex, ChatGPT, and Gemini CLI.</p>
+              <p>Open the generated entrypoints in the memory repo root. Works with Claude, Codex, ChatGPT, and Gemini CLI.</p>
               <button type="button" class="copy-cmd" data-copy="ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md" aria-label="Copy command"><span class="prompt">$ </span><span class="cmd">ls my-memory/CLAUDE.md AGENTS.md CHATGPT_PROJECT_BRIEF.md</span><span class="copy-icon" aria-hidden="true">⧉</span><span class="copy-feedback" aria-hidden="true">Copied</span></button>
               <a class="start-step-link" href="/guides/wire-up-agents/">Wire-up guide <span aria-hidden="true">→</span></a>
             </div>

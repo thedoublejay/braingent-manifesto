@@ -46,7 +46,7 @@ Together, they cover both the **why** (engineering memory) and the
 between a QA plan that re-derives everything and a QA plan that
 inherits the team's actual work.
 
-## Where they meet — `scripts/qa-generate.sh`
+## Where they meet — `braingent qa generate`
 
 Braingent's flagship workflow, [`qa-generate`](/guides/qa-test-planning/),
 is built to consume both:
@@ -59,7 +59,7 @@ is built to consume both:
   natively, so the pairing is one flag away.
 
 ```bash
-scripts/qa-generate.sh \
+braingent qa generate \
   --ticket-key ACME-1492 \
   --implementation-state post-implementation \
   --gather-workspace ~/Documents/repos/acme-app \
@@ -94,7 +94,7 @@ and line range — and decisions or learnings by record `id`.
    background.
 2. **Engineer captures to Braingent.** Decisions, learnings, the task
    record itself.
-3. **PR opens.** `scripts/qa-generate.sh` runs in CI, writes
+3. **PR opens.** `braingent qa generate` runs in CI, writes
    a draft QA plan into the PR.
 4. **Reviewer reads the plan.** Approves or asks for changes — both
    the code and the QA plan are reviewed together.
@@ -118,7 +118,7 @@ Then:
 gatherstep --version
 
 # generate a QA plan with both inputs
-scripts/qa-generate.sh \
+braingent qa generate \
   --ticket-key <TICKET> \
   --implementation-state post-implementation \
   --gather-workspace ~/Documents/repos/acme-app \

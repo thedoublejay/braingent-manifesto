@@ -75,8 +75,8 @@ fixes landed, refactors merged, decisions reached.
 
 ## II. Decision records
 
-ADR-style: the choice, the context, the consequences. Decisions live
-forever and supersede each other rather than getting deleted.
+Decision records capture the choice, the context, and the consequences.
+They live forever and supersede each other rather than getting deleted.
 
 ```yaml
 ---
@@ -236,7 +236,7 @@ Two mechanisms:
 2. **Markdown links in the body** — for prose context.
 
 A well-linked record has both. Frontmatter `links` are how
-`braingent_find` and `scripts/recall.sh` use for retrieval; Markdown links are how a human reading
+`braingent_find` and `braingent recall` use for retrieval; Markdown links are how a human reading
 the page gets to the next thing.
 
 ## Where to go next

@@ -1,37 +1,74 @@
 ---
 title: CLI Reference
-description: Runnable Braingent starter-pack scripts, flags, and examples.
+description: The installable Braingent Python CLI, commands, flags, and examples.
 section: Reference
 order: 1
 ---
 
-Braingent's public starter pack ships runnable helper scripts under
-`scripts/`. They are deliberately thin wrappers around Markdown files. You can
-always replace them with manual edits plus `git commit`; the scripts make
-search, validation, indexing, task coordination, MCP retrieval, and QA planning
-faster.
+The `braingent` command is the public API for creating, checking, searching,
+updating, and serving a Braingent memory repo.
 
-Run these commands from the root of your copied memory repo.
-
-## Runtime
-
-Most scripts use `python3` with `PyYAML==6.0.3`, or `uv` as a fallback when the
-dependency is not installed globally.
+Run commands from the memory repo root, or pass `--root /path/to/repo`.
 
 ```bash
-python3 -m pip install -r requirements.txt
+braingent --help
+braingent --root ~/Documents/repos/braingent doctor
 ```
 
-## `scripts/doctor.sh`
+## Install
+
+```bash
+pipx install braingent
+braingent --version
+```
+
+For MCP:
+
+```bash
+pipx inject braingent "mcp>=1.27.1"
+```
+
+## `braingent init`
+
+Create a new memory repo from the packaged starter template.
+
+```bash
+braingent init ~/Documents/repos/braingent
+braingent init ~/Documents/repos/braingent --dry-run
+braingent init ~/Documents/repos/braingent --force
+```
+
+| Flag | Description |
+| --- | --- |
+| `--dry-run` | Show what would be copied. |
+| `--force` | Allow copying into a non-empty target. |
+
+## `braingent update`
+
+Update starter template files in an existing memory repo.
+
+```bash
+braingent update ~/Documents/repos/braingent --dry-run
+braingent update ~/Documents/repos/braingent --write
+braingent update ~/Documents/repos/braingent --write --force
+```
+
+| Flag | Description |
+| --- | --- |
+| `--dry-run` | Show add/update/conflict counts without writing. |
+| `--write` | Apply non-conflicting updates. |
+| `--force` | Overwrite conflicted template files when used with `--write`. |
+
+## `braingent doctor`
 
 Report memory-repo health: missing entrypoints, placeholder leftovers,
 frontmatter issues, stale indexes, possible private paths, possible secrets,
 and stale records.
 
 ```bash
-scripts/doctor.sh
-scripts/doctor.sh --json
-scripts/doctor.sh --strict
+braingent doctor
+braingent doctor --json
+braingent doctor --strict
 ```
 
 | Flag | Description |
@@ -40,40 +77,40 @@ scripts/doctor.sh --strict
 | `--strict` | Exit non-zero when warnings are present. |
 | `--stale-days <n>` | Age threshold for stale profile/learning records. Default `180`. |
 
-## `scripts/validate.sh`
+## `braingent validate`
 
 Validate record frontmatter against `preferences/taxonomy.yml`.
 
 ```bash
-scripts/validate.sh
-scripts/validate.sh orgs/org--example/projects/project--example--memory/records/example.md
+braingent validate
+braingent validate orgs/org--example/projects/project--example--memory/records/example.md
 ```
 
 Arguments are optional Markdown paths. With no paths, the whole repo is
 validated.
 
-## `scripts/reindex.sh`
+## `braingent reindex`
 
 Regenerate derived indexes under `indexes/` and `.braingent.db`.
 
 ```bash
-scripts/reindex.sh
-scripts/reindex.sh --check
+braingent reindex
+braingent reindex --check
 ```
 
 | Flag | Description |
 | --- | --- |
 | `--check` | Fail if generated indexes are stale, without writing changes. |
-| `--dashboard-e2e` | Also run dashboard Playwright checks when the dashboard exists. |
+| `--dashboard-e2e` | Also run dashboard checks when the dashboard exists. |
 
-## `scripts/find.sh`
+## `braingent find`
 
 Search durable records by structured frontmatter filters.
 
 ```bash
-scripts/find.sh kind=decision
-scripts/find.sh repo=repo--example--owner--repo status=active --limit 5
-scripts/find.sh q="pagination state" --json
+braingent find kind=decision
+braingent find repo=repo--example--owner--repo status=active --limit 5
+braingent find q="pagination state" --json
 ```
 
 | Flag / Argument | Description |
@@ -84,47 +121,29 @@ scripts/find.sh q="pagination state" --json
 | `--count` | Emit only the result count. |
 | `--limit <n>` | Limit result count. |
 
-## `scripts/recall.sh`
+## `braingent recall`
 
 Build a focused context pack for an agent before planning or implementation.
 
 ```bash
-scripts/recall.sh repo=repo--example--owner--repo
-scripts/recall.sh ticket=ACME-123 --json
+braingent recall repo=repo--example--owner--repo
+braingent recall ticket=ACME-123 --json
 ```
 
 | Flag / Argument | Description |
 | --- | --- |
-| `key=value` | Same filter style as `find.sh`. |
+| `key=value` | Same filter style as `find`. |
 | `--json` | Emit JSON. |
 | `--limit <n>` | Number of `must_read` records. Default `8`. |
 | `--stale-days <n>` | Staleness threshold. Default `180`. |
 
-## `scripts/new-record.sh`
-
-Create a dated record from a template.
-
-```bash
-scripts/new-record.sh task project--example--memory "ship discussion tab" \
-  orgs/org--example/projects/project--example--memory/records
-```
-
-Arguments:
-
-1. Record kind: `task`, `review`, `decision`, `learning`, `interaction`,
-   `version`, `note`, `summary`, `profile`, or `ticket-stub`.
-2. Entity key: project, repo, topic, tool, person, org, or ticket key.
-3. Subject.
-4. Output directory.
-5. Optional filename suffix.
-
-## `scripts/qa-generate.sh`
+## `braingent qa generate`
 
 Generate a strict QA plan from ticket + memory + optional Gather Step evidence.
 See [QA Test Planning](/guides/qa-test-planning/).
 
 ```bash
-scripts/qa-generate.sh \
+braingent qa generate \
   --ticket-key ACME-1492 \
   --evidence-pack ./build/qa-evidence.json \
   --emit-format markdown \
@@ -142,7 +161,7 @@ scripts/qa-generate.sh \
 | `--no-diff` | Skip white-box implementation evidence. |
 | `--diff <base..head>` | Diff range for implementation evidence. |
 | `--gather-workspace <path>` | Workspace where Gather Step should run. |
-| `--gather-target <target>` | Symbol, route, or event target for Gather Step `qa-evidence`. |
+| `--gather-target <target>` | Symbol, route, or event target for Gather Step. |
 | `--projection-target <target>` | Optional field/contract target for projection impact evidence. |
 | `--evidence-pack <path>` | Existing `qa-evidence.v1` manifest. |
 | `--budget-tokens <n>` | Default `160000`. |
@@ -152,50 +171,38 @@ scripts/qa-generate.sh \
 | `--repo`, `--project`, `--topic`, `--tool` | Braingent memory filters. |
 | `--print` | Print generated output after writing it. |
 
-## `scripts/synthesize.sh`
+## `braingent synthesize`
 
 Generate a source-indexed synthesis page from records.
 
 ```bash
-scripts/synthesize.sh --topic topic--ai-memory
-scripts/synthesize.sh --repo repo--example--owner--repo
-scripts/synthesize.sh --project project--example--memory
+braingent synthesize --topic topic--ai-memory
+braingent synthesize --repo repo--example--owner--repo
+braingent synthesize --project project--example--memory
 ```
 
 Exactly one of `--topic`, `--repo`, or `--project` is required.
 
-## `scripts/cleanup.sh`
-
-Run report-only cleanup checks.
-
-```bash
-scripts/cleanup.sh --daily
-scripts/cleanup.sh --weekly
-```
-
-Cleanup reports stale generated indexes, unchecked follow-ups, stale records,
-raw imports, and live-task hygiene. It does not rewrite records by itself.
-
-## Live Task Scripts
+## Live Task Commands
 
 Coordinate optional live `BGT-NNNN` task files under `tasks/`.
 
-| Script | Purpose |
+| Command | Purpose |
 | --- | --- |
-| `scripts/task-new.sh "<title>"` | Create a live task. |
-| `scripts/task-claim.sh BGT-0001 --as agent--codex-cli` | Claim a task. |
-| `scripts/task-comment.sh BGT-0001 "note" --as agent--codex-cli` | Append activity. |
-| `scripts/task-status.sh BGT-0001 in-review --as agent--codex-cli` | Change status. |
-| `scripts/task-list.sh` | List live and archived tasks. |
-| `scripts/task-list.sh --count` | Print status counts. |
-| `scripts/task-archive.sh BGT-0001 --resolution completed --as agent--codex-cli` | Close and archive. |
+| `braingent task-new "<title>"` | Create a live task. |
+| `braingent task-claim BGT-0001 --as agent--codex-cli` | Claim a task. |
+| `braingent task-comment BGT-0001 "note" --as agent--codex-cli` | Append activity. |
+| `braingent task-status BGT-0001 in-review --as agent--codex-cli` | Change status. |
+| `braingent task-list` | List live and archived tasks. |
+| `braingent task-list --count` | Print status counts. |
+| `braingent task-archive BGT-0001 --resolution completed --as agent--codex-cli` | Close and archive. |
 
 ## MCP Server
 
 Expose token-efficient retrieval tools to MCP-aware agents.
 
 ```bash
-python3 scripts/mcp_server.py
+braingent mcp serve --path ~/Documents/repos/braingent
 ```
 
 Tools:
@@ -204,5 +211,4 @@ Tools:
 - `braingent_find(query, limit)`
 - `braingent_get(path, depth)`
 
-Point your agent's MCP config at `scripts/mcp_server.py` from your copied
-memory repo.
+Point your agent's MCP config at `braingent mcp serve --path <memory-repo>`.

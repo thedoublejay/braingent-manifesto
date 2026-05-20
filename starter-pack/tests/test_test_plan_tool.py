@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import importlib.util
 import io
 import json
 import sys
@@ -11,14 +10,13 @@ from pathlib import Path
 from unittest import mock
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-TOOL_PATH = REPO_ROOT / "tools" / "tool--test-plan" / "test_plan.py"
+SRC_DIR = REPO_ROOT / "src"
 
-spec = importlib.util.spec_from_file_location("test_plan_tool", TOOL_PATH)
-assert spec is not None
-test_plan_tool = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = test_plan_tool
-assert spec.loader is not None
-spec.loader.exec_module(test_plan_tool)
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from braingent import mcp_tools
+from braingent.qa import test_plan as test_plan_tool
 
 
 class TestPlanToolTests(unittest.TestCase):
@@ -317,8 +315,6 @@ Reviewers can export the filtered approvals table so offline audit checks use th
         args.ticket_key = None
         args.memory_query = ["q=approval"]
 
-        from scripts import mcp_tools
-
         with mock.patch.object(mcp_tools, "find_many", side_effect=RuntimeError("index drift")):
             result = test_plan_tool.compact_memory_search(args, "")
 
@@ -336,8 +332,6 @@ Reviewers can export the filtered approvals table so offline audit checks use th
         )
         parser = test_plan_tool.build_arg_parser()
         args = parser.parse_args([str(ticket), "--ticket-key", "SYN-006", "--no-diff", "--memory-query", "q=approval"])
-
-        from scripts import mcp_tools
 
         with mock.patch.object(mcp_tools, "find_many", side_effect=RuntimeError("index drift")):
             model = test_plan_tool.build_model(args)
@@ -439,6 +433,8 @@ Reviewers can export the filtered approvals table so offline audit checks use th
         scenarios = test_plan_tool.build_scenarios(model)
         rendered = test_plan_tool.render_plan(model, scenarios)
 
+        self.assertIsNotNone(model.evidence_pack)
+        assert model.evidence_pack is not None
         self.assertEqual(1, model.evidence_pack["manifest_summary"]["total_rows"])
         self.assertTrue(any("truncated rows" in gap for gap in model.gaps))
         self.assertTrue(any(scenario.classification == "Code-only" for scenario in scenarios))
@@ -522,6 +518,8 @@ Reviewers can export the filtered approvals table so offline audit checks use th
         scenarios = test_plan_tool.build_scenarios(model)
         rendered = test_plan_tool.render_plan(model, scenarios)
 
+        self.assertIsNotNone(model.evidence_pack)
+        assert model.evidence_pack is not None
         summary = model.evidence_pack["manifest_summary"]
         self.assertEqual("qa-evidence.v1", summary["evidence_pack_version"])
         self.assertEqual(2, summary["total_rows"])
@@ -601,15 +599,19 @@ Reviewers can export the filtered approvals table so offline audit checks use th
             text = json.dumps(pack) if label == "qa-evidence" else "{}"
             return test_plan_tool.EvidenceItem(label=label, command=" ".join(command), text=text, ok=True)
 
-        with mock.patch.object(test_plan_tool.shutil, "which", return_value="/usr/local/bin/gather-step"):
-            with mock.patch.object(test_plan_tool, "run_command", side_effect=fake_run_command):
-                model = test_plan_tool.build_model(args)
+        with (
+            mock.patch.object(test_plan_tool.shutil, "which", return_value="/usr/local/bin/gather-step"),
+            mock.patch.object(test_plan_tool, "run_command", side_effect=fake_run_command),
+        ):
+            model = test_plan_tool.build_model(args)
 
         command_names = [part for command in calls for part in command]
         self.assertIn("qa-evidence", command_names)
         self.assertNotIn("search", command_names)
         native_budget = next(budget for command, budget in budgets if "qa-evidence" in command)
         self.assertGreaterEqual(native_budget, 120_000)
+        self.assertIsNotNone(model.evidence_pack)
+        assert model.evidence_pack is not None
         self.assertEqual("qa-evidence.v1", model.evidence_pack["manifest_summary"]["evidence_pack_version"])
         self.assertEqual("feature_flag", model.gather_evidence[0].label)
         self.assertEqual("GS-EVID-FLAG", model.gather_evidence[0].evidence_row_id)

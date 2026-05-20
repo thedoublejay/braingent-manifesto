@@ -107,7 +107,7 @@ retrieval tools (`braingent_guide`, `braingent_find`, `braingent_get`)
 instead of having to search by hand.
 
 MCP is **strictly optional**. The entrypoint contract works without it.
-See [Installation → MCP Server](/guides/installation/#install-the-mcp-server)
+See [Installation → Enable MCP Retrieval](/guides/installation/#enable-mcp-retrieval)
 and [MCP Tools Reference](/reference/mcp-tools/).
 
 ## When you add a new tool

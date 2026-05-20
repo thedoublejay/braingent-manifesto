@@ -10,9 +10,8 @@ directory layout. The shape is opinionated but small. Most folders
 exist so that agents can navigate by convention instead of having to
 ask.
 
-This is the layout shipped in the starter pack. Today the public shell is
-copyable files plus repo-local scripts; a future packaged setup helper can
-stamp the same shape interactively.
+This is the layout created by `braingent init`. The package stamps this shape
+into your private memory repo and keeps starter files updateable over time.
 
 ## At a glance
 
@@ -60,7 +59,7 @@ first.
 - **`INDEX.md`** — a navigable site map. Pointers, not content.
 - **`CURRENT_STATE.md`** — short summary of what's live: open tasks,
   recent decisions, active projects. Refreshed during cleanup.
-- **`FILE-TREE.md`** — refreshed by `scripts/reindex.sh`; humans rarely
+- **`FILE-TREE.md`** — refreshed by `braingent reindex`; humans rarely
   edit it.
 - **`CLAUDE.md`, `AGENTS.md`, `CHATGPT_PROJECT_BRIEF.md`,
   `GEMINI.md`** — agent entrypoints. Short, ideally under 200 lines.
@@ -98,15 +97,15 @@ See [Index Your Repos](/guides/index-your-repos/) and
 [Keeping Memory Healthy](/guides/maintenance/) for the workflows in
 action.
 
-## IV. `templates/` — copy-and-customize starters
+## IV. `templates/` — capture blueprints
 
 Templates are frontmatter-stamped Markdown files. When the agent
 captures, it copies a template and fills in the body — so captured
 records always have consistent frontmatter.
 
-The starter pack includes templates for every record kind: full and
-minimal task records, decision records (ADR-style), reviews, learnings,
-repo profiles, tool/version notes.
+The generated memory repo includes templates for every record kind: full
+and minimal task records, decision records, reviews, learnings, repo
+profiles, tool/version notes.
 
 ## V. Records, organized by context
 
@@ -154,8 +153,8 @@ Live multi-agent coordination. See [Multi-Agent
 Coordination](/guides/multi-agent-tasks/).
 
 - **`tasks/active/`** — `BGT-NNNN.md` files for work in flight.
-- **`tasks/archive/`** — closed tasks moved here on
-  `scripts/task-archive.sh`.
+- **`tasks/archive/`** — closed tasks moved here by
+  `braingent task-archive`.
 
 Live tasks use `record_kind: agent-task` and IDs like `BGT-0142`. When
 a live task closes, important outcomes get **promoted** into durable
@@ -185,7 +184,7 @@ Auto-generated retrieval aids:
 - `indexes/decisions-index.md` — chronological decision list.
 - `.sqlite` files for full-text search.
 
-Run `scripts/reindex.sh` to regenerate. Never edit by hand.
+Run `braingent reindex` to regenerate. Never edit by hand.
 
 ## IX. `dashboard/` (optional)
 

@@ -6,8 +6,8 @@ order: 4
 ---
 
 Frontmatter is the index. Every durable record carries a small block of
-YAML at the top. That block is what `scripts/find.sh`,
-`scripts/recall.sh`, and the MCP tools actually filter on. The body of
+YAML at the top. That block is what `braingent find`,
+`braingent recall`, and the MCP tools actually filter on. The body of
 the record is for humans; the frontmatter is for retrieval.
 
 This page is the canonical schema.
@@ -57,7 +57,7 @@ Different record kinds have different valid `status` values.
 | Profile | `active`, `archived`, `superseded` |
 | Ticket-stub | `active`, `completed`, `abandoned` |
 
-`scripts/doctor.sh` will warn you if a record uses a value outside its
+`braingent doctor` will warn you if a record uses a value outside its
 kind's vocabulary.
 
 ## A complete example
@@ -101,7 +101,7 @@ resolution: null
 
 ## Validation
 
-`scripts/doctor.sh` and `scripts/validate.sh` check frontmatter for:
+`braingent doctor` and `braingent validate` check frontmatter for:
 
 - Missing required fields.
 - `status` values outside the kind's vocabulary.
@@ -121,7 +121,7 @@ or CI.
   them everywhere; otherwise put them in the body, not the frontmatter.
 - **Quote dates.** YAML's date parsing has surprised more than one person.
   ISO-8601 strings are always safe.
-- **Run `scripts/doctor.sh` before commits.** It's the cheapest way to keep memory
+- **Run `braingent doctor` before commits.** It's the cheapest way to keep memory
   clean.
 
 ## Where to go next
