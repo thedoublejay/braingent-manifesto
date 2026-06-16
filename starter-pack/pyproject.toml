@@ -60,7 +60,7 @@ include = [
   "/LICENSE",
   "/README.md",
   "/pyproject.toml",
-  "/src",
+  "/src/braingent",
   "/release",
   "/scripts/release-scan.py",
 ]
@@ -74,6 +74,9 @@ exclude = [
   ".test-plans/",
   "dashboard/",
   "indexes/records*.json",
+  ".env",
+  ".env.*",
+  "*.env",
 ]
 
 [tool.ruff]

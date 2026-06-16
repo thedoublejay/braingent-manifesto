@@ -149,7 +149,7 @@ projects_list="[]"
 [ "$project" = "null" ] || projects_list="[$project]"
 
 sed_escape() {
-  printf '%s' "$1" | sed 's/[\\&|]/\\&/g'
+  printf '%s' "$1" | tr -d '\r\n' | sed 's/[\\&|]/\\&/g'
 }
 
 yaml_double_quoted() {

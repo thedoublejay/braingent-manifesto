@@ -20,3 +20,21 @@ patterns:
   - id: api-key-assignment
     regex: '(?i)\b(api[_-]?key|secret|password|private[_-]?key)\s*[:=]\s*["''][^"'']{8,}["'']'
     description: Secret-like assignments must not ship in public artifacts.
+  - id: github-token
+    regex: '\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36,}\b'
+    description: GitHub personal access / OAuth tokens must not ship in public artifacts.
+  - id: aws-access-key
+    regex: '\b(AKIA|ASIA)[0-9A-Z]{16}\b'
+    description: AWS access key IDs must not ship in public artifacts.
+  - id: google-api-key
+    regex: '\bAIza[0-9A-Za-z_-]{35}\b'
+    description: Google API keys must not ship in public artifacts.
+  - id: jwt-token
+    regex: '\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b'
+    description: JSON Web Tokens must not ship in public artifacts.
+  - id: pem-private-key
+    regex: '-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----'
+    description: PEM private key blocks must not ship in public artifacts.
+  - id: bare-email
+    regex: '(?i)\b[a-z0-9._%+-]+@(?!example\.(?:com|org|net)\b|you\b)[a-z0-9.-]+\.[a-z]{2,}\b'
+    description: Real email addresses must not ship in public artifacts.
