@@ -62,7 +62,11 @@ commit your memory repo like any other project.
 
 ## Requirements
 
-Day one only requires Git and a text editor. The starter pack is plain Markdown.
+The `braingent` CLI is the recommended way to create and manage a memory repo.
+It needs **Python 3.11+** and [`pipx`](https://pipx.pypa.io) or
+[`uv`](https://docs.astral.sh/uv/). The repo it generates is plain Markdown in
+Git — once initialized, you can read, edit, and commit it with nothing but Git
+and a text editor.
 
 Optional tools unlock more automation:
 
@@ -81,9 +85,16 @@ Optional tools unlock more automation:
 1. **Install the CLI and initialize a memory repo.**
 
 ```bash
-pipx install braingent
+pipx install braingent          # or: uv tool install braingent
 braingent init my-braingent
 cd my-braingent
+```
+
+The CLI requires Python 3.11+. Optional extras add features:
+
+```bash
+pipx install "braingent[mcp]"     # MCP server for agent retrieval (braingent mcp serve)
+pipx install "braingent[tokens]"  # token-count helpers for budgeting
 ```
 
 Contributors working from this checkout can run the local package build:
@@ -125,6 +136,42 @@ Braingent's public setup paths are Python CLI paths:
 
 The product line is: **Braingent is Markdown-first. Automation only removes
 setup friction.**
+
+---
+
+## How the CLI Works With Your Memory Repo
+
+The `braingent` command is a thin helper around a Markdown repo — it never
+becomes the source of truth.
+
+- **`braingent init <dir>`** copies the packaged starter template into `<dir>`,
+  writes a template manifest, and builds the initial indexes. That directory is
+  now your memory repo — commit it to Git like any other project.
+- **Most commands run *inside* a memory repo.** Run them from anywhere in the
+  repo tree, or target one explicitly with `--root <dir>` or the
+  `BRAINGENT_ROOT` environment variable. A directory counts as a repo once it
+  has `preferences/taxonomy.yml`, `templates/`, and `workflows/`.
+- **`braingent update`** conservatively refreshes the template files in an
+  existing repo: it reports adds, clean updates, and conflicts, and only writes
+  with `--write` (and `--force` for conflicts). Your records are never touched.
+- **The installed `braingent` command is canonical.** The `scripts/*.sh`
+  wrappers inside a repo are legacy shims that forward to the same CLI; once
+  installed, prefer `braingent <command>`.
+
+Everyday commands:
+
+| Command | What it does |
+| --- | --- |
+| `braingent reindex` | Rebuild generated indexes and the local `.braingent.db` search cache. `--check` fails when indexes are stale (use in CI). |
+| `braingent doctor` | Report health: missing files, stale placeholders, invalid frontmatter, path leaks, stale indexes. |
+| `braingent find <filters>` | Structured search, e.g. `braingent find kind=decision topic=auth`. Supports `--json`, `--paths`, `--count`, `--limit`. |
+| `braingent recall <filters>` | Build a focused context pack for a ticket, repo, or topic. |
+| `braingent synthesize --topic\|--repo\|--project <id>` | Generate source-indexed synthesis pages. |
+| `braingent validate [paths]` | Validate record frontmatter. |
+| `braingent mcp serve --path <repo>` | Serve MCP retrieval tools (needs the `[mcp]` extra; also installed as `braingent-mcp`). |
+| `braingent task-new` / `task-list` / `task-status` … | Manage `BGT-NNNN` live task files. |
+
+Full command reference: <https://braingent.dev/reference/cli>.
 
 ---
 
@@ -331,7 +378,7 @@ Braingent starts as plain Markdown. Add tools when they help:
 | `rg` | Fast full-text search. |
 | `jq` / `yq` | Structured JSON/YAML inspection. |
 | Shell scripts | Record creation, validation, reindexing, task helpers. |
-| Optional setup CLI | Repeatable `init`, `doctor`, `print-prompts`, and `update` paths without replacing manual setup. |
+| `braingent` CLI | Repeatable `init`, `doctor`, `reindex`, `find`, and `update` paths without replacing manual setup. |
 | SQLite | Rebuildable local search cache for structured queries. |
 | Compact indexes | Small generated projections for fast agent scanning before full record reads. |
 | GitHub CLI | Import pull requests and issues when authenticated. |

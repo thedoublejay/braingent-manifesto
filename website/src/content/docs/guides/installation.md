@@ -43,6 +43,13 @@ uv tool install braingent
 uvx braingent --help
 ```
 
+Optional extras add features (combine them, e.g. `"braingent[mcp,tokens]"`):
+
+| Extra | Adds |
+| --- | --- |
+| `braingent[mcp]` | MCP server for agent retrieval — see [Enable MCP Retrieval](#enable-mcp-retrieval). |
+| `braingent[tokens]` | Token-count helpers (`tiktoken`) for context budgeting. |
+
 ## Initialize A Memory Repo
 
 ```bash
@@ -75,10 +82,17 @@ braingent find kind=decision --limit 1
 
 ## Enable MCP Retrieval
 
-For Claude, Codex, Gemini, or any MCP-aware agent, install the MCP dependency:
+For Claude, Codex, Gemini, or any MCP-aware agent, install Braingent with the
+`mcp` extra:
 
 ```bash
-pipx inject braingent "mcp>=1.27.1"
+pipx install "braingent[mcp]"      # or, for uv: uv tool install "braingent[mcp]"
+```
+
+Already installed without the extra? Re-run with `--force` to add it:
+
+```bash
+pipx install --force "braingent[mcp]"
 ```
 
 Then configure the agent to start Braingent through the package CLI:
@@ -93,6 +107,10 @@ Then configure the agent to start Braingent through the package CLI:
   }
 }
 ```
+
+The package also installs a dedicated `braingent-mcp` entrypoint, so
+`{"command": "braingent-mcp", "args": ["--path", "/Users/you/Documents/repos/braingent"]}`
+is equivalent.
 
 Restart the agent. It should expose `braingent_guide`, `braingent_find`, and
 `braingent_get`.
