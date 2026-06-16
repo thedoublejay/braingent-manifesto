@@ -1,139 +1,101 @@
 ---
 title: Configuration
-description: Optional configuration knobs — most users never need them. Defaults are designed to be right.
+description: Optional configuration knobs for the braingent CLI — most users never need them. Defaults are designed to be right.
 section: Reference
 order: 3
 ---
 
-Braingent's defaults are intentional: the smallest configuration that
-makes search, capture, and validation work out of the box. Most users
-never touch any of these knobs. If you do, here's what's available.
+Braingent works with no configuration. The defaults are the smallest set that
+makes search, capture, and validation work out of the box, and the built-in
+secret checks below are always on. If you want to tune behavior, the CLI reads
+an optional `config.toml`.
 
 ## Configuration sources, in priority order
 
 Higher in this list wins.
 
-1. **Helper flags** (`--json`, `--limit`, `--paths`, etc.).
-2. **Environment variables** (`BRAINGENT_PATH`, `BRAINGENT_NO_COLOR`).
-3. **Repo-local config** (`.braingent/config.toml` inside the memory
-   repo).
-4. **User-level config** (`~/.braingent/config.toml`).
-5. **Built-in defaults**.
+1. **Command flags** (`--limit`, `--stale-days`, etc.).
+2. **Repo-local config** — `.braingent/config.toml` inside the memory repo.
+3. **User-level config** — `~/.braingent/config.toml`.
+4. **Built-in defaults**.
 
-## Repo-local config
+Scalar values (like `stale_days`) follow this precedence directly. List values
+under `[safety]` are **additive**: repo and user entries are appended to the
+built-in defaults, never replacing them.
 
-Optional. Lives at `.braingent/config.toml` inside the memory repo.
+Selecting *which* repo to operate on is separate from the config file: use the
+`--root` flag or the `BRAINGENT_ROOT` environment variable.
+
+`braingent doctor` parses both config files and reports any problems (malformed
+TOML, wrong types, invalid regex) under its **Config issues** section; `doctor
+--strict` exits non-zero when there are any.
+
+## Example `config.toml`
+
+Everything is optional — include only the sections you want to change.
 
 ```toml
-# .braingent/config.toml
-version = 1
+# .braingent/config.toml  (or ~/.braingent/config.toml)
 
-[memory]
-# Override the default record kind directories.
-# Most users leave this alone.
-decisions_dir = "decisions"
-reviews_dir   = "reviews"
-learnings_dir = "learnings"
-tasks_dir     = "tasks"
+[safety]
+# Extra regexes flagged as a hard failure by `braingent doctor`.
+# Added to the always-on built-ins (AWS/GitHub/Google/OpenAI keys, PEM blocks).
+forbid_patterns = [
+  "ACME-INTERNAL-[0-9]+",
+]
+# Literal strings that must never appear in committed Markdown
+# (e.g. a private absolute path on your machine).
+forbid_paths = [
+  "/Users/alice/secrets",
+]
+
+[doctor]
+# Age threshold (days) for the stale-record check. Default: 180.
+stale_days = 180
+
+[recall]
+# Defaults for `braingent recall` (flags still override).
+limit = 8
+stale_days = 180
 
 [task_ids]
-# Format for task IDs. Default: BGT-NNNN, zero-padded to 4.
+# Format for new agent-task IDs. Default: BGT-NNNN, zero-padded to 4.
+# Set this BEFORE creating tasks — changing it later orphans existing IDs.
 prefix = "BGT"
-pad    = 4
-
-[capture]
-# Trigger phrases that mean "capture this".
-phrases = [
-  "capture this",
-  "save to braingent",
-  "write to braingent",
-  "task done",
-  "done thanks",
-  "ok done",
-]
-
-# Whether to auto-capture on PR open / merge / ticket close.
-auto_capture_on_pr     = true
-auto_capture_on_ticket = true
-
-[indexes]
-# Which indexes to regenerate when running `braingent reindex`.
-generate = ["by-topic", "by-repo", "by-tool", "decisions-index", "recent"]
-recent_count = 50
-
-[validate]
-# Status vocabularies per record kind. Override only if you really mean it.
-[validate.task]
-allowed_status = ["planned", "in_progress", "done", "abandoned", "blocked"]
-
-[mcp]
-# Read-only mode. Currently every tool is read-only; this flag is
-# future-proof for write tools.
-read_only = false
+pad = 4
 ```
 
-`braingent doctor` validates this file when health checks run.
+## What each section does
 
-## User-level config
-
-`~/.braingent/config.toml`. Same shape as the repo-local file. Useful
-for personal preferences (clipboard tool, editor) you don't want to
-commit.
-
-```toml
-[ui]
-editor    = "code"           # editor for future open helpers
-clipboard = "pbcopy"          # for future clipboard helpers
-
-[print_prompts]
-default_agent = "claude"
-```
-
-## Privacy / safety knobs
-
-```toml
-[safety]
-# Paths that should never appear inside committed Markdown.
-# `braingent doctor` flags violations.
-forbid_paths = ["~/private", "/Users/secrets"]
-
-# Patterns that should never appear in record bodies.
-forbid_patterns = [
-  "AKIA[0-9A-Z]{16}",            # AWS access key ids
-  "ghp_[A-Za-z0-9]{36}",         # GitHub PATs
-  "sk-[A-Za-z0-9]{40,}",         # OpenAI / Anthropic-style keys
-]
-```
-
-`forbid_patterns` is a defense-in-depth — the manifesto ships with the
-most common patterns enabled. Add yours.
-
-## Bootstrap hooks
-
-`.braingent/hooks/` (optional). Each script runs at a known lifecycle
-moment, if it exists.
-
-| Hook | When it runs |
+| Section / key | Effect |
 | --- | --- |
-| `pre-capture.sh` | Before a record is written. Receives the draft frontmatter on stdin. Exit non-zero to abort. |
-| `post-capture.sh` | After capture commits. Receives the commit SHA. |
-| `pre-update.sh` | Before `braingent update` applies changes. |
-| `post-doctor.sh` | After `doctor` runs. Receives the report on stdin. |
+| `[safety] forbid_patterns` | Extra regexes scanned across record bodies by `doctor`. Matches are hard failures. Added to the built-ins. |
+| `[safety] forbid_paths` | Literal substrings that must not appear in committed Markdown. Matches are hard failures. |
+| `[doctor] stale_days` | Default age threshold for the stale-record warning. |
+| `[recall] limit` | Default number of must-read records `recall` returns. |
+| `[recall] stale_days` | Default age threshold `recall` uses to classify stale records. |
+| `[task_ids] prefix` / `pad` | Prefix and zero-pad width for generated task IDs (and the matching validation). |
 
-Hooks are plain shell scripts. Keep them small. If you find yourself
-writing a long hook, you probably want a workflow under `workflows/`
-instead.
+The built-in `[safety]` patterns are always active even with no config file, so
+`doctor` flags common secret formats out of the box.
+
+## What is NOT configured here
+
+Some behavior lives in the memory repo's Markdown, not in `config.toml`:
+
+- **Capture trigger phrases** — `preferences/capture-policy.md`. Capture is
+  driven by your AI agent reading that file, not by the CLI.
+- **Taxonomy / allowed status values** — `preferences/taxonomy.yml`, which
+  `braingent validate` checks against.
+- **Repository layout** — see [Repository Shape](/concepts/repository-shape/).
 
 ## MCP server
 
-The MCP server reads its config from CLI args, not a file. See
-[Installation → Enable MCP Retrieval](/guides/installation/#enable-mcp-retrieval)
-for the JSON config blocks per agent.
+The MCP server reads its repo path from CLI args, not a config file. See
+[Installation → Enable MCP Retrieval](/guides/installation/#enable-mcp-retrieval).
 
 ## Where to go next
 
 - [CLI Reference](/reference/cli/) — every flag for every command.
-- [Frontmatter Schema](/concepts/frontmatter-schema/) — the schema that
-  `validate` checks against.
-- [Repository Shape](/concepts/repository-shape/) — the layout that
-  defaults assume.
+- [Frontmatter Schema](/concepts/frontmatter-schema/) — what `validate` checks.
+- [Repository Shape](/concepts/repository-shape/) — the layout defaults assume.
