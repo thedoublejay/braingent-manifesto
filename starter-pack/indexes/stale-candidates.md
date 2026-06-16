@@ -8,7 +8,7 @@ Generated cleanup queue for stale durable records and live task hygiene.
 
 | Task | Status | Updated | Reason |
 | --- | --- | --- | --- |
-| [Example review task](../tasks/active/BGT-0001--example-review-task.md) | triage | 2026-01-01 | triage task is 140 days old |
+| [Example review task](../tasks/active/BGT-0001--example-review-task.md) | triage | 2026-01-01 | triage task is 166 days old |
 
 ## Durable Records
 

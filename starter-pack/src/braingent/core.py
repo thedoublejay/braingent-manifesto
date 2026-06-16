@@ -135,6 +135,8 @@ RECORDS_COMPACT_JSON_PATH = INDEX_DIR / "records-compact.json"
 RECORDS_ROLLUP_MD_PATH = INDEX_DIR / "records-rollup.md"
 SQLITE_PATH = Path(".braingent.db")
 TASKS_DIR = Path("tasks")
+# stale-candidates embeds record ages computed from the current date, so it drifts daily; regenerate but skip in --check.
+CHECK_EXCLUDED_PATHS = frozenset({INDEX_DIR / "stale-candidates.md"})
 # Allow `import braingent.core` and `braingent --help` outside a memory repo.
 with contextlib.suppress(SystemExit):
     set_repo_root()
@@ -1513,6 +1515,8 @@ def run_reindex(check: bool = False, dashboard_e2e: bool = False) -> int:
 
     if check:
         for path, content in outputs.items():
+            if path in CHECK_EXCLUDED_PATHS:
+                continue
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 mismatches.append(path)
         if mismatches:
