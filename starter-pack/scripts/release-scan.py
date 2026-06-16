@@ -151,9 +151,13 @@ def scan_denylist(files: list[tuple[Path, Path, str]], patterns: list[DenyPatter
         except UnicodeDecodeError:
             continue
         for pattern in patterns:
-            match = pattern.regex.search(text)
-            if match:
-                issues.append(f"{rel}: {pattern.ident}: {pattern.description}: {match.group(0)!r}")
+            seen: set[str] = set()
+            for match in pattern.regex.finditer(text):
+                snippet = match.group(0)
+                if snippet in seen:
+                    continue
+                seen.add(snippet)
+                issues.append(f"{rel}: {pattern.ident}: {pattern.description}: {snippet!r}")
     return issues
 
 

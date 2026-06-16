@@ -14,16 +14,36 @@ on:
 
 permissions:
   contents: read
-  actions: read
-  id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     environment: testpypi
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     steps:
+      - name: Verify build provenance
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ inputs.run-id }}
+          EXPECTED_SHA: ${{ inputs.sha }}
+        run: |
+          info=$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json workflowName,headBranch,headSha,conclusion)
+          name=$(echo "$info" | jq -r '.workflowName')
+          branch=$(echo "$info" | jq -r '.headBranch')
+          head=$(echo "$info" | jq -r '.headSha')
+          concl=$(echo "$info" | jq -r '.conclusion')
+          echo "run $RUN_ID: workflow='$name' branch='$branch' sha=$head conclusion=$concl"
+          [ "$name" = "Python Package" ] || { echo "::error::run is not a Python Package build (got '$name')"; exit 1; }
+          [ "$branch" = "main" ] || { echo "::error::head branch is '$branch', expected main"; exit 1; }
+          [ "$concl" = "success" ] || { echo "::error::run conclusion is '$concl', expected success"; exit 1; }
+          [ "$head" = "$EXPECTED_SHA" ] || { echo "::error::run head sha '$head' != input sha '$EXPECTED_SHA'"; exit 1; }
+          echo "Provenance verified: $name @ $branch ($head)"
+
       - name: Download build-once artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: braingent-dist-${{ inputs.sha }}
           run-id: ${{ inputs.run-id }}
@@ -31,7 +51,7 @@ jobs:
           path: dist
 
       - name: Publish to TestPyPI
-        uses: pypa/gh-action-pypi-publish@v1.14.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: dist

@@ -55,6 +55,8 @@ def _resolve_safe(path: str) -> Path:
     repo_root = braingent.REPO_ROOT.resolve()
     if candidate != repo_root and repo_root not in candidate.parents:
         raise ValueError(f"path escapes repo root: {path}")
+    if candidate.suffix != ".md":
+        raise ValueError(f"path is not a markdown record: {path}")
     if not candidate.is_file():
         raise ValueError(f"path is not a file: {path}")
     return candidate

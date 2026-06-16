@@ -3,6 +3,9 @@ __pycache__/
 .venv/
 *.swp
 *.tmp
+.env
+.env.*
+*.env
 .braingent.db
 .braingent.db-*
 .test-plans/
