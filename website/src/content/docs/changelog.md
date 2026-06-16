@@ -12,6 +12,20 @@ migrations.
 
 ## Latest
 
+### `2026-06-16` — `0.1.1`
+
+- **Optional `config.toml`.** `braingent` now reads `.braingent/config.toml`
+  (repo-local) and `~/.braingent/config.toml` (user-level). Supports
+  `[safety]` forbid patterns/paths enforced by `doctor`, `[doctor]`/`[recall]`
+  default knobs, and `[task_ids]` prefix/pad. See
+  [Configuration](/reference/configuration/).
+- **Built-in secret scanning in `doctor`.** Always-on patterns for AWS,
+  GitHub, Google, and OpenAI/Anthropic keys plus PEM private keys; config can
+  add more.
+- **Hardening.** `braingent_get` (MCP) is restricted to Markdown records;
+  release tooling pins all GitHub Actions by SHA and verifies build provenance
+  before publishing.
+
 ### `2026-05-20` — Python package flow
 
 - `pipx install braingent` is the primary install path.
