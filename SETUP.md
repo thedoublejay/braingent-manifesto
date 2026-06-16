@@ -139,7 +139,7 @@ git commit -m "Initialize Braingent memory repo"
 
 After this, use normal Git commits to preserve memory changes.
 
-Delete or archive the cloned `braingent-manifesto` setup repo after this first commit unless you plan to contribute to the starter kit. Keeping both repos active can confuse future `AGENTS.md` / `CLAUDE.md` searches because agents may read the public starter kit instead of your real memory repo.
+With the pipx install flow there is no separate setup repo to clean up — `braingent init` generates your memory repo directly from the packaged template. (If you instead cloned `braingent-manifesto` to work on the starter kit itself, keep that checkout separate from your memory repo so agents don't read the public starter kit instead of your real memory.)
 
 ## Step 7: Index Your First Codebase
 

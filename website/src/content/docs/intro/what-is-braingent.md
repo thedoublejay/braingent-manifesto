@@ -32,14 +32,14 @@ Braingent fixes that without a vendor, a database, or a server.
   search, plain enough to read.
 - **Five memory surfaces.** Pinned context, durable records, derived
   retrieval, live multi-agent task files, and an optional local dashboard.
-- **Small, optional helpers.** `doctor`, `find`, `recall`, `reindex`,
-  `qa-generate`, plus live-task helpers. Markdown is still the
+- **Small, optional helpers.** `braingent doctor`, `find`, `recall`,
+  `reindex`, `qa generate`, plus live-task helpers. Markdown is still the
   source of truth.
 - **MCP retrieval out of the box.** `braingent_guide()`, `braingent_find()`,
   and `braingent_get()` give MCP-aware agents token-efficient retrieval
   without bloating context.
 - **Local-first, Git-native.** No server. No hosted account. No vendor lock.
-  If you can `git clone`, you can run Braingent.
+  If you can `pipx install`, you can run Braingent.
 
 ## How it feels in practice
 

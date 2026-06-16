@@ -97,10 +97,10 @@ For MCP-aware agents, add the MCP server:
 }
 ```
 
-Install the optional MCP dependency first:
+Install the `mcp` extra first (see [Installation](/guides/installation/#enable-mcp-retrieval)):
 
 ```bash
-pipx inject braingent "mcp>=1.27.1"
+pipx install "braingent[mcp]"   # add --force if braingent is already installed
 ```
 
 ## Step 6 — Capture Your First Task

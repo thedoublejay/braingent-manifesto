@@ -18,14 +18,16 @@ braingent --root ~/Documents/repos/braingent doctor
 ## Install
 
 ```bash
-pipx install braingent
+pipx install braingent          # or: uv tool install braingent
 braingent --version
 ```
 
-For MCP:
+Optional extras: `braingent[mcp]` (MCP retrieval server, also installs the
+`braingent-mcp` command) and `braingent[tokens]` (token-count helpers). Combine
+as `braingent[mcp,tokens]`.
 
 ```bash
-pipx inject braingent "mcp>=1.27.1"
+pipx install "braingent[mcp]"   # add --force to add the extra to an existing install
 ```
 
 ## `braingent init`
@@ -199,10 +201,13 @@ Coordinate optional live `BGT-NNNN` task files under `tasks/`.
 
 ## MCP Server
 
-Expose token-efficient retrieval tools to MCP-aware agents.
+Expose token-efficient retrieval tools to MCP-aware agents. Requires the
+`braingent[mcp]` extra.
 
 ```bash
 braingent mcp serve --path ~/Documents/repos/braingent
+# equivalent dedicated entrypoint:
+braingent-mcp --path ~/Documents/repos/braingent
 ```
 
 Tools:
