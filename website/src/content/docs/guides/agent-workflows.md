@@ -52,8 +52,8 @@ for relevant prior context. Concretely, it does some combination of:
 - **MCP tools** (preferred when available): `braingent_guide()`,
   `braingent_find(repos=..., topics=..., kind=...)`,
   `braingent_get(id, depth='summary')`.
-- **CLI fallbacks**: `braingent find --repo acme/api --kind decision`,
-  `braingent recall "session token rotation"`.
+- **CLI commands**: `braingent find repo=repo--acme--api kind=decision`,
+  `braingent recall q=session-token-rotation`.
 - **Direct grep / ripgrep** when the user asks for free-text body search.
 - **Reading the relevant repo profile** at `repos/<repo-slug>/profile.md`.
 

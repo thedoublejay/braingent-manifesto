@@ -1,0 +1,14 @@
+.DS_Store
+__pycache__/
+.venv/
+*.swp
+*.tmp
+.braingent.db
+.braingent.db-*
+.test-plans/
+uv.lock
+dashboard/tasks/.tanstack/
+dashboard/tasks/dist/
+dashboard/tasks/node_modules/
+dashboard/tasks/playwright-report/
+dashboard/tasks/test-results/

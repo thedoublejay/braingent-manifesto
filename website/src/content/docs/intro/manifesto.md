@@ -78,10 +78,9 @@ here*. If something does, the leak is visible in `git diff`.
 The CLI helps. The MCP tools help. The dashboard helps. None of them are
 required.
 
-Delete every script in `scripts/` tomorrow and your memory still works.
-Replace the CLI with a different language tomorrow and your memory still
-works. Switch from Claude to whatever-comes-next tomorrow and your memory
-still works.
+Replace the CLI with a different implementation tomorrow and your memory still
+works. Switch from Claude to whatever-comes-next tomorrow and your memory still
+works.
 
 This is what we mean by *boring*. Boring is what you trust five years from
 now.

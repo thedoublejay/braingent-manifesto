@@ -32,8 +32,8 @@ Braingent fixes that without a vendor, a database, or a server.
   search, plain enough to read.
 - **Five memory surfaces.** Pinned context, durable records, derived
   retrieval, live multi-agent task files, and an optional local dashboard.
-- **A small, optional CLI.** `braingent doctor`, `find`, `recall`, `init`,
-  `update`, `qa-generate`, plus live-task helpers. Markdown is still the
+- **Small, optional helpers.** `doctor`, `find`, `recall`, `reindex`,
+  `qa-generate`, plus live-task helpers. Markdown is still the
   source of truth.
 - **MCP retrieval out of the box.** `braingent_guide()`, `braingent_find()`,
   and `braingent_get()` give MCP-aware agents token-efficient retrieval

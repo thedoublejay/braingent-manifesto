@@ -1,0 +1,273 @@
+schema_version: 1
+
+record_kinds:
+  - task
+  - review
+  - decision
+  - learning
+  - interaction
+  - version
+  - note
+  - summary
+  - profile
+  - ticket-stub
+  - agent-task
+
+statuses:
+  task: [planned, active, blocked, completed, superseded]
+  review: [draft, completed, superseded]
+  decision: [proposed, accepted, superseded, rejected]
+  learning: [active, superseded]
+  interaction: [active, superseded]
+  version: [active, superseded]
+  note: [draft, active, completed, superseded]
+  summary: [draft, completed]
+  profile: [active, archived, superseded]
+  ticket-stub: [active, completed, abandoned]
+  agent-task: [triage, todo, in-progress, in-review, blocked, closed]
+
+required_fields:
+  common: [title, record_kind, status]
+  task: [date, timezone, organization, project, ticket, repositories, prs, commits, ai_tools]
+  review: [date, timezone, organization, project, ticket, review_target, repositories, reviewer, people, prs]
+  decision: [date, timezone, organization, project, repositories, decision_owner, superseded_by, topics]
+  learning: [date, timezone, topic, organization, project, repositories, last_revalidated, tools]
+  interaction: [date, timezone, person, organization, project, channel]
+  version: [date, timezone, tool, version, scope, source_of_truth, last_checked, organization, project, repositories]
+  summary: [date_imported, timezone, source, source_location, import_scope, raw_retained_until]
+  profile: [repo, organization, project, last_reviewed]
+  ticket-stub: [ticket, ticket_system, organization, projects, repositories, people]
+  agent-task: [id, date, timezone, organization, project, repositories, ticket, prs, commits, ai_tools, people, topics, tools, status_category, resolution, type, priority, assignee, reviewer, observers, claimed_by, claimed_at, created, updated, parent, depends_on, duplicate_of, closed]
+
+allowed_fields:
+  - agent_task
+  - ai_tools
+  - assignee
+  - branches
+  - channel
+  - claimed_at
+  - claimed_by
+  - closed
+  - commits
+  - confidence
+  - created
+  - date
+  - date_completed
+  - date_imported
+  - decision_owner
+  - depends_on
+  - duplicate_of
+  - duration_hours
+  - entity
+  - id
+  - import_scope
+  - last_checked
+  - last_revalidated
+  - last_reviewed
+  - local_path
+  - observers
+  - opened
+  - organization
+  - parent
+  - people
+  - person
+  - priority
+  - primary_languages
+  - project
+  - projects
+  - prs
+  - raw_retained_until
+  - record_kind
+  - related_prs
+  - related_records
+  - related_tickets
+  - remote
+  - repositories
+  - resolution
+  - repo
+  - reviewer
+  - review_target
+  - scope
+  - source
+  - source_imports
+  - source_location
+  - source_of_truth
+  - status
+  - status_category
+  - stale_after
+  - superseded_by
+  - supersedes
+  - ticket
+  - ticket_system
+  - ticket_url
+  - timezone
+  - title
+  - tool
+  - tools
+  - topic
+  - topics
+  - type
+  - uid
+  - updated
+  - valid_from
+  - valid_until
+  - version
+  - visibility
+  - provenance
+
+list_fields:
+  - ai_tools
+  - branches
+  - commits
+  - depends_on
+  - observers
+  - people
+  - primary_languages
+  - projects
+  - prs
+  - related_prs
+  - related_records
+  - related_tickets
+  - repositories
+  - source_imports
+  - tools
+  - topics
+
+nullable_fields:
+  - closed
+  - claimed_at
+  - claimed_by
+  - date_completed
+  - duplicate_of
+  - duration_hours
+  - organization
+  - parent
+  - project
+  - raw_retained_until
+  - resolution
+  - assignee
+  - reviewer
+  - stale_after
+  - superseded_by
+  - supersedes
+  - ticket
+  - ticket_url
+  - valid_from
+  - valid_until
+
+entity_fields:
+  organization:
+    prefix: org--
+    directory_root: orgs
+  project:
+    prefix: project--
+    directory_glob: orgs/*/projects/{value}
+  projects:
+    prefix: project--
+    directory_glob: orgs/*/projects/{value}
+  repo:
+    prefix: repo--
+    directory_root: repositories
+  repositories:
+    prefix: repo--
+    directory_root: repositories
+  person:
+    prefix: person--
+    directory_root: people
+  people:
+    prefix: person--
+    directory_root: people
+  topic:
+    prefix: topic--
+    directory_root: topics
+  topics:
+    prefix: topic--
+    directory_root: topics
+  tool:
+    prefix: tool--
+    directory_root: tools
+  tools:
+    prefix: tool--
+    directory_root: tools
+
+ai_tools:
+  - ChatGPT
+  - Claude
+  - Codex
+  - Cursor
+  - Gemini
+  - GitHub Copilot
+  - Roo Code
+
+agent_ids:
+  - agent--chatgpt
+  - agent--claude-code
+  - agent--codex-cli
+  - agent--cursor
+  - agent--gemini
+  - agent--github-copilot
+  - agent--roo-code
+
+agent_task_status_categories:
+  - triage
+  - active
+  - closed
+
+agent_task_resolutions:
+  - completed
+  - wont_do
+  - duplicate
+  - superseded
+
+agent_task_types:
+  - task
+  - bug
+  - feature
+  - review
+  - decision
+  - spike
+  - chore
+
+agent_task_priorities:
+  - critical
+  - high
+  - medium
+  - low
+
+agent_task_visibilities:
+  - private
+  - shareable
+  - public
+
+agent_task_events:
+  - created
+  - claimed
+  - commented
+  - status-changed
+  - handoff
+  - blocked
+  - unblocked
+  - closed
+  - visibility
+  - archived
+
+ticket_systems:
+  - github
+  - jira
+  - linear
+  - other
+
+ticket_patterns:
+  jira: "^[A-Z][A-Z0-9]+-[0-9]+$"
+  github: "^.+#[0-9]+$"
+
+record_scan_roots:
+  - orgs
+  - repositories
+  - topics
+  - tools
+  - people
+  - tickets
+  - tasks
+  - inbox
+  - imports

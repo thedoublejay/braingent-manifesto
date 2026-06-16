@@ -1,0 +1,89 @@
+name: Python Package
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: starter-pack
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: starter-pack/pyproject.toml
+
+      - name: Install package and dev dependencies
+        run: python -m pip install -e ".[dev]"
+
+      - name: Ruff
+        run: ruff check src scripts tests tools
+
+      - name: mypy
+        run: mypy src/braingent scripts/braingent.py scripts/mcp_tools.py scripts/mcp_server.py scripts/release-scan.py tools/tool--test-plan/test_plan.py tools/tool--test-plan/qa_evidence.py tests
+
+      - name: Unit tests
+        run: python -m unittest discover tests
+
+      - name: Validate starter memory
+        run: scripts/validate.sh
+
+      - name: Check generated indexes
+        run: scripts/reindex.sh --check
+
+      - name: Build package
+        run: python -m build --outdir dist
+
+      - name: Check package metadata
+        run: twine check dist/*
+
+      - name: Release artifact scan
+        run: python scripts/release-scan.py --json
+
+      - name: Install from wheel smoke
+        run: |
+          python -m venv /tmp/braingent-wheel-smoke
+          /tmp/braingent-wheel-smoke/bin/python -m pip install dist/*.whl
+          /tmp/braingent-wheel-smoke/bin/braingent init /tmp/braingent-memory
+          /tmp/braingent-wheel-smoke/bin/braingent --root /tmp/braingent-memory doctor
+
+      - name: Upload release artifacts
+        if: matrix.python-version == '3.13'
+        uses: actions/upload-artifact@v7
+        with:
+          name: braingent-dist-${{ github.sha }}
+          path: starter-pack/dist/*
+          if-no-files-found: error
+          retention-days: 14
+
+  gitleaks:
+    name: Gitleaks repository scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan repository
+        uses: gitleaks/gitleaks-action@v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

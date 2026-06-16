@@ -62,10 +62,7 @@ structured tools.
   "mcpServers": {
     "braingent": {
       "command": "braingent",
-      "args": [
-        "mcp", "serve",
-        "--path", "/Users/you/Documents/repos/braingent"
-      ]
+      "args": ["mcp", "serve", "--path", "/Users/you/Documents/repos/braingent"]
     }
   }
 }

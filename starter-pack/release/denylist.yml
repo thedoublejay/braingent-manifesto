@@ -1,0 +1,22 @@
+patterns:
+  - id: private-customer-reference
+    regex: '(?i)\br[e]gask\b'
+    description: Private customer/project name must not ship in public artifacts.
+  - id: jira-ticket-reference
+    regex: '\bREG-[0-9]+\b'
+    description: Private Jira ticket keys must not ship in public artifacts.
+  - id: private-local-user-path
+    regex: '/Users/(?!you\b)[A-Za-z0-9._-]+/'
+    description: Local developer paths must not ship in public artifacts.
+  - id: atlassian-host
+    regex: '(?i)\b[a-z0-9.-]+\.atlassian\.net\b'
+    description: Atlassian tenant hosts must not ship in public artifacts.
+  - id: slack-host
+    regex: '(?i)\b[a-z0-9.-]+\.slack\.com\b'
+    description: Slack workspace hosts must not ship in public artifacts.
+  - id: sentry-dsn
+    regex: 'https://[A-Za-z0-9]+@[A-Za-z0-9.-]+/[0-9]+'
+    description: Sentry DSNs must not ship in public artifacts.
+  - id: api-key-assignment
+    regex: '(?i)\b(api[_-]?key|secret|password|private[_-]?key)\s*[:=]\s*["''][^"'']{8,}["'']'
+    description: Secret-like assignments must not ship in public artifacts.

@@ -1,309 +1,214 @@
 ---
 title: CLI Reference
-description: Every Braingent CLI command, every flag, every exit code.
+description: The installable Braingent Python CLI, commands, flags, and examples.
 section: Reference
 order: 1
 ---
 
-The `braingent` CLI is a thin wrapper around plain Markdown operations.
-Every command can be replaced with a manual edit + `git commit` — but the
-CLI is faster and adds validation, indexing, and templating.
+The `braingent` command is the public API for creating, checking, searching,
+updating, and serving a Braingent memory repo.
 
-This page is the canonical surface. For tutorial-style explanations, see
-the [CLI Workflows guide](/guides/cli-workflows/).
-
-## Global flags
-
-These flags are accepted by every command:
-
-| Flag | Default | Notes |
-| --- | --- | --- |
-| `--path <dir>` | `$BRAINGENT_PATH` or `~/Documents/repos/braingent` | The memory repo to operate on. |
-| `--json` | off | Emit JSON instead of human-readable output. |
-| `--quiet` | off | Suppress non-error output. |
-| `--verbose` | off | Print debug detail. |
-| `--no-color` | off | Disable ANSI colors. |
-| `--version` | — | Print CLI version and exit. |
-
-### Environment variables
-
-| Variable | What it sets |
-| --- | --- |
-| `BRAINGENT_PATH` | Default value for `--path`. |
-| `BRAINGENT_NO_COLOR` | Same as `--no-color`. |
-| `BRAINGENT_LOG_LEVEL` | `debug` / `info` / `warn` / `error`. |
-
-## `init`
-
-Bootstrap a new memory repo from the starter pack.
+Run commands from the memory repo root, or pass `--root /path/to/repo`.
 
 ```bash
-braingent init [target-dir]
+braingent --help
+braingent --root ~/Documents/repos/braingent doctor
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `target-dir` | required | Where to create or seed the repo. |
-| `--from <path>` | bundled | Use a different starter pack source. |
-| `--non-interactive` | off | Use defaults; skip prompts. |
-| `--force` | off | Overwrite existing files (dangerous). |
-| `--no-git` | off | Skip `git init`. |
-| `--name <slug>` | from prompt | Repo display name. |
-
-Exit codes:
-- `0` — success.
-- `2` — target directory not empty without `--force`.
-- `3` — required tool missing.
-
-## `doctor`
-
-Health-check a memory repo.
+## Install
 
 ```bash
-braingent doctor [--strict]
+pipx install braingent
+braingent --version
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--strict` | off | Warnings become errors. |
-| `--check <key>` | all | Run only the named checks. |
-| `--skip <key>` | none | Skip the named checks. |
-
-Check keys: `entrypoints`, `placeholders`, `frontmatter`, `indexes`,
-`tooling`, `private-paths`, `links`.
-
-Exit codes:
-- `0` — clean.
-- `1` — error(s) reported.
-- `2` — warning(s) under `--strict`.
-
-## `validate`
-
-Check frontmatter only.
+For MCP:
 
 ```bash
-braingent validate [--kind <kind>] [--since <date>]
+pipx inject braingent "mcp>=1.27.1"
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--kind <kind>` | all | Limit to one record kind. |
-| `--since <date>` | — | Only records created on or after this date. |
-| `--fix` | off | Auto-fix safe issues (date formatting, slug case). |
+## `braingent init`
 
-## `find`
-
-Filter records by frontmatter fields.
+Create a new memory repo from the packaged starter template.
 
 ```bash
-braingent find [--kind ...] [--repo ...] [--tag ...] [--status ...] [--since ...] [--limit N]
-```
-
-| Flag | Notes |
-| --- | --- |
-| `--kind <kind>` | One of: `task`, `decision`, `review`, `learning`, `repo`, `project`, `topic`, `tool`. Repeatable. |
-| `--repo <slug>` | Repeatable. |
-| `--project <slug>` | Repeatable. |
-| `--topic <slug>` | Repeatable. |
-| `--tool <slug>` | Repeatable. |
-| `--tag <tag>` | Repeatable. |
-| `--status <status>` | Kind-specific. |
-| `--owner <name>` | Match `owner` field. |
-| `--since <date>` | YYYY-MM-DD. |
-| `--until <date>` | YYYY-MM-DD. |
-| `--limit <n>` | Default 50. |
-| `--sort <field>` | `date` (default), `id`, `title`. |
-
-Output: `<id>  <title>  <path>` per line, or JSON with `--json`.
-
-## `get`
-
-Fetch one record.
-
-```bash
-braingent get <id> [--depth summary|full]
-```
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--depth` | `summary` | `summary` returns frontmatter + first paragraph; `full` returns whole body. |
-| `--with-links` | off | Include linked record summaries. |
-| `--format <md\|json>` | `md` | Output format. |
-
-## `recall`
-
-Build a focused context pack.
-
-```bash
-braingent recall <query> [--task <id>] [--max N]
-```
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `<query>` | required (or `--task`) | Free-text concept. |
-| `--task <id>` | — | Walk links from a specific task instead. |
-| `--max <n>` | 12 | Maximum records in the pack. |
-| `--depth <n>` | 2 | How many graph hops to walk. |
-| `--include-archived` | off | Include archived records. |
-
-## `search`
-
-Full-text body search with frontmatter ranking.
-
-```bash
-braingent search <query> [--kind ...]
-```
-
-Standard boolean syntax: `temporal AND idempotency`, `(jobs OR webhooks)
-AND -archived`.
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--kind <kind>` | all | Repeatable. |
-| `--limit <n>` | 50 | |
-| `--context <n>` | 1 | Lines of body context per hit. |
-
-## `capture`
-
-Write a record without touching an agent.
-
-```bash
-braingent capture --kind <kind> --title "..." [--tags ...] [--body ...]
-```
-
-| Flag | Required? | Description |
-| --- | --- | --- |
-| `--kind <kind>` | yes | The record kind. |
-| `--title "..."` | yes | Record title. |
-| `--status <status>` | no | Defaults to kind's "live" value. |
-| `--repo <slug>` | repeatable | Adds to `repos`. |
-| `--project <slug>` | repeatable | Adds to `projects`. |
-| `--topic <slug>` | repeatable | Adds to `topics`. |
-| `--tool <slug>` | repeatable | Adds to `tools`. |
-| `--tags <a,b,c>` | comma-list | Adds to `tags`. |
-| `--link <id>` | repeatable | Adds to `links`. |
-| `--body @<path>` | no | Read body from file. |
-| `--body "..."` | no | Inline body. |
-| `--dry-run` | off | Print path + frontmatter, don't write. |
-| `--no-commit` | off | Write file but skip `git commit`. |
-
-## `update`
-
-Apply starter-pack improvements safely.
-
-```bash
-braingent update [--apply auto|all|none] [--dry-run]
-```
-
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--apply <mode>` | `auto` | `auto` = safe-only, `all` = include manual review, `none` = plan only. |
-| `--dry-run` | off | Print plan, don't write. |
-| `--from <path>` | bundled | Use a different starter-pack source. |
-
-## `synthesize`
-
-Generate a synthesis page that cites records.
-
-```bash
-braingent synthesize --topic <slug> --out <path>
-```
-
-| Flag | Required? | Description |
-| --- | --- | --- |
-| `--topic <slug>` | one of these | Synthesize within a topic. |
-| `--repo <slug>` | one of these | Synthesize within a repo. |
-| `--project <slug>` | one of these | Synthesize within a project. |
-| `--since <date>` | no | Limit by date. |
-| `--max-records <n>` | no, default 40 | Cap how many sources are included. |
-| `--out <path>` | yes | Output Markdown path. |
-
-## `qa-generate`
-
-Generate a strict QA plan from ticket + memory + evidence. See [QA Test
-Planning](/guides/qa-test-planning/).
-
-```bash
-braingent qa-generate --ticket <path> [--evidence <path>] [--gatherstep] [--format <fmt>] [--out <path>]
+braingent init ~/Documents/repos/braingent
+braingent init ~/Documents/repos/braingent --dry-run
+braingent init ~/Documents/repos/braingent --force
 ```
 
 | Flag | Description |
 | --- | --- |
-| `--ticket <path or URL>` | Source ticket. Required. |
-| `--allow-missing-ac` | Skip the AC requirement. Pair with `--intent`. |
-| `--intent "..."` | Free-text product intent when AC is missing. |
-| `--evidence <path>` | `qa-evidence.v1` manifest from your build. |
-| `--gatherstep` | Pull native evidence from Gather Step's CLI. |
-| `--memory <path>` | Path to memory repo (defaults to `--path`). |
-| `--budget-tokens <n>` | Default 160000. |
-| `--format <md\|xray\|testrail\|gherkin>` | Output format. |
-| `--out <path>` | Output path. Required. |
-| `--strict` | Treat precheck warnings as errors. |
-| `--include-risks` | On by default. Add risks per case. |
+| `--dry-run` | Show what would be copied. |
+| `--force` | Allow copying into a non-empty target. |
 
-Exit codes:
-- `0` — plan generated.
-- `1` — precheck error.
-- `2` — strict-mode warning.
+## `braingent update`
 
-## Live task commands — `task-*`
+Update starter template files in an existing memory repo.
 
-See [Multi-Agent Coordination](/guides/multi-agent-tasks/) for the full
-flow.
+```bash
+braingent update ~/Documents/repos/braingent --dry-run
+braingent update ~/Documents/repos/braingent --write
+braingent update ~/Documents/repos/braingent --write --force
+```
 
-| Command | Notes |
+| Flag | Description |
 | --- | --- |
-| `task-new "<title>"` | `--priority P0..P4`, `--repo`, `--project`. |
-| `task-claim <BGT-ID>` | `--as <agent>`. |
-| `task-status <BGT-ID> "<line>"` | Append to status log. |
-| `task-question <BGT-ID> "<text>"` | Add to open questions. |
-| `task-block <BGT-ID> "<text>"` | Add to blockers. |
-| `task-unblock <BGT-ID> "<text>"` | Resolve a blocker. |
-| `task-close <BGT-ID>` | `--status done\|abandoned`. |
-| `task-list` | `--status`, `--owner`, `--repo`. |
-| `task-archive <BGT-ID>` | Move from `tasks/active/` to `tasks/done/`. |
+| `--dry-run` | Show add/update/conflict counts without writing. |
+| `--write` | Apply non-conflicting updates. |
+| `--force` | Overwrite conflicted template files when used with `--write`. |
 
-## `mcp serve`
+## `braingent doctor`
 
-Start the MCP server.
+Report memory-repo health: missing entrypoints, placeholder leftovers,
+frontmatter issues, stale indexes, possible private paths, possible secrets,
+and stale records.
 
 ```bash
-braingent mcp serve [--port <n>] [--read-only]
+braingent doctor
+braingent doctor --json
+braingent doctor --strict
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--port <n>` | stdio | Use TCP instead of stdio. |
-| `--read-only` | off | Disable any future write tools. |
+| Flag | Description |
+| --- | --- |
+| `--json` | Emit the report as JSON. |
+| `--strict` | Exit non-zero when warnings are present. |
+| `--stale-days <n>` | Age threshold for stale profile/learning records. Default `180`. |
 
-## `print-prompts`
+## `braingent validate`
 
-Print agent entrypoint contents (no file changes).
+Validate record frontmatter against `preferences/taxonomy.yml`.
 
 ```bash
-braingent print-prompts --agent <claude|codex|chatgpt|gemini> [--copy]
+braingent validate
+braingent validate orgs/org--example/projects/project--example--memory/records/example.md
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--agent <name>` | required | Which entrypoint to print. |
-| `--copy` | off | Copy to clipboard instead of stdout. |
+Arguments are optional Markdown paths. With no paths, the whole repo is
+validated.
 
-## `reindex`
+## `braingent reindex`
 
-Regenerate `indexes/*.md` and search caches.
+Regenerate derived indexes under `indexes/` and `.braingent.db`.
 
 ```bash
-braingent reindex [--check]
+braingent reindex
+braingent reindex --check
 ```
 
-| Flag | Default | Description |
-| --- | --- | --- |
-| `--check` | off | Exit non-zero if indexes drifted; don't write. |
+| Flag | Description |
+| --- | --- |
+| `--check` | Fail if generated indexes are stale, without writing changes. |
+| `--dashboard-e2e` | Also run dashboard checks when the dashboard exists. |
 
-## Where to go next
+## `braingent find`
 
-- [CLI Workflows](/guides/cli-workflows/) — tutorial-style tour.
-- [QA Test Planning](/guides/qa-test-planning/) — `qa-generate` end to
-  end.
-- [MCP Tools Reference](/reference/mcp-tools/) — the MCP equivalents.
+Search durable records by structured frontmatter filters.
+
+```bash
+braingent find kind=decision
+braingent find repo=repo--example--owner--repo status=active --limit 5
+braingent find q="pagination state" --json
+```
+
+| Flag / Argument | Description |
+| --- | --- |
+| `key=value` | Filter by frontmatter or body text. Common keys: `kind`, `org`, `project`, `repo`, `topic`, `tool`, `ticket`, `status`, `q`. |
+| `--json` | Emit JSON. |
+| `--paths` | Emit only matching paths. |
+| `--count` | Emit only the result count. |
+| `--limit <n>` | Limit result count. |
+
+## `braingent recall`
+
+Build a focused context pack for an agent before planning or implementation.
+
+```bash
+braingent recall repo=repo--example--owner--repo
+braingent recall ticket=ACME-123 --json
+```
+
+| Flag / Argument | Description |
+| --- | --- |
+| `key=value` | Same filter style as `find`. |
+| `--json` | Emit JSON. |
+| `--limit <n>` | Number of `must_read` records. Default `8`. |
+| `--stale-days <n>` | Staleness threshold. Default `180`. |
+
+## `braingent qa generate`
+
+Generate a strict QA plan from ticket + memory + optional Gather Step evidence.
+See [QA Test Planning](/guides/qa-test-planning/).
+
+```bash
+braingent qa generate \
+  --ticket-key ACME-1492 \
+  --evidence-pack ./build/qa-evidence.json \
+  --emit-format markdown \
+  --output ./qa-plans/ACME-1492.md \
+  ./tickets/ACME-1492.md
+```
+
+| Flag | Description |
+| --- | --- |
+| `<ticket-path-or-inline-ticket-text>` | Source ticket text or path. Required. |
+| `--ticket-key <key>` | Ticket key used in the output title and filename. |
+| `--allow-missing-ac` | Allow product-intent-derived `REQ-*` cases when explicit AC is missing. |
+| `--source <path-or-text>` | Supporting spec, PRD, note, design source, or pasted text. Repeatable. |
+| `--implementation-state <state>` | `pre-implementation`, `in-progress`, or `post-implementation`. |
+| `--no-diff` | Skip white-box implementation evidence. |
+| `--diff <base..head>` | Diff range for implementation evidence. |
+| `--gather-workspace <path>` | Workspace where Gather Step should run. |
+| `--gather-target <target>` | Symbol, route, or event target for Gather Step. |
+| `--projection-target <target>` | Optional field/contract target for projection impact evidence. |
+| `--evidence-pack <path>` | Existing `qa-evidence.v1` manifest. |
+| `--budget-tokens <n>` | Default `160000`. |
+| `--emit-format <fmt>` | `markdown`, `xray-json`, `testrail-csv`, or `gherkin`. |
+| `--output <path>` | Explicit output path. |
+| `--output-dir <path>` | Output directory. Defaults to `.test-plans/`. |
+| `--repo`, `--project`, `--topic`, `--tool` | Braingent memory filters. |
+| `--print` | Print generated output after writing it. |
+
+## `braingent synthesize`
+
+Generate a source-indexed synthesis page from records.
+
+```bash
+braingent synthesize --topic topic--ai-memory
+braingent synthesize --repo repo--example--owner--repo
+braingent synthesize --project project--example--memory
+```
+
+Exactly one of `--topic`, `--repo`, or `--project` is required.
+
+## Live Task Commands
+
+Coordinate optional live `BGT-NNNN` task files under `tasks/`.
+
+| Command | Purpose |
+| --- | --- |
+| `braingent task-new "<title>"` | Create a live task. |
+| `braingent task-claim BGT-0001 --as agent--codex-cli` | Claim a task. |
+| `braingent task-comment BGT-0001 "note" --as agent--codex-cli` | Append activity. |
+| `braingent task-status BGT-0001 in-review --as agent--codex-cli` | Change status. |
+| `braingent task-list` | List live and archived tasks. |
+| `braingent task-list --count` | Print status counts. |
+| `braingent task-archive BGT-0001 --resolution completed --as agent--codex-cli` | Close and archive. |
+
+## MCP Server
+
+Expose token-efficient retrieval tools to MCP-aware agents.
+
+```bash
+braingent mcp serve --path ~/Documents/repos/braingent
+```
+
+Tools:
+
+- `braingent_guide()`
+- `braingent_find(query, limit)`
+- `braingent_get(path, depth)`
+
+Point your agent's MCP config at `braingent mcp serve --path <memory-repo>`.

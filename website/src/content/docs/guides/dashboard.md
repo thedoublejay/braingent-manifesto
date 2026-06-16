@@ -107,8 +107,8 @@ The first thing you should see when the dashboard starts:
 
 If the queue is empty *and* `BRAINGENT_MEMORY_ROOT` is set, check that
 `tasks/active/` actually has files. The dashboard ignores
-`tasks/archive/` and `tasks/done/` — those are deliberately out of
-scope for the live view.
+`tasks/archive/` — closed tasks are deliberately out of scope for the
+live view.
 
 ## Limitations on purpose
 

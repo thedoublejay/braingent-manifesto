@@ -1,0 +1,99 @@
+[build-system]
+requires = ["hatchling>=1.29.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "braingent"
+version = "0.1.0"
+description = "Durable engineering memory CLI: doctor, reindex, find, recall, synthesize, MCP, and QA test-plan generation."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "JJ Adonis" }]
+keywords = ["memory", "cli", "mcp", "qa", "test-plans"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development",
+]
+dependencies = [
+  "PyYAML>=6.0.3,<7",
+]
+
+[project.optional-dependencies]
+mcp = [
+  "mcp>=1.27.1,<2",
+]
+tokens = [
+  "tiktoken>=0.13.0,<1",
+]
+dev = [
+  "build>=1.5.0",
+  "hatchling>=1.29.0",
+  "mypy>=2.1.0",
+  "pytest>=9.0.3",
+  "ruff>=0.15.13",
+  "twine>=6.2.0",
+  "types-PyYAML>=6.0.12.20260518",
+]
+
+[project.urls]
+Homepage = "https://github.com/thedoublejay/braingent-manifesto"
+Source = "https://github.com/thedoublejay/braingent-manifesto"
+Issues = "https://github.com/thedoublejay/braingent-manifesto/issues"
+
+[project.scripts]
+braingent = "braingent.cli:main"
+braingent-mcp = "braingent.mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/braingent"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/LICENSE",
+  "/README.md",
+  "/pyproject.toml",
+  "/src",
+  "/release",
+  "/scripts/release-scan.py",
+]
+exclude = [
+  ".git/",
+  ".gitignore",
+  ".venv/",
+  "__pycache__/",
+  "*.pyc",
+  ".braingent.db",
+  ".test-plans/",
+  "dashboard/",
+  "indexes/records*.json",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "scripts", "tests", "tools"]
+exclude = ["src/braingent/templates/starter"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "A"]
+ignore = ["D", "E402", "E501"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src", "scripts", "tests", "tools/tool--test-plan/test_plan.py"]
+mypy_path = ["src", "."]
+explicit_package_bases = true
+namespace_packages = true
+warn_unused_configs = true
+ignore_missing_imports = false
+disable_error_code = ["attr-defined", "assignment", "import-not-found"]
+exclude = ["build", "dist", "__pycache__", "src/braingent/templates/starter"]
+plugins = []

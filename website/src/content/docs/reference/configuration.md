@@ -13,7 +13,7 @@ never touch any of these knobs. If you do, here's what's available.
 
 Higher in this list wins.
 
-1. **CLI flags** (`--path`, `--strict`, etc.).
+1. **Helper flags** (`--json`, `--limit`, `--paths`, etc.).
 2. **Environment variables** (`BRAINGENT_PATH`, `BRAINGENT_NO_COLOR`).
 3. **Repo-local config** (`.braingent/config.toml` inside the memory
    repo).
@@ -57,7 +57,7 @@ auto_capture_on_pr     = true
 auto_capture_on_ticket = true
 
 [indexes]
-# Which indexes to regenerate on `braingent reindex`.
+# Which indexes to regenerate when running `braingent reindex`.
 generate = ["by-topic", "by-repo", "by-tool", "decisions-index", "recent"]
 recent_count = 50
 
@@ -72,7 +72,7 @@ allowed_status = ["planned", "in_progress", "done", "abandoned", "blocked"]
 read_only = false
 ```
 
-`braingent doctor` validates this file at startup.
+`braingent doctor` validates this file when health checks run.
 
 ## User-level config
 
@@ -82,8 +82,8 @@ commit.
 
 ```toml
 [ui]
-editor    = "code"           # what `braingent open <id>` launches
-clipboard = "pbcopy"          # for `--copy` flags
+editor    = "code"           # editor for future open helpers
+clipboard = "pbcopy"          # for future clipboard helpers
 
 [print_prompts]
 default_agent = "claude"
@@ -127,7 +127,7 @@ instead.
 ## MCP server
 
 The MCP server reads its config from CLI args, not a file. See
-[Installation → MCP Server](/guides/installation/#install-the-mcp-server)
+[Installation → Enable MCP Retrieval](/guides/installation/#enable-mcp-retrieval)
 for the JSON config blocks per agent.
 
 ## Where to go next

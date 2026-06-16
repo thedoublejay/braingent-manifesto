@@ -104,8 +104,8 @@ A live task file holds:
 
 Multiple Claude sessions, a Codex run, and you typing notes can all
 update the same file. Git handles the conflicts. The dashboard renders
-the live view. When work is done, the file moves from `tasks/active/` to
-`tasks/done/` (or just lives in `tasks/` with `status: done`).
+the live view. When work is done, `braingent task-archive` moves the file
+from `tasks/active/` to `tasks/archive/` and marks it `status: closed`.
 
 This is how Braingent supports multi-agent coordination without a
 synchronization layer. See [Multi-Agent

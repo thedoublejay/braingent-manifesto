@@ -40,13 +40,13 @@ capturing work, and one searchable history of tasks, reviews, decisions,
 learnings, tools, repositories, and projects.
 
 This repository is not a private memory dump. It is a public, open source
-starter kit. Copy the Markdown files into your own repo, personalize them, and
-let your agents use that repo as shared engineering memory. No database,
-server, or required install is needed on day one.
+starter kit plus the source for the installable `braingent` Python CLI. Install
+the CLI, run `braingent init`, personalize the generated repo, and let your
+agents use that repo as shared engineering memory.
 
-Braingent stays simple: Markdown is the source of truth. Optional scripts,
-generated indexes, local search databases, live task files, and dashboards are
-helpers built around the Markdown, not replacements for it.
+Braingent stays simple: Markdown is the source of truth. The CLI, generated
+indexes, local search databases, live task files, and dashboards are helpers
+built around the Markdown, not replacements for it.
 
 ## Why Braingent
 
@@ -57,8 +57,8 @@ Use Braingent when agent sessions keep losing the same context:
 - which conventions should guide future edits;
 - what work should be captured after the PR, fix, or decision is done.
 
-It is deliberately plain: clone it, copy the starter pack, personalize the
-Markdown, and commit your memory repo like any other project.
+It is deliberately plain: initialize a repo, personalize the Markdown, and
+commit your memory repo like any other project.
 
 ## Requirements
 
@@ -71,56 +71,57 @@ Optional tools unlock more automation:
 | `gh` | Importing GitHub PR and issue context when authenticated. |
 | `rg` | Fast search across records and preferences. |
 | `jq` / SQLite | Querying generated indexes and local search caches. |
-| Python / `uv` | Validation, indexing, and helper scripts. |
+| Python / `pipx` / `uv` | Installing and running the `braingent` helper CLI. |
 | Bun | Running the optional dashboard example and website locally. |
 
 ---
 
 ## Quick Start
 
-1. **Copy the starter pack into a new memory repo.**
+1. **Install the CLI and initialize a memory repo.**
 
 ```bash
-git clone https://github.com/thedoublejay/braingent-manifesto
-mkdir my-braingent
+pipx install braingent
+braingent init my-braingent
 cd my-braingent
-git init
-cp -r ../braingent-manifesto/starter-pack/. .
 ```
 
-2. **Give the setup prompt to your agent.**
+Contributors working from this checkout can run the local package build:
 
-Paste `BOOTSTRAP-PROMPT.md` into Claude, Codex, ChatGPT, or Gemini CLI as the
-first message in a new session. The agent will read `INITIALIZE.md` and walk
-you through the setup one question at a time.
+```bash
+python -m pip install --editable starter-pack
+braingent --root . doctor
+braingent --root . validate
+```
+
+2. **Personalize the generated entrypoints.**
+
+Open `AGENTS.md`, `CLAUDE.md`, `CHATGPT_PROJECT_BRIEF.md`, and `GEMINI.md`.
+Replace the path, role, organization, project, and repository placeholders with
+your actual context.
 
 3. **Commit your initialized memory repo.**
 
-After the agent replaces placeholders, creates your first folders, and writes
-the first setup record:
+After placeholders are replaced and the first setup record is ready:
 
 ```bash
 git add .
 git commit -m "Initialize Braingent memory repo"
 ```
 
-After that first commit, delete or archive the cloned `braingent-manifesto`
-setup repo unless you plan to contribute to it. Keeping both repos active can
-confuse agent searches because they may read the public starter kit instead of
-your real memory repo.
-
-Detailed setup lives in `INITIALIZE.md` and `SETUP.md`.
+Detailed setup lives in `SETUP.md`.
 
 ### Setup Paths
 
-Braingent should keep one manual path and three optional CLI-assisted paths:
+Braingent's public setup paths are Python CLI paths:
 
-| Path | Command or artifact | Purpose |
+| Path | Command | Purpose |
 | --- | --- | --- |
-| Manual path | `starter-pack/` + `BOOTSTRAP-PROMPT.md` | Zero-install setup that proves Braingent is still just Markdown. |
-| Fast path | future `braingent init` | Optional CLI setup that copies files, replaces placeholders, and asks setup questions once. |
-| Health path | future `braingent doctor` | Optional checks for missing files, stale placeholders, invalid frontmatter, path leaks, and stale generated indexes. |
-| Upgrade path | future `braingent update` | Optional starter-pack upgrade helper that shows what changed before editing. |
+| Install path | `pipx install braingent` | Install the CLI once in an isolated environment. |
+| Fast path | `braingent init my-braingent` | Create a private memory repo from the packaged starter template and rebuild indexes. |
+| Health path | `braingent doctor` | Check missing files, stale placeholders, invalid frontmatter, path leaks, and stale generated indexes. |
+| Upgrade path | `braingent update` | Report adds, clean updates, unchanged files, and conflicts before editing. |
+| QA path | `braingent qa generate` | Turn tickets, Braingent memory, and Gather Step evidence into traceable Markdown, Xray JSON, TestRail CSV, or Gherkin. |
 
 The product line is: **Braingent is Markdown-first. Automation only removes
 setup friction.**
@@ -268,8 +269,7 @@ BRAINGENT_MEMORY_ROOT=/path/to/your-memory-repo bun run dev
 
 | File or directory | Purpose |
 | --- | --- |
-| `INITIALIZE.md` | Guided agent setup prompt. Start here after copying `starter-pack/`. |
-| `SETUP.md` | Manual setup guide and optional tooling notes. |
+| `SETUP.md` | Python CLI setup guide and optional tooling notes. |
 | `MANIFESTO.md` | Philosophy and core principles. |
 | `HOW-IT-WORKS.md` | Conceptual model for the memory layers. |
 | `STRUCTURE.md` | Recommended directory layout and naming. |
@@ -280,7 +280,7 @@ BRAINGENT_MEMORY_ROOT=/path/to/your-memory-repo bun run dev
 | `PRIVACY-AND-SAFETY.md` | What must never be captured and how to review before publishing. |
 | `PUBLISHING-CHECKLIST.md` | Public-release checklist for examples and docs. |
 | `FAQ.md` | Practical questions and answers. |
-| `starter-pack/` | Files to copy into a new memory repo. |
+| `starter-pack/` | Packaged template source for `braingent init`. |
 | `examples/task-dashboard/` | Copyable local dashboard sample with synthetic task data. |
 
 ---

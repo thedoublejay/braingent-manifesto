@@ -1,0 +1,295 @@
+{
+  "entities": {
+    "organizations": [
+      {
+        "key": "org--example",
+        "name": "<Organization Name>",
+        "path": "orgs/org--example",
+        "readme": "orgs/org--example/README.md"
+      }
+    ],
+    "people": [],
+    "projects": [
+      {
+        "key": "project--example--memory",
+        "name": "<Project Name>",
+        "organization": "org--example",
+        "path": "orgs/org--example/projects/project--example--memory",
+        "readme": "orgs/org--example/projects/project--example--memory/README.md"
+      }
+    ],
+    "repositories": [
+      {
+        "key": "repo--example--owner--repo",
+        "name": "<Repository Name>",
+        "path": "repositories/repo--example--owner--repo",
+        "readme": "repositories/repo--example--owner--repo/README.md"
+      }
+    ],
+    "tools": [
+      {
+        "key": "tool--test-plan",
+        "name": "test-plan",
+        "path": "tools/tool--test-plan",
+        "readme": "tools/tool--test-plan/README.md"
+      }
+    ],
+    "topics": [
+      {
+        "key": "topic--ai-memory",
+        "name": "AI Memory",
+        "path": "topics/topic--ai-memory",
+        "readme": "topics/topic--ai-memory/README.md"
+      }
+    ]
+  },
+  "generated_by": "scripts/reindex.sh",
+  "records": [
+    {
+      "ai_tools": [],
+      "commits": [],
+      "date": "<yyyy-mm-dd>",
+      "frontmatter": {
+        "date": "<yyyy-mm-dd>",
+        "last_reviewed": "2026-05-07",
+        "organization": "org--example",
+        "project": null,
+        "projects": [
+          "project--example--memory"
+        ],
+        "record_kind": "profile",
+        "repo": null,
+        "repositories": [],
+        "status": "active",
+        "timezone": "<timezone>",
+        "title": "<Organization Name>",
+        "tools": [],
+        "topics": []
+      },
+      "organization": "org--example",
+      "path": "orgs/org--example/README.md",
+      "people": [],
+      "project": null,
+      "projects": [
+        "project--example--memory"
+      ],
+      "prs": [],
+      "record_kind": "profile",
+      "repositories": [],
+      "status": "active",
+      "summary": "project--example--memory",
+      "ticket": null,
+      "title": "<Organization Name>",
+      "tools": [],
+      "topics": []
+    },
+    {
+      "ai_tools": [],
+      "commits": [],
+      "date": "<yyyy-mm-dd>",
+      "frontmatter": {
+        "date": "<yyyy-mm-dd>",
+        "last_reviewed": "2026-05-07",
+        "organization": "org--example",
+        "project": "project--example--memory",
+        "record_kind": "profile",
+        "repo": null,
+        "repositories": [],
+        "status": "active",
+        "timezone": "<timezone>",
+        "title": "<Project Name>",
+        "tools": [],
+        "topics": [
+          "topic--ai-memory"
+        ]
+      },
+      "organization": "org--example",
+      "path": "orgs/org--example/projects/project--example--memory/README.md",
+      "people": [],
+      "project": "project--example--memory",
+      "projects": [],
+      "prs": [],
+      "record_kind": "profile",
+      "repositories": [],
+      "status": "active",
+      "summary": "<Active context>",
+      "ticket": null,
+      "title": "<Project Name>",
+      "tools": [],
+      "topics": [
+        "topic--ai-memory"
+      ]
+    },
+    {
+      "ai_tools": [],
+      "commits": [],
+      "date": "2026-05-07",
+      "frontmatter": {
+        "date": "2026-05-07",
+        "organization": "org--example",
+        "project": "project--example--memory",
+        "record_kind": "note",
+        "repositories": [],
+        "status": "draft",
+        "timezone": "UTC",
+        "title": "Project Records",
+        "tools": [],
+        "topics": []
+      },
+      "organization": "org--example",
+      "path": "orgs/org--example/projects/project--example--memory/records/README.md",
+      "people": [],
+      "project": "project--example--memory",
+      "projects": [],
+      "prs": [],
+      "record_kind": "note",
+      "repositories": [],
+      "status": "draft",
+      "summary": "Project-specific durable records live here.",
+      "ticket": null,
+      "title": "Project Records",
+      "tools": [],
+      "topics": []
+    },
+    {
+      "ai_tools": [],
+      "commits": [],
+      "date": "<yyyy-mm-dd>",
+      "frontmatter": {
+        "date": "<yyyy-mm-dd>",
+        "last_reviewed": "2026-05-07",
+        "local_path": null,
+        "organization": "org--example",
+        "primary_languages": [],
+        "project": "project--example--memory",
+        "record_kind": "profile",
+        "remote": "<repo-url>",
+        "repo": "repo--example--owner--repo",
+        "status": "active",
+        "timezone": "<timezone>",
+        "title": "<Repository Name>",
+        "tools": [],
+        "topics": []
+      },
+      "organization": "org--example",
+      "path": "repositories/repo--example--owner--repo/README.md",
+      "people": [],
+      "project": "project--example--memory",
+      "projects": [],
+      "prs": [],
+      "record_kind": "profile",
+      "repositories": [
+        "repo--example--owner--repo"
+      ],
+      "status": "active",
+      "summary": "<Naming, architecture, testing, or workflow convention>",
+      "ticket": null,
+      "title": "<Repository Name>",
+      "tools": [],
+      "topics": []
+    },
+    {
+      "ai_tools": [
+        "Codex"
+      ],
+      "commits": [],
+      "date": "2026-01-01",
+      "frontmatter": {
+        "ai_tools": [
+          "Codex"
+        ],
+        "assignee": null,
+        "claimed_at": null,
+        "claimed_by": null,
+        "closed": null,
+        "commits": [],
+        "created": "2026-01-01",
+        "date": "2026-01-01",
+        "depends_on": [],
+        "duplicate_of": null,
+        "id": "BGT-0001",
+        "observers": [],
+        "organization": "org--example",
+        "parent": null,
+        "people": [],
+        "priority": "medium",
+        "project": "project--example--memory",
+        "prs": [],
+        "record_kind": "agent-task",
+        "related_records": [],
+        "repositories": [
+          "repo--example--owner--repo"
+        ],
+        "resolution": null,
+        "reviewer": null,
+        "status": "triage",
+        "status_category": "triage",
+        "ticket": null,
+        "timezone": "UTC",
+        "title": "Example review task",
+        "tools": [],
+        "topics": [
+          "topic--ai-memory"
+        ],
+        "type": "task",
+        "updated": "2026-01-01",
+        "visibility": "public"
+      },
+      "organization": "org--example",
+      "path": "tasks/active/BGT-0001--example-review-task.md",
+      "people": [],
+      "project": "project--example--memory",
+      "projects": [],
+      "prs": [],
+      "record_kind": "agent-task",
+      "repositories": [
+        "repo--example--owner--repo"
+      ],
+      "status": "triage",
+      "summary": "Show the live task format with synthetic, public-safe content. This example demonstrates how an agent can claim work, leave handoff notes, and later link a durable record. Replace or delete it during initialization.",
+      "ticket": null,
+      "title": "Example review task",
+      "tools": [],
+      "topics": [
+        "topic--ai-memory"
+      ]
+    },
+    {
+      "ai_tools": [],
+      "commits": [],
+      "date": "<yyyy-mm-dd>",
+      "frontmatter": {
+        "date": "<yyyy-mm-dd>",
+        "last_reviewed": "2026-05-07",
+        "organization": null,
+        "project": null,
+        "projects": [],
+        "record_kind": "profile",
+        "repo": null,
+        "repositories": [],
+        "status": "active",
+        "timezone": "<timezone>",
+        "title": "AI Memory",
+        "tools": [],
+        "topic": "topic--ai-memory"
+      },
+      "organization": null,
+      "path": "topics/topic--ai-memory/README.md",
+      "people": [],
+      "project": null,
+      "projects": [],
+      "prs": [],
+      "record_kind": "profile",
+      "repositories": [],
+      "status": "active",
+      "summary": "Patterns, decisions, and learnings about durable memory for AI-assisted software engineering.",
+      "ticket": null,
+      "title": "AI Memory",
+      "tools": [],
+      "topics": [
+        "topic--ai-memory"
+      ]
+    }
+  ],
+  "schema_version": 1
+}
