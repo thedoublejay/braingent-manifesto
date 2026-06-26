@@ -30,7 +30,7 @@ Before writing new code:
 
 ## CI And GitHub Actions
 
-- New workflows: use the **latest stable** versions of every action (`actions/checkout@v4`, `actions/setup-node@v4`, `actions/setup-python@v5`, etc.).
+- New workflows: use the **latest stable** versions of every action (`actions/checkout@v7`, `actions/setup-node@v6`, `actions/setup-python@v6`, etc.).
 - When editing existing workflows, **report any actions still pinned to old majors** as a follow-up. Don't bundle the upgrade into an unrelated task unless explicitly asked.
 - Pin to a major version (`@v4`) for evergreen actions; pin to a SHA only when supply-chain hardening is the explicit goal.
 - Treat outdated runner images, node versions in matrix configs, and deprecated commands the same way: report as follow-up.

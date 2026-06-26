@@ -76,7 +76,7 @@ Optional tools unlock more automation:
 | `rg` | Fast search across records and preferences. |
 | `jq` / SQLite | Querying generated indexes and local search caches. |
 | Python / `pipx` / `uv` | Installing and running the `braingent` helper CLI. |
-| Bun | Running the optional dashboard example and website locally. |
+| Node 24 + Bun | Running the optional dashboard example and website locally. |
 
 ---
 

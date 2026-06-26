@@ -31,7 +31,7 @@ installed Python CLI:
 Install the optional MCP dependency before starting the agent:
 
 ```bash
-pipx inject braingent "mcp>=1.27.1"
+pipx inject braingent "mcp>=1.28.0"
 ```
 
 ## `braingent_guide`
@@ -123,7 +123,7 @@ The server returns structured errors through the MCP runtime. Common causes:
 | Cause | Fix |
 | --- | --- |
 | Memory path is wrong | Check the `--path` argument. |
-| MCP dependency is missing | Run `pipx inject braingent "mcp>=1.27.1"`. |
+| MCP dependency is missing | Run `pipx inject braingent "mcp>=1.28.0"`. |
 | Record path is missing | Run `braingent find` or `braingent_find` again with broader filters. |
 
 ## Where To Go Next

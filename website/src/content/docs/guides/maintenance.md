@@ -123,7 +123,7 @@ jobs:
   doctor:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
           python-version-file: .python-version
