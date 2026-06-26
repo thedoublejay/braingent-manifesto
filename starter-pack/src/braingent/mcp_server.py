@@ -8,7 +8,7 @@ import argparse
 try:
     from mcp.server.fastmcp import FastMCP
 except ImportError as exc:  # pragma: no cover - depends on optional runtime.
-    raise SystemExit("Missing dependency `mcp`. Install with `pipx inject braingent 'mcp>=1.27.1'`.") from exc
+    raise SystemExit("Missing dependency `mcp`. Install with `pipx inject braingent 'mcp>=1.28.0'`.") from exc
 
 from braingent import core, mcp_tools
 

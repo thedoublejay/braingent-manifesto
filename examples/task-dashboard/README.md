@@ -60,6 +60,7 @@ bun run test:e2e
 
 ## Stack
 
+- Node 24.
 - Bun package manager/runtime.
 - TanStack Start, Router, Query, and Table.
 - React 19, TypeScript 6, Vite 8.

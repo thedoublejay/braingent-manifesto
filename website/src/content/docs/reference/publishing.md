@@ -55,7 +55,7 @@ is **Cloudflare Pages** with the project root pointed at `website/`:
 
 - Build command: `bun install --frozen-lockfile && bun run build`
 - Build output: `website/dist`
-- Node/Bun version: pinned via `package.json` `packageManager`.
+- Node/Bun version: Node 24 and Bun 1.3.14, pinned by `.node-version` and `package.json` `packageManager`.
 
 Other hosts (Netlify, Vercel, GitHub Pages, S3 + CloudFront) work
 identically — feed them `website/dist`.

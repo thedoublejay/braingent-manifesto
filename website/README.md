@@ -4,6 +4,7 @@ Astro landing page for `https://braingent.dev`.
 
 This mirrors the Gather Step website setup:
 
+- Node 24.
 - Bun package manager.
 - Astro landing page at `/`.
 - Static build output in `dist/`.

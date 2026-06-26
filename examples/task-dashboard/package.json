@@ -2,6 +2,7 @@
   "name": "@braingent/task-dashboard-example",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.3.14",
   "scripts": {
     "dev": "vite dev --host 127.0.0.1",
     "build": "vite build",
@@ -9,24 +10,24 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@tanstack/react-query": "5.100.6",
-    "@tanstack/react-router": "1.168.26",
-    "@tanstack/react-start": "1.167.52",
+    "@tanstack/react-query": "5.101.1",
+    "@tanstack/react-router": "1.170.16",
+    "@tanstack/react-start": "1.168.26",
     "@tanstack/react-table": "8.21.3",
-    "lucide-react": "1.14.0",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
-    "yaml": "2.8.3",
-    "zod": "4.4.1"
+    "lucide-react": "1.21.0",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "yaml": "2.9.0",
+    "zod": "4.4.3"
   },
   "devDependencies": {
-    "@playwright/test": "1.59.1",
-    "@tanstack/router-plugin": "1.167.29",
-    "@types/node": "25.6.0",
-    "@types/react": "19.2.14",
+    "@playwright/test": "1.61.1",
+    "@tanstack/router-plugin": "1.168.18",
+    "@types/node": "26.0.1",
+    "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
-    "@vitejs/plugin-react": "6.0.1",
+    "@vitejs/plugin-react": "6.0.3",
     "typescript": "6.0.3",
-    "vite": "8.0.10"
+    "vite": "8.1.0"
   }
 }

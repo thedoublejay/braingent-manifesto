@@ -18,7 +18,7 @@ Optional but useful:
 - `jq` and `yq` for structured JSON/YAML inspection.
 - SQLite if you later build generated indexes.
 - GitHub CLI if you later want to index merged PRs.
-- Bun and Playwright if you later build or run the optional task dashboard.
+- Node 24, Bun, and Playwright if you later build or run the optional task dashboard.
 
 ## Step 1: Install The CLI
 
