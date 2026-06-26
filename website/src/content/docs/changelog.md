@@ -12,6 +12,17 @@ migrations.
 
 ## Latest
 
+### `2026-06-26` — `1.0.0`
+
+- **Stable package metadata.** The `braingent` Python package is now versioned
+  as `1.0.0` and marked `Production/Stable` on PyPI.
+- **Stable starter-template baseline.** The packaged starter template manifest
+  now reports `1.0.0`, making the current memory repo shape the first stable
+  baseline for `braingent init` and `braingent update`.
+- **Release baseline.** This release includes the hardened publishing pipeline,
+  optional `config.toml`, built-in secret scanning, MCP retrieval tools, QA test
+  planning, and the refreshed Node 24 website/example dependency baseline.
+
 ### `2026-06-16` — `0.1.1`
 
 - **Optional `config.toml`.** `braingent` now reads `.braingent/config.toml`
