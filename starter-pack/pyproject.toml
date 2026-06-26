@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "braingent"
-version = "0.1.1"
+version = "1.0.0"
 description = "Durable engineering memory CLI: doctor, reindex, find, recall, synthesize, MCP, and QA test-plan generation."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,7 +12,7 @@ license = "MIT"
 authors = [{ name = "JJ Adonis" }]
 keywords = ["memory", "cli", "mcp", "qa", "test-plans"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",

@@ -2517,7 +2517,7 @@ def read_existing_manifest(root: Path) -> dict[str, str]:
 def write_template_manifest(root: Path, manifest: dict[str, str]) -> None:
     payload = {
         "template": "braingent-starter",
-        "version": "0.1.1",
+        "version": "1.0.0",
         "files": manifest,
     }
     (root / TEMPLATE_MANIFEST_PATH).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -2648,7 +2648,7 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Braingent metadata helper")
-    parser.add_argument("--version", action="version", version="braingent 0.1.1")
+    parser.add_argument("--version", action="version", version="braingent 1.0.0")
     parser.add_argument(
         "--root",
         help="Braingent repo root to operate on. Defaults to BRAINGENT_ROOT or the nearest parent repo.",
