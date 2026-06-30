@@ -86,6 +86,31 @@ class LoadConfigTests(unittest.TestCase):
             self.assertEqual(cfg.task_id_prefix, "ENG")
             self.assertEqual(cfg.task_id_pad, 5)
 
+    def test_factcheck_domains_are_additive_and_scope_topics_collected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            home = Path(tmp) / "home"
+            _write(
+                root,
+                ".braingent/config.toml",
+                '[factcheck]\nscope_topics = ["company-research"]\n'
+                'slop_domains = ["Mill.Example"]\nprwire_domains = ["myWire.example"]\n',
+            )
+            cfg = bgconfig.load_config(root, home=home)
+            self.assertEqual(cfg.factcheck_scope_topics, ("company-research",))
+            self.assertEqual(cfg.factcheck_slop_domains, ("mill.example",))  # lowercased
+            # PR-wire defaults kept, custom entry appended.
+            self.assertEqual(cfg.factcheck_prwire_domains[: len(bgconfig.DEFAULT_FACTCHECK_PRWIRE_DOMAINS)], bgconfig.DEFAULT_FACTCHECK_PRWIRE_DOMAINS)
+            self.assertIn("mywire.example", cfg.factcheck_prwire_domains)
+
+    def test_factcheck_defaults_when_no_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = bgconfig.load_config(Path(tmp) / "repo", home=Path(tmp) / "home")
+            self.assertEqual(cfg.factcheck_scope_topics, ())
+            self.assertEqual(cfg.factcheck_slop_domains, ())
+            self.assertEqual(cfg.factcheck_prwire_domains, bgconfig.DEFAULT_FACTCHECK_PRWIRE_DOMAINS)
+            self.assertEqual(cfg.factcheck_tier12_domains, bgconfig.DEFAULT_FACTCHECK_TIER12_DOMAINS)
+
 
 class DoctorSafetyTests(unittest.TestCase):
     def test_builtin_pattern_catches_aws_key(self) -> None:
