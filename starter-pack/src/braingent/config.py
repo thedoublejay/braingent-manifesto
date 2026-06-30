@@ -29,6 +29,32 @@ DEFAULT_RECALL_LIMIT = 8
 DEFAULT_TASK_ID_PREFIX = "BGT"
 DEFAULT_TASK_ID_PAD = 4
 
+# Topics that opt a record into the `braingent factcheck` loop when it has no
+# explicit `verification` field. Empty by default: a record opts in either by
+# carrying a `verification` field or by listing one of these topics.
+DEFAULT_FACTCHECK_SCOPE_TOPICS: tuple[str, ...] = ()
+# Source-credibility tiers for `braingent factcheck`. Generic, well-known
+# defaults; extend per project via [factcheck] in config.toml. Tier 4 (slop):
+# aggregators/PR mills not credible alone. PR wires: the subject talking, fine
+# as self-reported. Tier 1/2: recognised independent press.
+DEFAULT_FACTCHECK_PRWIRE_DOMAINS: tuple[str, ...] = (
+    "prnewswire.com",
+    "prnewswire.co.uk",
+    "businesswire.com",
+    "globenewswire.com",
+    "newswire.ca",
+    "prlog.org",
+)
+DEFAULT_FACTCHECK_TIER12_DOMAINS: tuple[str, ...] = (
+    "reuters.com",
+    "bloomberg.com",
+    "ft.com",
+    "wsj.com",
+    "nytimes.com",
+    "apnews.com",
+    "economist.com",
+)
+
 CONFIG_RELATIVE_PATH = Path(".braingent") / "config.toml"
 
 
@@ -41,6 +67,10 @@ class BraingentConfig:
     recall_stale_days: int = DEFAULT_STALE_DAYS
     task_id_prefix: str = DEFAULT_TASK_ID_PREFIX
     task_id_pad: int = DEFAULT_TASK_ID_PAD
+    factcheck_scope_topics: tuple[str, ...] = DEFAULT_FACTCHECK_SCOPE_TOPICS
+    factcheck_slop_domains: tuple[str, ...] = ()
+    factcheck_prwire_domains: tuple[str, ...] = DEFAULT_FACTCHECK_PRWIRE_DOMAINS
+    factcheck_tier12_domains: tuple[str, ...] = DEFAULT_FACTCHECK_TIER12_DOMAINS
     issues: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -113,6 +143,9 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
             continue
         extra_patterns.append(pattern)
 
+    def domains(key: str) -> list[str]:
+        return [domain.strip().lower().removeprefix("www.") for domain in string_list("factcheck", key) if domain.strip()]
+
     return BraingentConfig(
         forbid_patterns=BUILTIN_FORBID_PATTERNS + tuple(extra_patterns),
         forbid_paths=tuple(string_list("safety", "forbid_paths")),
@@ -121,5 +154,9 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
         recall_stale_days=positive_int("recall", "stale_days", DEFAULT_STALE_DAYS),
         task_id_prefix=nonempty_str("task_ids", "prefix", DEFAULT_TASK_ID_PREFIX),
         task_id_pad=positive_int("task_ids", "pad", DEFAULT_TASK_ID_PAD),
+        factcheck_scope_topics=DEFAULT_FACTCHECK_SCOPE_TOPICS + tuple(string_list("factcheck", "scope_topics")),
+        factcheck_slop_domains=tuple(domains("slop_domains")),
+        factcheck_prwire_domains=DEFAULT_FACTCHECK_PRWIRE_DOMAINS + tuple(domains("prwire_domains")),
+        factcheck_tier12_domains=DEFAULT_FACTCHECK_TIER12_DOMAINS + tuple(domains("tier12_domains")),
         issues=tuple(issues),
     )

@@ -20,8 +20,8 @@ Higher in this list wins.
 4. **Built-in defaults**.
 
 Scalar values (like `stale_days`) follow this precedence directly. List values
-under `[safety]` are **additive**: repo and user entries are appended to the
-built-in defaults, never replacing them.
+under `[safety]` and the `[factcheck]` domain lists are **additive**: repo and
+user entries are appended to the built-in defaults, never replacing them.
 
 Selecting *which* repo to operate on is separate from the config file: use the
 `--root` flag or the `BRAINGENT_ROOT` environment variable.
@@ -63,6 +63,16 @@ stale_days = 180
 # Set this BEFORE creating tasks — changing it later orphans existing IDs.
 prefix = "BGT"
 pad = 4
+
+[factcheck]
+# Topics that opt a record into `braingent factcheck` when it has no
+# `verification` field. A record with a `verification` field is always in scope.
+scope_topics = ["company-research", "deep-research"]
+# Source-credibility tiers. Domain lists are additive to sensible defaults
+# (PR-wire and tier-1-2 press ship pre-filled; slop starts empty).
+slop_domains = ["contentfarm.example", "ai-rewrite-mill.example"]
+prwire_domains = ["myindustrywire.example"]
+tier12_domains = ["mytrustedjournal.example"]
 ```
 
 ## What each section does
@@ -75,6 +85,8 @@ pad = 4
 | `[recall] limit` | Default number of must-read records `recall` returns. |
 | `[recall] stale_days` | Default age threshold `recall` uses to classify stale records. |
 | `[task_ids] prefix` / `pad` | Prefix and zero-pad width for generated task IDs (and the matching validation). |
+| `[factcheck] scope_topics` | Topics that opt a record into `factcheck` when it has no `verification` field. Additive. |
+| `[factcheck] slop_domains` / `prwire_domains` / `tier12_domains` | Source-credibility tiers used by `factcheck`. Additive to the built-in defaults. |
 
 The built-in `[safety]` patterns are always active even with no config file, so
 `doctor` flags common secret formats out of the box.
