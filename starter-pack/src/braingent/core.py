@@ -2478,6 +2478,17 @@ def cmd_synthesize(args: argparse.Namespace) -> int:
     return run_synthesize(args)
 
 
+def cmd_factcheck(args: argparse.Namespace) -> int:
+    from braingent import factcheck
+
+    return factcheck.run_factcheck(
+        record=args.record,
+        audit_all=args.all,
+        next_only=args.next,
+        output_json=args.json,
+    )
+
+
 def template_root() -> Any:
     return importlib.resources.files("braingent").joinpath("templates", "starter")
 
@@ -2721,6 +2732,14 @@ def build_parser() -> argparse.ArgumentParser:
     synthesize_scope_group.add_argument("--repo", help="repository key, with or without repo-- prefix")
     synthesize_scope_group.add_argument("--project", help="project key")
     synthesize_parser.set_defaults(func=cmd_synthesize)
+
+    factcheck_parser = subparsers.add_parser("factcheck", help="audit research records for source credibility and unsourced claims")
+    factcheck_parser.add_argument("record", nargs="?", help="path to a single record to audit")
+    factcheck_group = factcheck_parser.add_mutually_exclusive_group()
+    factcheck_group.add_argument("--all", action="store_true", help="audit every in-scope record")
+    factcheck_group.add_argument("--next", action="store_true", help="print the next unverified in-scope record path")
+    factcheck_parser.add_argument("--json", action="store_true", help="emit JSON")
+    factcheck_parser.set_defaults(func=cmd_factcheck)
 
     task_new_parser = subparsers.add_parser("task-new", help="create an agent task")
     task_new_parser.add_argument("title")

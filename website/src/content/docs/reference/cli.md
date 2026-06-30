@@ -185,6 +185,29 @@ braingent synthesize --project project--example--memory
 
 Exactly one of `--topic`, `--repo`, or `--project` is required.
 
+## `braingent factcheck`
+
+Audit research records for source credibility and unsourced claims. Read-only:
+it makes no network calls and no edits. It does the mechanical part of
+fact-checking so a human or AI reviewer spends effort only on judgment (does
+this source support this claim?).
+
+```bash
+braingent factcheck path/to/report.md   # audit one record
+braingent factcheck --all                # audit every in-scope record
+braingent factcheck --next               # print the next unverified record path
+braingent factcheck --all --json         # machine-readable punch-list
+```
+
+A record is in scope when it carries a `verification` frontmatter field or when
+its topics intersect `[factcheck] scope_topics` in config. The audit tiers each
+cited source (slop / PR-wire / tier-1-2 / primary-or-other) using the configured
+domain lists, flags `[UNVERIFIED]` and `[SINGLE-SOURCE]` markers, and lists
+bullets that assert something with no citation. Citations are GFM footnote
+definitions (`[^id]: URL`); a `[^id]` marker on a claim line counts it as
+sourced. Configure the tiers under `[factcheck]` (see the configuration
+reference).
+
 ## Live Task Commands
 
 Coordinate optional live `BGT-NNNN` task files under `tasks/`.
