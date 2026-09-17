@@ -1,4 +1,4 @@
 PyYAML==6.0.3
-mypy
-types-PyYAML
-ruff
+mypy==2.3.1
+types-PyYAML==6.0.12.20260906
+ruff==0.16.8
