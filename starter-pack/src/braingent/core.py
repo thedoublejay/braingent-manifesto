@@ -42,6 +42,7 @@ except ImportError as exc:  # pragma: no cover - exercised by wrapper fallback.
         "or install uv and rerun the wrapper."
     ) from exc
 
+from braingent import __version__
 from braingent.config import CONFIG_RELATIVE_PATH, DEFAULT_CONFIG, BraingentConfig, load_config
 
 YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
@@ -2986,7 +2987,7 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Braingent metadata helper")
-    parser.add_argument("--version", action="version", version="braingent 0.1.0")
+    parser.add_argument("--version", action="version", version=f"braingent {__version__}")
     parser.add_argument(
         "--root",
         help="Braingent repo root to operate on. Defaults to BRAINGENT_ROOT or the nearest parent repo.",

@@ -12,6 +12,10 @@ migrations.
 
 ## Latest
 
+### `17 September 2026`: `1.0.2`
+
+- **CLI version string.** `braingent --version` now reports the package version (`1.0.2`) instead of a leftover `0.1.0`.
+
 ### `17 September 2026`: `1.0.1`
 
 - **PyPI republish.** `1.0.0` is already on PyPI (26 June 2026) and cannot be replaced. This patch ships the post-1.0 work: MCP SDK 2.2 (`MCPServer`), `braingent factcheck`, token-efficient retrieval, and hatchling metadata 2.5 with a matching publish action.
