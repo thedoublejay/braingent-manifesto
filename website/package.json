@@ -12,7 +12,12 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/sitemap": "^3.7.3",
-    "astro": "^7.0.3"
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.3"
+  },
+  "overrides": {
+    "smol-toml": ">=1.7.1",
+    "nanoid": ">=3.3.16",
+    "postcss": ">=8.5.18"
   }
 }

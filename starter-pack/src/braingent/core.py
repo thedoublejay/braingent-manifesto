@@ -42,8 +42,11 @@ except ImportError as exc:  # pragma: no cover - exercised by wrapper fallback.
         "or install uv and rerun the wrapper."
     ) from exc
 
+from braingent.config import CONFIG_RELATIVE_PATH, DEFAULT_CONFIG, BraingentConfig, load_config
 
 YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
+CONFIG: BraingentConfig = DEFAULT_CONFIG
 
 ROOT_MARKERS = (
     Path("preferences") / "taxonomy.yml",
@@ -68,6 +71,11 @@ FOLLOWUP_SECTION_HEADINGS = {
 SECRET_SCAN_ALLOWLIST: set[str] = set()
 GUIDE_FILES = ("AGENTS.md", "CURRENT_STATE.md")
 AGENT_TASK_ID_PATTERN = re.compile(r"^BGT-[0-9]{4,}$")
+
+
+def agent_task_id_regex() -> re.Pattern[str]:
+    """Task-id validation pattern for the configured prefix (default BGT)."""
+    return re.compile(rf"^{re.escape(CONFIG.task_id_prefix)}-[0-9]+$")
 AGENT_TASK_ACTIVITY_PATTERN = re.compile(
     r"^- (?P<timestamp>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:Z|[+-][0-9]{2}:[0-9]{2})) "
     r"\| (?P<actor>[^|]+) \| role:(?P<role>[^|]+) \| event:(?P<event>[^|]+) \|$"
@@ -127,6 +135,8 @@ def set_repo_root(root: str | os.PathLike[str] | None = None) -> Path:
     global RECORDS_ROLLUP_MD_PATH
     global SQLITE_PATH
     global TASKS_DIR
+    global CONFIG
+    global CHECK_EXCLUDED_PATHS
 
     REPO_ROOT = resolve_repo_root(root)
     TAXONOMY_PATH = REPO_ROOT / "preferences" / "taxonomy.yml"
@@ -136,6 +146,8 @@ def set_repo_root(root: str | os.PathLike[str] | None = None) -> Path:
     RECORDS_ROLLUP_MD_PATH = INDEX_DIR / "records-rollup.md"
     SQLITE_PATH = REPO_ROOT / ".braingent.db"
     TASKS_DIR = REPO_ROOT / "tasks"
+    CONFIG = load_config(REPO_ROOT)
+    CHECK_EXCLUDED_PATHS = frozenset({INDEX_DIR / "stale-candidates.md"})
     return REPO_ROOT
 
 
@@ -147,6 +159,7 @@ RECORDS_COMPACT_JSON_PATH = INDEX_DIR / "records-compact.json"
 RECORDS_ROLLUP_MD_PATH = INDEX_DIR / "records-rollup.md"
 SQLITE_PATH = Path(".braingent.db")
 TASKS_DIR = Path("tasks")
+CHECK_EXCLUDED_PATHS = frozenset({INDEX_DIR / "stale-candidates.md"})
 # Allow `import braingent.core` and `braingent --help` outside a memory repo.
 with contextlib.suppress(SystemExit):
     set_repo_root()
@@ -787,7 +800,8 @@ def validate_decision_conflicts(records: list[Record]) -> list[ValidationIssue]:
             if not newer_tokens:
                 continue
             for older in ordered[:index]:
-                pair = tuple(sorted((older.relpath, newer.relpath)))
+                first, second = sorted((older.relpath, newer.relpath))
+                pair = (first, second)
                 if pair in seen_pairs or older.relpath == newer.relpath:
                     continue
                 if len(title_tokens(older) & newer_tokens) < 2:
@@ -1727,6 +1741,8 @@ def run_reindex(
 
     if check:
         for path, content in outputs.items():
+            if path in CHECK_EXCLUDED_PATHS:
+                continue
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 mismatches.append(path)
         if mismatches:
@@ -2194,12 +2210,7 @@ def render_followups_index(followups: list[dict[str, str]]) -> str:
 
 def is_secret_false_positive(item: dict[str, str]) -> bool:
     path = item.get("path", "")
-    if path in SECRET_SCAN_ALLOWLIST:
-        return True
-    name = Path(path).name
-    if "pem-header-scan-cannot-see-a-secret" in name:
-        return True
-    return False
+    return path in SECRET_SCAN_ALLOWLIST or "pem-header-scan-cannot-see-a-secret" in Path(path).name
 
 
 def scan_markdown_patterns(pattern: str, roots: Iterable[str]) -> list[dict[str, str]]:
@@ -2239,9 +2250,28 @@ def index_mismatches(records: list[Record]) -> list[dict[str, str]]:
     outputs = build_index_outputs(records)
     mismatches: list[dict[str, str]] = []
     for path, content in outputs.items():
+        if path in CHECK_EXCLUDED_PATHS:
+            continue
         if not path.exists() or path.read_text(encoding="utf-8") != content:
             mismatches.append(short_issue(path, "generated index is stale"))
     return mismatches
+
+
+def forbidden_content_findings() -> list[dict[str, str]]:
+    """Scan records for built-in + configured forbidden patterns and paths."""
+    patterns = list(CONFIG.forbid_patterns) + [re.escape(path) for path in CONFIG.forbid_paths]
+    findings: list[dict[str, str]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for pattern in patterns:
+        for hit in scan_markdown_patterns(pattern, ["."]):
+            if is_secret_false_positive(hit):
+                continue
+            key = (hit.get("path", ""), hit.get("line", ""), hit.get("message", ""))
+            if key in seen:
+                continue
+            seen.add(key)
+            findings.append(hit)
+    return findings
 
 
 def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
@@ -2280,14 +2310,8 @@ def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
 
     unchecked = scan_unchecked_followups(FOLLOWUP_SCAN_ROOTS)
     placeholders = scan_markdown_patterns(r"\b(TODO|FIXME|PLACEHOLDER|XXX)\b", ["."])
-    possible_secrets = [
-        item
-        for item in scan_markdown_patterns(
-            r"(?i)((api[_-]?key|token|secret|password)\s*[:=]\s*['\"]?[A-Za-z0-9_./+=-]{16,}|BEGIN .*PRIVATE KEY)",
-            ["."],
-        )
-        if not is_secret_false_positive(item)
-    ]
+    possible_secrets = forbidden_content_findings()
+    config_issues = [{"path": CONFIG_RELATIVE_PATH.as_posix(), "message": issue} for issue in CONFIG.issues]
 
     return {
         "generated_on": today.isoformat(),
@@ -2300,6 +2324,7 @@ def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
             "metadata_and_freshness": warnings + [short_issue(issue.path, issue.message) for issue in validation_warnings],
             "unchecked_followups": unchecked,
             "placeholders": placeholders,
+            "config": config_issues,
         },
         "counts": {
             "records": len(records),
@@ -2309,6 +2334,7 @@ def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
             "metadata_and_freshness": len(warnings) + len(validation_warnings),
             "unchecked_followups": len(unchecked),
             "placeholders": len(placeholders),
+            "config": len(config_issues),
         },
     }
 
@@ -2327,6 +2353,7 @@ def render_doctor_markdown(payload: dict[str, Any], max_items: int = 20) -> str:
             f"- Metadata/freshness warnings: {counts['metadata_and_freshness']}",
             f"- Unchecked follow-ups: {counts['unchecked_followups']}",
             f"- Placeholders/TODO markers: {counts['placeholders']}",
+            f"- Config issues: {counts['config']}",
             "",
         ]
     )
@@ -2373,7 +2400,11 @@ def run_doctor(output_json: bool = False, strict: bool = False, stale_days: int 
         + payload["counts"]["stale_indexes"]
         + payload["counts"]["possible_secrets"]
     )
-    warning_count = payload["counts"]["metadata_and_freshness"] + payload["counts"]["placeholders"]
+    warning_count = (
+        payload["counts"]["metadata_and_freshness"]
+        + payload["counts"]["placeholders"]
+        + payload["counts"]["config"]
+    )
     if hard_count:
         return 1
     if strict and warning_count:
@@ -2469,14 +2500,15 @@ def next_agent_task_id() -> str:
         raw = next_id_path.read_text(encoding="utf-8").strip()
         number = int(raw) if raw else 1
     else:
+        prefix = CONFIG.task_id_prefix
         max_seen = 0
-        for path in TASKS_DIR.rglob("BGT-*.md"):
-            match = re.match(r"BGT-([0-9]{4,})--", path.name)
+        for path in TASKS_DIR.rglob(f"{prefix}-*.md"):
+            match = re.match(rf"{re.escape(prefix)}-([0-9]+)--", path.name)
             if match:
                 max_seen = max(max_seen, int(match.group(1)))
         number = max_seen + 1
     next_id_path.write_text(f"{number + 1}\n", encoding="utf-8")
-    return f"BGT-{number:04d}"
+    return f"{CONFIG.task_id_prefix}-{number:0{CONFIG.task_id_pad}d}"
 
 
 def write_markdown_record(path: Path, frontmatter: dict[str, Any], body: str) -> None:
@@ -2487,7 +2519,8 @@ def write_markdown_record(path: Path, frontmatter: dict[str, Any], body: str) ->
 def task_files() -> list[Path]:
     if not TASKS_DIR.exists():
         return []
-    return sorted(TASKS_DIR.glob("active/BGT-*.md")) + sorted(TASKS_DIR.glob("archive/*/BGT-*.md"))
+    prefix = CONFIG.task_id_prefix
+    return sorted(TASKS_DIR.glob(f"active/{prefix}-*.md")) + sorted(TASKS_DIR.glob(f"archive/*/{prefix}-*.md"))
 
 
 def load_task_record(task_id: str) -> Record:
@@ -2747,11 +2780,14 @@ def cmd_find(args: argparse.Namespace) -> int:
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
-    return run_recall(args.filters, output_json=args.json, limit=args.limit, stale_days=args.stale_days)
+    limit = args.limit if args.limit is not None else CONFIG.recall_limit
+    stale_days = args.stale_days if args.stale_days is not None else CONFIG.recall_stale_days
+    return run_recall(args.filters, output_json=args.json, limit=limit, stale_days=stale_days)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    return run_doctor(output_json=args.json, strict=args.strict, stale_days=args.stale_days)
+    stale_days = args.stale_days if args.stale_days is not None else CONFIG.doctor_stale_days
+    return run_doctor(output_json=args.json, strict=args.strict, stale_days=stale_days)
 
 
 def cmd_synthesize(args: argparse.Namespace) -> int:
@@ -2776,8 +2812,17 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def is_generated_starter_path(relative: str) -> bool:
+    name = relative.replace("\\", "/")
+    return name == "CURRENT_STATE.md" or name.startswith("indexes/")
+
+
 def build_template_manifest() -> dict[str, str]:
-    return {relative: sha256_bytes(resource.read_bytes()) for relative, resource in iter_template_files()}
+    return {
+        relative: sha256_bytes(resource.read_bytes())
+        for relative, resource in iter_template_files()
+        if not is_generated_starter_path(relative)
+    }
 
 
 def read_existing_manifest(root: Path) -> dict[str, str]:
@@ -2856,6 +2901,8 @@ def cmd_init(args: argparse.Namespace) -> int:
 def update_plan_for_target(target: Path, manifest: dict[str, str], previous: dict[str, str]) -> dict[str, list[str]]:
     plan: dict[str, list[str]] = {"add": [], "update": [], "unchanged": [], "conflict": []}
     for relative, expected_hash in manifest.items():
+        if is_generated_starter_path(relative):
+            continue
         path = target / relative
         current_hash = target_file_hash(path)
         if current_hash is None:
@@ -2992,14 +3039,14 @@ def build_parser() -> argparse.ArgumentParser:
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
     recall_parser.add_argument("filters", nargs="*", help="filters like repo=github--example--app ticket=EX-123")
     recall_parser.add_argument("--json", action="store_true", help="emit JSON")
-    recall_parser.add_argument("--limit", type=int, default=8, help="number of must_read records to return")
-    recall_parser.add_argument("--stale-days", type=int, default=180, help="age threshold for stale profile/learning records")
+    recall_parser.add_argument("--limit", type=int, default=None, help="number of must_read records to return (config [recall] limit, default 8)")
+    recall_parser.add_argument("--stale-days", type=int, default=None, help="age threshold for stale records (config [recall] stale_days, default 180)")
     recall_parser.set_defaults(func=cmd_recall)
 
     doctor_parser = subparsers.add_parser("doctor", help="report Braingent health checks")
     doctor_parser.add_argument("--json", action="store_true", help="emit JSON")
     doctor_parser.add_argument("--strict", action="store_true", help="exit non-zero on warnings")
-    doctor_parser.add_argument("--stale-days", type=int, default=180, help="age threshold for stale profile/learning records")
+    doctor_parser.add_argument("--stale-days", type=int, default=None, help="age threshold for stale records (config [doctor] stale_days, default 180)")
     doctor_parser.set_defaults(func=cmd_doctor)
 
     synthesize_parser = subparsers.add_parser("synthesize", help="generate source-indexed synthesis pages")
