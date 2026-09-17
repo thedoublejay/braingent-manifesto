@@ -95,6 +95,9 @@ allowed_fields:
   - status
   - status_category
   - stale_after
+  - summary
+  - captured_by
+  - captured_at
   - superseded_by
   - supersedes
   - ticket
@@ -193,10 +196,12 @@ entity_fields:
 ai_tools:
   - ChatGPT
   - Claude
+  - Claude Code
   - Codex
   - Cursor
   - Gemini
   - GitHub Copilot
+  - Grok
   - Roo Code
 
 agent_ids:
@@ -206,6 +211,7 @@ agent_ids:
   - agent--cursor
   - agent--gemini
   - agent--github-copilot
+  - agent--grok
   - agent--roo-code
 
 agent_task_status_categories:

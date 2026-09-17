@@ -42,11 +42,8 @@ except ImportError as exc:  # pragma: no cover - exercised by wrapper fallback.
         "or install uv and rerun the wrapper."
     ) from exc
 
-from braingent.config import CONFIG_RELATIVE_PATH, DEFAULT_CONFIG, BraingentConfig, load_config
 
 YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
-
-CONFIG: BraingentConfig = DEFAULT_CONFIG
 
 ROOT_MARKERS = (
     Path("preferences") / "taxonomy.yml",
@@ -56,14 +53,21 @@ ROOT_MARKERS = (
 TEMPLATE_MANIFEST_PATH = Path(".braingent-template-manifest.json")
 GENERATED_BY = "scripts/reindex.sh"
 SCHEMA_VERSION = 1
-RECORDS_ROLLUP_PER_ORG_LIMIT = 25
+RECORDS_ROLLUP_PER_ORG_LIMIT = 18
 FOLLOWUP_SCAN_ROOTS = ["orgs", "repositories", "topics", "tools", "tickets", "inbox", "imports"]
+NON_RECORD_DIR_NAMES = {"attachments", "inbox"}
+NON_RECORD_PATH_PARTS = {("imports", "raw")}
+HARD_REQUIRED_FIELDS = {"title", "record_kind", "status"}
+FOLLOWUP_SECTION_HEADINGS = {
+    "Follow-ups",
+    "Follow-Ups",
+    "Follow ups",
+    "Decisions Or Follow-Ups",
+    "Decisions or follow-ups",
+}
+SECRET_SCAN_ALLOWLIST: set[str] = set()
+GUIDE_FILES = ("AGENTS.md", "CURRENT_STATE.md")
 AGENT_TASK_ID_PATTERN = re.compile(r"^BGT-[0-9]{4,}$")
-
-
-def agent_task_id_regex() -> re.Pattern[str]:
-    """Task-id validation pattern for the configured prefix (default BGT)."""
-    return re.compile(rf"^{re.escape(CONFIG.task_id_prefix)}-[0-9]+$")
 AGENT_TASK_ACTIVITY_PATTERN = re.compile(
     r"^- (?P<timestamp>[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:Z|[+-][0-9]{2}:[0-9]{2})) "
     r"\| (?P<actor>[^|]+) \| role:(?P<role>[^|]+) \| event:(?P<event>[^|]+) \|$"
@@ -123,7 +127,6 @@ def set_repo_root(root: str | os.PathLike[str] | None = None) -> Path:
     global RECORDS_ROLLUP_MD_PATH
     global SQLITE_PATH
     global TASKS_DIR
-    global CONFIG
 
     REPO_ROOT = resolve_repo_root(root)
     TAXONOMY_PATH = REPO_ROOT / "preferences" / "taxonomy.yml"
@@ -133,7 +136,6 @@ def set_repo_root(root: str | os.PathLike[str] | None = None) -> Path:
     RECORDS_ROLLUP_MD_PATH = INDEX_DIR / "records-rollup.md"
     SQLITE_PATH = REPO_ROOT / ".braingent.db"
     TASKS_DIR = REPO_ROOT / "tasks"
-    CONFIG = load_config(REPO_ROOT)
     return REPO_ROOT
 
 
@@ -145,8 +147,6 @@ RECORDS_COMPACT_JSON_PATH = INDEX_DIR / "records-compact.json"
 RECORDS_ROLLUP_MD_PATH = INDEX_DIR / "records-rollup.md"
 SQLITE_PATH = Path(".braingent.db")
 TASKS_DIR = Path("tasks")
-# stale-candidates embeds record ages computed from the current date, so it drifts daily; regenerate but skip in --check.
-CHECK_EXCLUDED_PATHS = frozenset({INDEX_DIR / "stale-candidates.md"})
 # Allow `import braingent.core` and `braingent --help` outside a memory repo.
 with contextlib.suppress(SystemExit):
     set_repo_root()
@@ -193,13 +193,23 @@ class Record:
 class ValidationIssue:
     path: Path
     message: str
+    severity: str = "error"
 
     def format(self) -> str:
         try:
             label = self.path.relative_to(REPO_ROOT).as_posix()
         except ValueError:
             label = str(self.path)
-        return f"{label}: {self.message}"
+        prefix = "warning: " if self.severity == "warning" else ""
+        return f"{prefix}{label}: {self.message}"
+
+
+def issue_errors(issues: Iterable[ValidationIssue]) -> list[ValidationIssue]:
+    return [issue for issue in issues if issue.severity != "warning"]
+
+
+def issue_warnings(issues: Iterable[ValidationIssue]) -> list[ValidationIssue]:
+    return [issue for issue in issues if issue.severity == "warning"]
 
 
 def as_scalar(value: Any) -> str:
@@ -392,6 +402,10 @@ def is_record_like_path(path: Path) -> bool:
     except ValueError:
         return True
     parts = rel.parts
+    if any(part in NON_RECORD_DIR_NAMES for part in parts):
+        return False
+    if any(tuple(parts[index : index + len(skip)]) == skip for skip in NON_RECORD_PATH_PARTS for index in range(len(parts))):
+        return False
     if "records" in parts:
         return True
     return len(parts) >= 3 and parts[0] in {"repositories", "tickets", "people"} and path.name == "README.md"
@@ -508,8 +522,8 @@ def validate_agent_task_record(record: Record, taxonomy: dict[str, Any]) -> list
     path = record.path
     task_id = task_id_from_record(record)
 
-    if not agent_task_id_regex().match(task_id):
-        issues.append(ValidationIssue(path, f"`id` must match {CONFIG.task_id_prefix}-0001 style"))
+    if not AGENT_TASK_ID_PATTERN.match(task_id):
+        issues.append(ValidationIssue(path, "`id` must match BGT-0001 style"))
 
     if path.is_relative_to(TASKS_DIR) and task_id and not path.name.startswith(f"{task_id}--"):
         issues.append(ValidationIssue(path, "filename must start with `<id>--`"))
@@ -601,7 +615,9 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
             suggestion = ""
             if field == "tickets":
                 suggestion = " Use scalar `ticket:` instead."
-            issues.append(ValidationIssue(path, f"unknown frontmatter field `{field}`.{suggestion}"))
+            issues.append(
+                ValidationIssue(path, f"unknown frontmatter field `{field}`.{suggestion}", severity="warning")
+            )
 
     common_required = taxonomy.get("required_fields", {}).get("common", [])
     for field in common_required:
@@ -623,16 +639,23 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
         issues.append(ValidationIssue(path, "`status` must be a non-empty string"))
     elif kind in statuses and status not in statuses[kind]:
         allowed = ", ".join(statuses[kind])
-        issues.append(ValidationIssue(path, f"invalid status `{status}` for {kind}; allowed: {allowed}"))
+        issues.append(
+            ValidationIssue(
+                path,
+                f"invalid status `{status}` for {kind}; allowed: {allowed}",
+                severity="warning",
+            )
+        )
 
     for field in taxonomy.get("required_fields", {}).get(kind, []):
         if field not in fm:
-            issues.append(ValidationIssue(path, f"missing required field `{field}` for {kind}"))
+            severity = "error" if field in HARD_REQUIRED_FIELDS or field in {"date", "timezone"} else "warning"
+            issues.append(ValidationIssue(path, f"missing required field `{field}` for {kind}", severity=severity))
 
     list_fields = set(taxonomy.get("list_fields", []))
     for field in sorted(list_fields & set(fm)):
         if not isinstance(fm[field], list):
-            issues.append(ValidationIssue(path, f"`{field}` must be a YAML list"))
+            issues.append(ValidationIssue(path, f"`{field}` must be a YAML list", severity="warning"))
 
     nullable_fields = set(taxonomy.get("nullable_fields", []))
     for field, value in fm.items():
@@ -648,7 +671,16 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
         for item in fm["ai_tools"]:
             if item not in allowed_ai_tools:
                 allowed = ", ".join(sorted(allowed_ai_tools))
-                issues.append(ValidationIssue(path, f"unknown ai_tools value `{item}`; allowed: {allowed}"))
+                issues.append(
+                    ValidationIssue(
+                        path,
+                        f"unknown ai_tools value `{item}`; allowed: {allowed}",
+                        severity="warning",
+                    )
+                )
+
+    for field in ("supersedes", "superseded_by"):
+        issues.extend(validate_record_ref(record, field))
 
     if kind == "agent-task":
         issues.extend(validate_agent_task_record(record, taxonomy))
@@ -671,8 +703,103 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
             else:
                 pattern = taxonomy.get("ticket_patterns", {}).get("jira")
             if pattern and not re.match(pattern, as_scalar(ticket)):
-                issues.append(ValidationIssue(path, f"ticket `{ticket}` does not match expected uppercase ticket format"))
+                issues.append(
+                    ValidationIssue(
+                        path,
+                        f"ticket `{ticket}` does not match expected uppercase ticket format",
+                        severity="warning",
+                    )
+                )
 
+    return issues
+
+
+def resolve_record_ref(value: Any, *, source: Path) -> Path | None:
+    if is_nullish(value):
+        return None
+    raw = as_scalar(value).strip()
+    if not raw or raw == "null":
+        return None
+    candidates = []
+    as_path = Path(raw)
+    if not as_path.is_absolute():
+        candidates.append((REPO_ROOT / raw).resolve())
+        candidates.append((source.parent / raw).resolve())
+    stem = Path(raw).name
+    if stem.endswith(".md"):
+        stem = stem[:-3]
+    matches = list(REPO_ROOT.rglob(f"{stem}.md"))
+    candidates.extend(match.resolve() for match in matches)
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            candidate.relative_to(REPO_ROOT.resolve())
+        except ValueError:
+            continue
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def validate_record_ref(record: Record, field: str) -> list[ValidationIssue]:
+    value = record.frontmatter.get(field)
+    if is_nullish(value):
+        return []
+    if resolve_record_ref(value, source=record.path) is None:
+        return [
+            ValidationIssue(
+                record.path,
+                f"`{field}` value `{as_scalar(value)}` does not resolve to a Markdown record",
+                severity="warning",
+            )
+        ]
+    return []
+
+
+def validate_decision_conflicts(records: list[Record]) -> list[ValidationIssue]:
+    issues: list[ValidationIssue] = []
+    live = [
+        record
+        for record in records
+        if record.kind == "decision"
+        and record.status in {"accepted", "active", "proposed"}
+        and is_nullish(record.frontmatter.get("superseded_by"))
+    ]
+    by_repo: dict[str, list[Record]] = {}
+    for record in live:
+        repos = as_list(record.frontmatter.get("repositories")) + as_list(record.frontmatter.get("repo"))
+        keys = [as_scalar(item) for item in repos if not is_nullish(item)] or ["_none"]
+        for key in keys:
+            by_repo.setdefault(key, []).append(record)
+    def title_tokens(record: Record) -> set[str]:
+        return {token for token in re.findall(r"[a-z0-9]{4,}", record.title.lower())}
+
+    seen_pairs: set[tuple[str, str]] = set()
+    for group in by_repo.values():
+        if len(group) < 2:
+            continue
+        ordered = sorted(group, key=lambda item: (item.date_sort, item.relpath))
+        for index, newer in enumerate(ordered):
+            newer_tokens = title_tokens(newer)
+            if not newer_tokens:
+                continue
+            for older in ordered[:index]:
+                pair = tuple(sorted((older.relpath, newer.relpath)))
+                if pair in seen_pairs or older.relpath == newer.relpath:
+                    continue
+                if len(title_tokens(older) & newer_tokens) < 2:
+                    continue
+                seen_pairs.add(pair)
+                issues.append(
+                    ValidationIssue(
+                        older.path,
+                        f"possible implicit conflict with `{newer.relpath}`; set superseded_by or status=superseded",
+                        severity="warning",
+                    )
+                )
     return issues
 
 
@@ -686,10 +813,22 @@ def validate_entity_values(record: Record, field: str, value: Any, spec: dict[st
             continue
         item_str = as_scalar(item)
         if prefix and not item_str.startswith(prefix):
-            issues.append(ValidationIssue(record.path, f"`{field}` value `{item_str}` must start with `{prefix}`"))
+            issues.append(
+                ValidationIssue(
+                    record.path,
+                    f"`{field}` value `{item_str}` must start with `{prefix}`",
+                    severity="warning",
+                )
+            )
             continue
         if not entity_exists(item_str, spec):
-            issues.append(ValidationIssue(record.path, f"`{field}` value `{item_str}` has no matching directory"))
+            issues.append(
+                ValidationIssue(
+                    record.path,
+                    f"`{field}` value `{item_str}` has no matching directory",
+                    severity="warning",
+                )
+            )
 
     return issues
 
@@ -771,6 +910,7 @@ def validate_loaded_records(
     for record in records:
         issues.extend(validate_record(record, taxonomy))
     issues.extend(validate_agent_task_collection(records))
+    issues.extend(validate_decision_conflicts(records))
     return issues
 
 
@@ -1084,7 +1224,8 @@ def render_records_index(records: list[Record]) -> str:
     lines = generated_header("Records Index")
     lines.extend(
         [
-            "This generated index is optimized for human and AI scanning. Durable records remain source of truth.",
+            "Do not load this file into an agent session. Use `braingent find` or `braingent recall`.",
+            "Durable records remain source of truth.",
             "",
             "| Date | Kind | Status | Title | Scope | Summary |",
             "| --- | --- | --- | --- | --- | --- |",
@@ -1230,6 +1371,55 @@ def render_memory_summary(records: list[Record]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def render_current_state(records: list[Record]) -> str:
+    today = date.today().isoformat()
+    kinds: dict[str, int] = {}
+    for record in records:
+        kinds[record.kind] = kinds.get(record.kind, 0) + 1
+    live_decisions = [
+        record
+        for record in records
+        if record.kind == "decision"
+        and record.status == "accepted"
+        and is_nullish(record.frontmatter.get("superseded_by"))
+    ]
+    live_decisions.sort(key=lambda record: (record.date_sort, record.relpath), reverse=True)
+    lines = generated_header("Current State")
+    lines.extend(
+        [
+            f"Last generated: {today}",
+            "Timezone: Asia/Singapore",
+            "",
+            "This file is generated. Do not hand-edit. Durable evidence stays in records.",
+            "",
+            "## How to retrieve",
+            "",
+            "- `braingent find key=value` for structured metadata.",
+            "- `braingent recall repo=... ticket=... --limit 8` for a bounded context pack.",
+            "- `braingent_get(path, depth=\"summary\")` by default. Use `depth=\"full\"` only for evidence.",
+            "- Do not open `indexes/records.md` or `indexes/followups.md` as a scan surface.",
+            "- Load preference files only when the task needs them.",
+            "",
+            "## Volume",
+            "",
+            f"- Records: {len(records)}",
+            f"- {agent_task_count_line(records)}",
+            f"- Kinds: {', '.join(f'{kind} {count}' for kind, count in sorted(kinds.items())) or 'none'}",
+            "",
+            "## Current accepted decisions (newest first, 8)",
+            "",
+        ]
+    )
+    if not live_decisions:
+        lines.append("- None")
+    for record in live_decisions[:8]:
+        lines.append(
+            f"- `{record.relpath}`: {record.title} ({record.date_sort or '-'})"
+        )
+    lines.extend(["", "## Capture", "", "After durable work, write a record, then `braingent validate` and `braingent reindex`.", ""])
+    return "\n".join(lines)
 
 
 def render_task_index(records: list[Record]) -> str:
@@ -1392,6 +1582,7 @@ def build_index_outputs(records: list[Record]) -> dict[Path, str]:
         INDEX_DIR / "stale-candidates.md": render_stale_candidates_index(records),
         INDEX_DIR / "followups.md": render_followups_index(scan_unchecked_followups(FOLLOWUP_SCAN_ROOTS)),
         TASKS_DIR / "INDEX.md": render_task_index(records),
+        REPO_ROOT / "CURRENT_STATE.md": render_current_state(records),
         RECORDS_JSON_PATH: records_json(records),
         RECORDS_COMPACT_JSON_PATH: records_compact_json(records),
     }
@@ -1513,11 +1704,22 @@ def run_dashboard_e2e() -> int:
     return completed.returncode
 
 
-def run_reindex(check: bool = False, dashboard_e2e: bool = False) -> int:
+def run_reindex(
+    check: bool = False,
+    dashboard_e2e: bool = False,
+    strict: bool = False,
+    archive_followups: bool = False,
+) -> int:
     records, parse_issues = load_records(include_parse_errors=True)
     issues = validate_loaded_records(records, parse_issues)
-    if issues:
-        print_issues(issues)
+    errors = issue_errors(issues)
+    warnings = issue_warnings(issues)
+    if warnings:
+        print(f"Braingent validation warnings: {len(warnings)}", file=sys.stderr)
+        for issue in warnings:
+            print(f"- {issue.format()}", file=sys.stderr)
+    if errors or (strict and warnings):
+        print_issues(errors if errors else warnings)
         return 1
 
     outputs = build_index_outputs(records)
@@ -1525,8 +1727,6 @@ def run_reindex(check: bool = False, dashboard_e2e: bool = False) -> int:
 
     if check:
         for path, content in outputs.items():
-            if path in CHECK_EXCLUDED_PATHS:
-                continue
             if not path.exists() or path.read_text(encoding="utf-8") != content:
                 mismatches.append(path)
         if mismatches:
@@ -1536,6 +1736,13 @@ def run_reindex(check: bool = False, dashboard_e2e: bool = False) -> int:
             return 1
         print("Braingent indexes are current.")
         return run_dashboard_e2e() if dashboard_e2e else 0
+
+    if archive_followups:
+        archived = archive_stale_followups(records)
+        if archived:
+            print(f"Archived follow-up checkboxes in {archived} records.")
+            records, parse_issues = load_records(include_parse_errors=True)
+            outputs = build_index_outputs(records)
 
     for path, content in outputs.items():
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -1742,6 +1949,8 @@ def stale_reason(record: Record, stale_days: int, today: date | None = None) -> 
 def recall_classification(record: Record, stale_days: int) -> tuple[str, str]:
     if record.status in {"superseded", "draft", "archived", "rejected"}:
         return "do_not_use", f"status is {record.status}"
+    if not is_nullish(record.frontmatter.get("superseded_by")):
+        return "do_not_use", "superseded_by is set"
     stale = stale_reason(record, stale_days)
     if stale:
         return "stale_or_verify", stale
@@ -1804,13 +2013,24 @@ def recall_payload(filters: dict[str, list[str]], limit: int, stale_days: int) -
             categories[category].append(item)
 
     categories["must_read"] = candidate_items[:limit]
-    categories["supporting"] = candidate_items[limit:]
+    supporting_cap = limit
+    categories["supporting"] = candidate_items[limit : limit + supporting_cap]
+    omitted_supporting = max(0, len(candidate_items) - limit - supporting_cap)
+    omitted_stale = max(0, len(categories["stale_or_verify"]) - supporting_cap)
+    omitted_unused = max(0, len(categories["do_not_use"]) - supporting_cap)
+    categories["stale_or_verify"] = categories["stale_or_verify"][:supporting_cap]
+    categories["do_not_use"] = categories["do_not_use"][:supporting_cap]
 
     return {
         "filters": filters,
         "generated_on": date.today().isoformat(),
         "match_count": len(matched),
         **categories,
+        "omitted": {
+            "supporting": omitted_supporting,
+            "stale_or_verify": omitted_stale,
+            "do_not_use": omitted_unused,
+        },
         "capture_target": infer_capture_target(matched, filters),
     }
 
@@ -1826,6 +2046,10 @@ def render_recall_markdown(payload: dict[str, Any]) -> str:
         f"Matches: {payload['match_count']}",
         "",
     ]
+    omitted = payload.get("omitted") or {}
+    omitted_parts = [f"{count} {name}" for name, count in omitted.items() if count]
+    if omitted_parts:
+        lines.extend([f"Omitted: {', '.join(omitted_parts)}. Re-run with a narrower filter or a higher --limit.", ""])
     for category in ("must_read", "supporting", "stale_or_verify", "do_not_use"):
         lines.extend([f"## {category}", ""])
         items = payload[category]
@@ -1861,6 +2085,54 @@ def run_recall(filters_raw: list[str], output_json: bool = False, limit: int = 8
 
 def short_issue(path: Path, message: str) -> dict[str, str]:
     return {"path": path.relative_to(REPO_ROOT).as_posix(), "message": message}
+
+
+def extract_open_followups(text: str) -> str:
+    lines = text.splitlines()
+    capturing = False
+    collected: list[str] = []
+    for line in lines:
+        if line.startswith("## "):
+            heading = line[3:].strip()
+            capturing = heading in FOLLOWUP_SECTION_HEADINGS or heading.lower().startswith("follow-up")
+            if capturing:
+                collected.append(line)
+            continue
+        if capturing:
+            collected.append(line)
+    if not any(line.startswith("- [ ]") for line in collected):
+        return ""
+    return "\n".join(collected).strip()
+
+
+def archive_stale_followups(records: list[Record], *, today: date | None = None, max_age_days: int = 14) -> int:
+    today = today or date.today()
+    changed = 0
+    closable = {"completed", "superseded", "closed", "rejected", "archived"}
+    for record in records:
+        if record.status not in closable:
+            continue
+        parsed = parse_date_value(record.date_sort)
+        if parsed is None or (today - parsed).days < max_age_days:
+            continue
+        original = record.path.read_text(encoding="utf-8")
+        lines = original.splitlines(keepends=True)
+        capturing = False
+        rewritten: list[str] = []
+        mutated = False
+        for line in lines:
+            stripped = line.rstrip("\n")
+            if stripped.startswith("## "):
+                heading = stripped[3:].strip()
+                capturing = heading in FOLLOWUP_SECTION_HEADINGS or heading.lower().startswith("follow-up")
+            if capturing and stripped.startswith("- [ ]"):
+                line = line.replace("- [ ]", "-", 1)
+                mutated = True
+            rewritten.append(line)
+        if mutated:
+            record.path.write_text("".join(rewritten), encoding="utf-8")
+            changed += 1
+    return changed
 
 
 def scan_unchecked_followups(roots: Iterable[str]) -> list[dict[str, str]]:
@@ -1902,6 +2174,7 @@ def render_followups_index(followups: list[dict[str, str]]) -> str:
     lines = generated_header("Follow-up Index")
     lines.extend(
         [
+            "Do not load this file into an agent session. Use `braingent find` or `braingent reindex --archive-followups`.",
             "This generated index collects unchecked follow-ups from durable records.",
             "Use it as the maintenance queue for deliberate current work;",
             "archive stale reminders as plain bullets.",
@@ -1917,6 +2190,16 @@ def render_followups_index(followups: list[dict[str, str]]) -> str:
         source = f"[{path}](../{path})"
         lines.append(f"| {source} | {item['line']} | {table_cell(item.get('text', ''))} |")
     return "\n".join(lines) + "\n"
+
+
+def is_secret_false_positive(item: dict[str, str]) -> bool:
+    path = item.get("path", "")
+    if path in SECRET_SCAN_ALLOWLIST:
+        return True
+    name = Path(path).name
+    if "pem-header-scan-cannot-see-a-secret" in name:
+        return True
+    return False
 
 
 def scan_markdown_patterns(pattern: str, roots: Iterable[str]) -> list[dict[str, str]]:
@@ -1961,23 +2244,10 @@ def index_mismatches(records: list[Record]) -> list[dict[str, str]]:
     return mismatches
 
 
-def forbidden_content_findings() -> list[dict[str, str]]:
-    """Scan records for built-in + configured forbidden patterns and paths."""
-    patterns = list(CONFIG.forbid_patterns) + [re.escape(path) for path in CONFIG.forbid_paths]
-    findings: list[dict[str, str]] = []
-    seen: set[tuple[str, str, str]] = set()
-    for pattern in patterns:
-        for hit in scan_markdown_patterns(pattern, ["."]):
-            key = (hit.get("path", ""), hit.get("line", ""), hit.get("message", ""))
-            if key in seen:
-                continue
-            seen.add(key)
-            findings.append(hit)
-    return findings
-
-
 def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
     validation_issues = validate()
+    validation_errors = issue_errors(validation_issues)
+    validation_warnings = issue_warnings(validation_issues)
     records, parse_issues = load_records(include_parse_errors=True)
     today = date.today()
     warnings: list[dict[str, str]] = []
@@ -2010,31 +2280,35 @@ def doctor_payload(stale_days: int = 180) -> dict[str, Any]:
 
     unchecked = scan_unchecked_followups(FOLLOWUP_SCAN_ROOTS)
     placeholders = scan_markdown_patterns(r"\b(TODO|FIXME|PLACEHOLDER|XXX)\b", ["."])
-    possible_secrets = forbidden_content_findings()
-    config_issues = [{"path": CONFIG_RELATIVE_PATH.as_posix(), "message": issue} for issue in CONFIG.issues]
+    possible_secrets = [
+        item
+        for item in scan_markdown_patterns(
+            r"(?i)((api[_-]?key|token|secret|password)\s*[:=]\s*['\"]?[A-Za-z0-9_./+=-]{16,}|BEGIN .*PRIVATE KEY)",
+            ["."],
+        )
+        if not is_secret_false_positive(item)
+    ]
 
     return {
         "generated_on": today.isoformat(),
         "hard_failures": {
-            "validation": [issue.format() for issue in validation_issues],
+            "validation": [issue.format() for issue in validation_errors],
             "stale_indexes": index_mismatches(records),
             "possible_secrets": possible_secrets,
         },
         "warnings": {
-            "metadata_and_freshness": warnings,
+            "metadata_and_freshness": warnings + [short_issue(issue.path, issue.message) for issue in validation_warnings],
             "unchecked_followups": unchecked,
             "placeholders": placeholders,
-            "config": config_issues,
         },
         "counts": {
             "records": len(records),
-            "validation_issues": len(validation_issues),
+            "validation_issues": len(validation_errors),
             "stale_indexes": len(index_mismatches(records)),
             "possible_secrets": len(possible_secrets),
-            "metadata_and_freshness": len(warnings),
+            "metadata_and_freshness": len(warnings) + len(validation_warnings),
             "unchecked_followups": len(unchecked),
             "placeholders": len(placeholders),
-            "config": len(config_issues),
         },
     }
 
@@ -2053,7 +2327,6 @@ def render_doctor_markdown(payload: dict[str, Any], max_items: int = 20) -> str:
             f"- Metadata/freshness warnings: {counts['metadata_and_freshness']}",
             f"- Unchecked follow-ups: {counts['unchecked_followups']}",
             f"- Placeholders/TODO markers: {counts['placeholders']}",
-            f"- Config issues: {counts['config']}",
             "",
         ]
     )
@@ -2100,11 +2373,7 @@ def run_doctor(output_json: bool = False, strict: bool = False, stale_days: int 
         + payload["counts"]["stale_indexes"]
         + payload["counts"]["possible_secrets"]
     )
-    warning_count = (
-        payload["counts"]["metadata_and_freshness"]
-        + payload["counts"]["placeholders"]
-        + payload["counts"]["config"]
-    )
+    warning_count = payload["counts"]["metadata_and_freshness"] + payload["counts"]["placeholders"]
     if hard_count:
         return 1
     if strict and warning_count:
@@ -2200,15 +2469,14 @@ def next_agent_task_id() -> str:
         raw = next_id_path.read_text(encoding="utf-8").strip()
         number = int(raw) if raw else 1
     else:
-        prefix = CONFIG.task_id_prefix
         max_seen = 0
-        for path in TASKS_DIR.rglob(f"{prefix}-*.md"):
-            match = re.match(rf"{re.escape(prefix)}-([0-9]+)--", path.name)
+        for path in TASKS_DIR.rglob("BGT-*.md"):
+            match = re.match(r"BGT-([0-9]{4,})--", path.name)
             if match:
                 max_seen = max(max_seen, int(match.group(1)))
         number = max_seen + 1
     next_id_path.write_text(f"{number + 1}\n", encoding="utf-8")
-    return f"{CONFIG.task_id_prefix}-{number:0{CONFIG.task_id_pad}d}"
+    return f"BGT-{number:04d}"
 
 
 def write_markdown_record(path: Path, frontmatter: dict[str, Any], body: str) -> None:
@@ -2219,8 +2487,7 @@ def write_markdown_record(path: Path, frontmatter: dict[str, Any], body: str) ->
 def task_files() -> list[Path]:
     if not TASKS_DIR.exists():
         return []
-    prefix = CONFIG.task_id_prefix
-    return sorted(TASKS_DIR.glob(f"active/{prefix}-*.md")) + sorted(TASKS_DIR.glob(f"archive/*/{prefix}-*.md"))
+    return sorted(TASKS_DIR.glob("active/BGT-*.md")) + sorted(TASKS_DIR.glob("archive/*/BGT-*.md"))
 
 
 def load_task_record(task_id: str) -> Record:
@@ -2448,15 +2715,31 @@ def cmd_task_archive(args: argparse.Namespace) -> int:
 
 def cmd_validate(args: argparse.Namespace) -> int:
     issues = validate(path_args(args.paths) if args.paths else None)
-    if issues:
-        print_issues(issues)
+    errors = issue_errors(issues)
+    warnings = issue_warnings(issues)
+    if warnings:
+        print(f"Braingent validation warnings: {len(warnings)}", file=sys.stderr)
+        for issue in warnings:
+            print(f"- {issue.format()}", file=sys.stderr)
+    if errors:
+        print_issues(errors)
         return 1
+    if args.strict and warnings:
+        return 1
+    if warnings:
+        print("Braingent validation passed with warnings.")
+        return 0
     print("Braingent validation passed.")
     return 0
 
 
 def cmd_reindex(args: argparse.Namespace) -> int:
-    return run_reindex(check=args.check, dashboard_e2e=args.dashboard_e2e)
+    return run_reindex(
+        check=args.check,
+        dashboard_e2e=args.dashboard_e2e,
+        strict=args.strict,
+        archive_followups=args.archive_followups,
+    )
 
 
 def cmd_find(args: argparse.Namespace) -> int:
@@ -2464,14 +2747,11 @@ def cmd_find(args: argparse.Namespace) -> int:
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
-    limit = args.limit if args.limit is not None else CONFIG.recall_limit
-    stale_days = args.stale_days if args.stale_days is not None else CONFIG.recall_stale_days
-    return run_recall(args.filters, output_json=args.json, limit=limit, stale_days=stale_days)
+    return run_recall(args.filters, output_json=args.json, limit=args.limit, stale_days=args.stale_days)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    stale_days = args.stale_days if args.stale_days is not None else CONFIG.doctor_stale_days
-    return run_doctor(output_json=args.json, strict=args.strict, stale_days=stale_days)
+    return run_doctor(output_json=args.json, strict=args.strict, stale_days=args.stale_days)
 
 
 def cmd_synthesize(args: argparse.Namespace) -> int:
@@ -2517,7 +2797,7 @@ def read_existing_manifest(root: Path) -> dict[str, str]:
 def write_template_manifest(root: Path, manifest: dict[str, str]) -> None:
     payload = {
         "template": "braingent-starter",
-        "version": "1.0.0",
+        "version": "0.1.0",
         "files": manifest,
     }
     (root / TEMPLATE_MANIFEST_PATH).write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -2648,7 +2928,7 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Braingent metadata helper")
-    parser.add_argument("--version", action="version", version="braingent 1.0.0")
+    parser.add_argument("--version", action="version", version="braingent 0.1.0")
     parser.add_argument(
         "--root",
         help="Braingent repo root to operate on. Defaults to BRAINGENT_ROOT or the nearest parent repo.",
@@ -2687,11 +2967,18 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate", help="validate record frontmatter")
     validate_parser.add_argument("paths", nargs="*", help="optional Markdown files to validate")
+    validate_parser.add_argument("--strict", action="store_true", help="fail on taxonomy warnings as well as errors")
     validate_parser.set_defaults(func=cmd_validate)
 
     reindex_parser = subparsers.add_parser("reindex", help="regenerate derived indexes")
     reindex_parser.add_argument("--check", action="store_true", help="fail if generated files are stale")
     reindex_parser.add_argument("--dashboard-e2e", action="store_true", help="run dashboard Playwright e2e after index checks")
+    reindex_parser.add_argument("--strict", action="store_true", help="fail on taxonomy warnings as well as errors")
+    reindex_parser.add_argument(
+        "--archive-followups",
+        action="store_true",
+        help="convert stale follow-up checkboxes in completed records to historical bullets",
+    )
     reindex_parser.set_defaults(func=cmd_reindex)
 
     find_parser = subparsers.add_parser("find", help="search records by structured filters")
@@ -2705,14 +2992,14 @@ def build_parser() -> argparse.ArgumentParser:
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
     recall_parser.add_argument("filters", nargs="*", help="filters like repo=github--example--app ticket=EX-123")
     recall_parser.add_argument("--json", action="store_true", help="emit JSON")
-    recall_parser.add_argument("--limit", type=int, default=None, help="number of must_read records to return (config [recall] limit, default 8)")
-    recall_parser.add_argument("--stale-days", type=int, default=None, help="age threshold for stale records (config [recall] stale_days, default 180)")
+    recall_parser.add_argument("--limit", type=int, default=8, help="number of must_read records to return")
+    recall_parser.add_argument("--stale-days", type=int, default=180, help="age threshold for stale profile/learning records")
     recall_parser.set_defaults(func=cmd_recall)
 
     doctor_parser = subparsers.add_parser("doctor", help="report Braingent health checks")
     doctor_parser.add_argument("--json", action="store_true", help="emit JSON")
     doctor_parser.add_argument("--strict", action="store_true", help="exit non-zero on warnings")
-    doctor_parser.add_argument("--stale-days", type=int, default=None, help="age threshold for stale records (config [doctor] stale_days, default 180)")
+    doctor_parser.add_argument("--stale-days", type=int, default=180, help="age threshold for stale profile/learning records")
     doctor_parser.set_defaults(func=cmd_doctor)
 
     synthesize_parser = subparsers.add_parser("synthesize", help="generate source-indexed synthesis pages")
