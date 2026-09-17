@@ -41,7 +41,7 @@ from braingent.core import Record, as_list, as_scalar, load_records, split_front
 # Legacy inline forms ``(source: URL)`` / ``[Source: URL]`` are still matched so
 # an unconverted record does not silently read as unsourced.
 FN_DEF_RE = re.compile(r"^\s*\[\^([^\]]+)\]:\s*(.+)$")
-FN_REF_RE = re.compile(r"\[\^[^\]]+\]")
+FN_REF_RE = re.compile(r"\[\^([^\]]+)\]")
 LEGACY_SOURCE_RE = re.compile(r"\(sources?:\s*([^)]+)\)|\[Source:\s*([^\]]+)\]", re.I)
 URL_RE = re.compile(r"https?://([a-z0-9.-]+)", re.I)
 UNVERIFIED_RE = re.compile(r"\[UNVERIFIED")
@@ -60,14 +60,34 @@ def _hosts_of(citation: str) -> list[str]:
     return [match.group(1).lower().removeprefix("www.") for match in URL_RE.finditer(citation)]
 
 
+def _host_matches(host: str, domains: tuple[str, ...]) -> bool:
+    return any(host == domain or host.endswith("." + domain) for domain in domains)
+
+
 def _tier_of(host: str, cfg: core.BraingentConfig) -> str:
-    if host in cfg.factcheck_slop_domains:
+    if _host_matches(host, cfg.factcheck_slop_domains):
         return "slop"
-    if host in cfg.factcheck_prwire_domains:
+    if _host_matches(host, cfg.factcheck_prwire_domains):
         return "prwire"
-    if host in cfg.factcheck_tier12_domains:
+    if _host_matches(host, cfg.factcheck_tier12_domains):
         return "tier12"
     return "primary_or_other"
+
+
+def _footnote_ids(body: str) -> set[str]:
+    ids: set[str] = set()
+    in_fence = False
+    for line in body.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("```"):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        match = FN_DEF_RE.match(line)
+        if match:
+            ids.add(match.group(1))
+    return ids
 
 
 def _verification(record: Record) -> str:
@@ -95,6 +115,7 @@ def audit(record: Record, cfg: core.BraingentConfig) -> dict[str, Any]:
     tier_counts = {"slop": 0, "prwire": 0, "tier12": 0, "primary_or_other": 0}
     source_citations = 0
 
+    known_footnote_ids = _footnote_ids(body)
     in_non_claim_section = False
     in_fence = False
     for number, line in enumerate(body.splitlines(), start=1):
@@ -130,11 +151,12 @@ def audit(record: Record, cfg: core.BraingentConfig) -> dict[str, Any]:
                 elif tier == "prwire":
                     prwire_hits.append({"line": number, "host": host, "text": stripped[:140]})
 
-        has_source = bool(legacy) or (bool(FN_REF_RE.search(line)) and not fn_def)
+        resolved_refs = {ref for ref in FN_REF_RE.findall(line) if ref in known_footnote_ids}
+        has_source = bool(legacy) or (bool(resolved_refs) and not fn_def)
 
-        # Bare-claim heuristic: a list bullet asserting something with no marker
-        # of any kind (no citation, no UNVERIFIED, no ANALYSIS), outside
-        # non-claim sections and tables. Advisory only.
+        # Bare-claim heuristic: list bullets only. Numbered lists and prose
+        # paragraphs are out of scope. A missing citation is expected in
+        # non-claim sections and tables.
         if (
             not in_non_claim_section
             and not fn_def
@@ -148,7 +170,7 @@ def audit(record: Record, cfg: core.BraingentConfig) -> dict[str, Any]:
         ):
             bare_claims.append({"line": number, "text": stripped[:140]})
 
-    todo = len(slop_hits) + len(unverified) + len(single_source)
+    todo = len(slop_hits) + len(unverified) + len(single_source) + len(bare_claims)
     return {
         "path": record.relpath,
         "verification": _verification(record) or "MISSING",
@@ -243,7 +265,7 @@ def run_factcheck(
             print(json.dumps(results, indent=2, default=str))
         else:
             _print_report(results[0])
-        return 0
+        return 1 if any(result["needs_ai_judgment"] for result in results) else 0
 
     scoped, parse_issues = iter_scoped_records(cfg)
     if parse_issues:
@@ -283,12 +305,13 @@ def run_factcheck(
         return 2
 
     results = [audit(record_obj, cfg) for record_obj in targets]
+    dirty = any(result["needs_ai_judgment"] for result in results)
     if output_json:
         print(json.dumps(results, indent=2, default=str))
-        return 0
+        return 1 if dirty else 0
     for result in results:
         _print_report(result)
     if len(results) > 1:
         need = sum(1 for result in results if result["needs_ai_judgment"])
         print(f"\n{'=' * 50}\n{len(results)} records audited; {need} need fact-check work.")
-    return 0
+    return 1 if dirty else 0

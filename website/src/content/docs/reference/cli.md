@@ -203,10 +203,16 @@ A record is in scope when it carries a `verification` frontmatter field or when
 its topics intersect `[factcheck] scope_topics` in config. The audit tiers each
 cited source (slop / PR-wire / tier-1-2 / primary-or-other) using the configured
 domain lists, flags `[UNVERIFIED]` and `[SINGLE-SOURCE]` markers, and lists
-bullets that assert something with no citation. Citations are GFM footnote
-definitions (`[^id]: URL`); a `[^id]` marker on a claim line counts it as
-sourced. Configure the tiers under `[factcheck]` (see the configuration
-reference).
+unsourced list bullets. Numbered lists and prose paragraphs are out of scope.
+Citations are GFM footnote definitions (`[^id]: URL`); a `[^id]` marker on a
+claim line counts it as sourced only when that id has a definition. Domain
+tiers match the host and its subdomains (`uk.reuters.com` counts as
+`reuters.com`).
+
+Exit codes: `0` if the audit is mechanically clean, `1` if any item still needs
+judgment (or `--next` finds nothing), `2` for usage or a missing file.
+
+Configure the tiers under `[factcheck]` (see the configuration reference).
 
 ## Live Task Commands
 

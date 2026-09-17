@@ -54,17 +54,45 @@ class AuditTests(unittest.TestCase):
         self.assertEqual(len(result["prwire_sources"]), 1)
         self.assertEqual(result["needs_ai_judgment"], 1)  # only the slop source
 
+    def test_subdomain_matches_parent_tier(self) -> None:
+        body = (
+            "## Findings\n"
+            "- UK filing.[^a]\n"
+            "- Mill rewrite.[^b]\n\n"
+            "## Footnotes\n"
+            "[^a]: https://uk.reuters.com/x\n"
+            "[^b]: https://news.contentmill.example/z\n"
+        )
+        result = factcheck.audit(_record(body, verification="unverified"), self.cfg)
+        self.assertEqual(result["tier_counts"]["tier12"], 1)
+        self.assertEqual(result["tier_counts"]["slop"], 1)
+        self.assertEqual(result["bare_claim_candidates"], [])
+
     def test_unverified_and_single_source_markers(self) -> None:
         body = "## Findings\n- A claim [UNVERIFIED].\n- Thin claim [SINGLE-SOURCE].[^a]\n\n## Footnotes\n[^a]: https://reuters.com/x\n"
         result = factcheck.audit(_record(body, verification="unverified"), self.cfg)
         self.assertEqual(len(result["unverified_markers"]), 1)
         self.assertEqual(len(result["single_source_markers"]), 1)
+        self.assertEqual(result["needs_ai_judgment"], 2)
 
     def test_bare_claim_detected_but_sourced_bullet_clean(self) -> None:
         body = "## Findings\n- Unsourced assertion about the market.\n- Sourced assertion.[^a]\n\n## Footnotes\n[^a]: https://reuters.com/x\n"
         result = factcheck.audit(_record(body, verification="unverified"), self.cfg)
         self.assertEqual(len(result["bare_claim_candidates"]), 1)
         self.assertIn("Unsourced assertion", result["bare_claim_candidates"][0]["text"])
+        self.assertEqual(result["needs_ai_judgment"], 1)
+
+    def test_dangling_footnote_ref_is_not_sourced(self) -> None:
+        body = "## Findings\n- Claim with a missing footnote.[^todo]\n"
+        result = factcheck.audit(_record(body, verification="unverified"), self.cfg)
+        self.assertEqual(len(result["bare_claim_candidates"]), 1)
+        self.assertEqual(result["needs_ai_judgment"], 1)
+
+    def test_numbered_lists_are_not_bare_claims(self) -> None:
+        body = "## Findings\n1. Numbered assertion without a citation.\n"
+        result = factcheck.audit(_record(body, verification="unverified"), self.cfg)
+        self.assertEqual(result["bare_claim_candidates"], [])
+        self.assertEqual(result["needs_ai_judgment"], 0)
 
     def test_footnotes_section_bullets_not_flagged_as_bare(self) -> None:
         body = "## Footnotes\n- not a claim line\n[^a]: https://reuters.com/x\n"
@@ -117,6 +145,24 @@ class RunFactcheckTests(unittest.TestCase):
             finally:
                 core.REPO_ROOT, core.CONFIG = saved_root, saved_cfg
             self.assertEqual(exit_code, 0)
+
+    def test_dirty_audit_returns_1(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            record = root / "report.md"
+            record.write_text(
+                "---\nrecord_kind: learning\nstatus: active\nverification: unverified\n---\n"
+                "## Findings\n- Unsourced assertion about the market.\n",
+                encoding="utf-8",
+            )
+            saved_root, saved_cfg = core.REPO_ROOT, core.CONFIG
+            try:
+                core.REPO_ROOT = root
+                core.CONFIG = bgconfig.DEFAULT_CONFIG
+                exit_code = factcheck.run_factcheck(record=str(record), output_json=True)
+            finally:
+                core.REPO_ROOT, core.CONFIG = saved_root, saved_cfg
+            self.assertEqual(exit_code, 1)
 
     def test_missing_record_returns_2(self) -> None:
         saved_root = core.REPO_ROOT
