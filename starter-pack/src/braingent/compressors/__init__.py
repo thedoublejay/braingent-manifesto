@@ -8,6 +8,14 @@ from .base import Depth
 VALID_DEPTHS = {"full", "summary", "frontmatter"}
 
 
+def render_summary_depth(text: str, *, summary: str, followups: str = "") -> str:
+    frontmatter = filters.frontmatter_only(text).rstrip()
+    parts = [frontmatter, "", "## Summary", "", summary.strip() or "_No summary._"]
+    if followups.strip():
+        parts.extend(["", followups.strip()])
+    return "\n".join(parts).rstrip() + "\n"
+
+
 def apply_pipeline(
     text: str,
     *,
@@ -28,4 +36,4 @@ def apply_pipeline(
     return out
 
 
-__all__ = ["VALID_DEPTHS", "Depth", "apply_pipeline"]
+__all__ = ["VALID_DEPTHS", "Depth", "apply_pipeline", "render_summary_depth"]

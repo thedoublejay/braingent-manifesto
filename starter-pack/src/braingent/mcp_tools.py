@@ -13,20 +13,11 @@ from pathlib import Path
 from typing import Any
 
 from braingent import core as braingent
-from braingent.compressors import apply_pipeline
+from braingent.compressors import apply_pipeline, render_summary_depth
 
 READ_FIRST_FILES = [
-    "README.md",
     "AGENTS.md",
-    "CLAUDE.md",
-    "INDEX.md",
     "CURRENT_STATE.md",
-    "preferences/naming.md",
-    "preferences/agent-workflow.md",
-    "preferences/capture-policy.md",
-    "preferences/search-recipes.md",
-    "preferences/taxonomy.md",
-    "preferences/note-taking-and-ai-memory.md",
 ]
 
 SCALAR_FILTER_COLUMNS = {
@@ -209,7 +200,13 @@ def get(path: str, depth: str = "summary") -> dict[str, Any]:
         raise ValueError(error)
     frontmatter = frontmatter or {}
     record_kind = str(frontmatter.get("record_kind") or "unknown")
-    content = apply_pipeline(text, record_kind=record_kind, depth=depth)
+    if depth == "summary":
+        record = braingent.Record(path=full_path, frontmatter=frontmatter, body=text)
+        summary = braingent.as_scalar(frontmatter.get("summary")) or braingent.record_summary(record)
+        followups = braingent.extract_open_followups(text)
+        content = render_summary_depth(text, summary=summary, followups=followups)
+    else:
+        content = apply_pipeline(text, record_kind=record_kind, depth=depth)
     return {
         "path": full_path.relative_to(braingent.REPO_ROOT).as_posix(),
         "frontmatter": frontmatter,
