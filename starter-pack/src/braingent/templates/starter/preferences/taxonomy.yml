@@ -111,6 +111,8 @@ allowed_fields:
   - updated
   - valid_from
   - valid_until
+  - verification
+  - verification_score
   - version
   - visibility
   - provenance
@@ -154,6 +156,7 @@ nullable_fields:
   - ticket_url
   - valid_from
   - valid_until
+  - verification_score
 
 entity_fields:
   organization:
