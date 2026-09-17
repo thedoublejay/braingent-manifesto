@@ -4,11 +4,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { createServerFn } from '@tanstack/react-start'
 import { useQuery } from '@tanstack/react-query'
 import {
-  ColumnDef,
+  createSortedRowModel,
   flexRender,
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
+  rowSortingFeature,
+  sortFn_alphanumeric,
+  sortFn_text,
+  tableFeatures,
+  useTable,
+  type ColumnDef,
 } from '@tanstack/react-table'
 import {
   Activity,
@@ -38,6 +41,15 @@ export const Route = createFileRoute('/')({
 
 const statuses: AgentTaskStatus[] = ['triage', 'ready', 'in-progress', 'in-review', 'blocked', 'completed', 'closed']
 const activityPageSize = 6
+
+const tableFeaturesConfig = tableFeatures({
+  rowSortingFeature,
+  sortedRowModel: createSortedRowModel(),
+  sortFns: {
+    alphanumeric: sortFn_alphanumeric,
+    text: sortFn_text,
+  },
+})
 
 function TasksDashboard() {
   const dashboard = useQuery({
@@ -78,7 +90,7 @@ function TasksDashboard() {
 
   const selectedTask = tasks.find((task) => task.id === selectedId) ?? filteredTasks[0] ?? tasks[0] ?? null
 
-  const columns = useMemo<ColumnDef<AgentTask>[]>(() => [
+  const columns = useMemo<ColumnDef<typeof tableFeaturesConfig, AgentTask>[]>(() => [
     {
       accessorKey: 'id',
       header: 'ID',
@@ -121,11 +133,10 @@ function TasksDashboard() {
     },
   ], [])
 
-  const table = useReactTable({
+  const table = useTable({
+    features: tableFeaturesConfig,
     data: filteredTasks,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   })
 
   if (dashboard.isLoading) {
@@ -220,7 +231,7 @@ function TasksDashboard() {
               <tbody>
                 {table.getRowModel().rows.map((row) => (
                   <tr key={row.id} className={selectedTask?.id === row.original.id ? 'selected-row' : ''}>
-                    {row.getVisibleCells().map((cell) => (
+                    {row.getAllCells().map((cell) => (
                       <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
                     ))}
                   </tr>
