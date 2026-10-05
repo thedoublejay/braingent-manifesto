@@ -2805,6 +2805,72 @@ def cmd_factcheck(args: argparse.Namespace) -> int:
     )
 
 
+def daily_day(tz: Any, value: str | None) -> date:
+    if not value:
+        return datetime.now(tz).date()
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise SystemExit(f"--date must be YYYY-MM-DD, got {value!r}") from exc
+
+
+def daily_tz() -> Any:
+    from braingent import daily
+
+    try:
+        return daily.resolve_tz(CONFIG.daily_timezone)
+    except ValueError as exc:
+        raise SystemExit(f"[daily] {exc}") from exc
+
+
+def cmd_daily_log(args: argparse.Namespace) -> int:
+    from braingent import daily
+
+    tz = daily_tz()
+    now = datetime.now(tz)
+    if args.date:
+        day = daily_day(tz, args.date)
+        now = now.replace(year=day.year, month=day.month, day=day.day)
+    try:
+        path = daily.log_event(
+            REPO_ROOT,
+            args.kind,
+            args.text,
+            actor=args.as_agent,
+            ref=args.ref,
+            now=now,
+            tz=tz,
+            sprawl_threshold=CONFIG.daily_sprawl_threshold,
+        )
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    print(path.relative_to(REPO_ROOT).as_posix())
+    return 0
+
+
+def cmd_daily_status(args: argparse.Namespace) -> int:
+    from braingent import daily
+
+    tz = daily_tz()
+    summary = daily.summarise(REPO_ROOT, daily_day(tz, args.date), CONFIG.daily_sprawl_threshold, tz)
+    if args.path:
+        print(summary["path"])
+        return 0
+    if args.json:
+        print(json.dumps(summary, indent=2))
+        return 0
+    counts = summary["counts"]
+    print(summary["path"])
+    print(
+        f"ongoing {counts['ongoing']} · review {counts['review']} · blocked {counts['blocked']} · "
+        f"todo {counts['todo']} · done {counts['done']} · spawned {summary['spawned']} "
+        f"({summary['spawned_untouched']} untouched) · carried {summary['carried']}"
+    )
+    if summary["sprawl"]:
+        print(f"sprawl: {summary['spawned']} spawned today, threshold {summary['sprawl_threshold']}")
+    return 0
+
+
 def template_root() -> Any:
     return importlib.resources.files("braingent").joinpath("templates", "starter")
 
@@ -3074,6 +3140,21 @@ def build_parser() -> argparse.ArgumentParser:
     factcheck_group.add_argument("--next", action="store_true", help="print the next unverified in-scope record path")
     factcheck_parser.add_argument("--json", action="store_true", help="emit JSON")
     factcheck_parser.set_defaults(func=cmd_factcheck)
+
+    daily_log_parser = subparsers.add_parser("daily-log", help="append an event to today's daily log")
+    daily_log_parser.add_argument("kind", choices=["todo", "started", "review", "blocked", "done", "dropped", "spawned", "note"])
+    daily_log_parser.add_argument("text")
+    daily_log_parser.add_argument("--as", dest="as_agent", required=True)
+    daily_log_parser.add_argument("--ref", help="ticket key, PR reference, or task ID the event is about")
+    daily_log_parser.add_argument("--date", help="log against YYYY-MM-DD instead of today")
+    daily_log_parser.set_defaults(func=cmd_daily_log)
+
+    daily_status_parser = subparsers.add_parser("daily-status", help="regenerate and summarise a daily log")
+    daily_status_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today in [daily] timezone")
+    daily_status_output = daily_status_parser.add_mutually_exclusive_group()
+    daily_status_output.add_argument("--json", action="store_true", help="emit JSON")
+    daily_status_output.add_argument("--path", action="store_true", help="emit only the day file path")
+    daily_status_parser.set_defaults(func=cmd_daily_status)
 
     task_new_parser = subparsers.add_parser("task-new", help="create an agent task")
     task_new_parser.add_argument("title")

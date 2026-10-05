@@ -28,7 +28,7 @@ For every non-trivial task that uses this memory repo, read in this order:
 
 Do not read archives or raw imports by default. Search them only when relevant.
 
-When the user invokes a workflow trigger phrase, follow the matching procedure in `workflows/` exactly. Current workflows include "clean up braingent" → `workflows/cleanup-braingent.md` and "index this repo to braingent" / "index <specific-repo> to braingent" → `workflows/index-repo.md`.
+When the user invokes a workflow trigger phrase, follow the matching procedure in `workflows/` exactly. Current workflows include "clean up braingent" → `workflows/cleanup-braingent.md` and "index this repo to braingent" / "index <specific-repo> to braingent" → `workflows/index-repo.md`, and "run the daily PM" / "catch me up" → `workflows/daily-pm.md`.
 
 ## Operating Rules
 
@@ -45,6 +45,10 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 - When a task is completed, create or update a task record before considering memory capture done.
 - When a live `BGT-NNNN` task is completed, link it to durable memory with `agent_task: BGT-NNNN`.
 - Never store secrets, credentials, tokens, or sensitive personal data.
+
+## Daily Log
+
+When you start, finish, hand off for review, get blocked, or spawn a ticket or PR, append one line to today's log: `braingent daily-log <kind> "<what>" --ref <ticket-or-pr> --as <your-agent-id>`. See `daily/README.md`. "Run the daily PM" or "catch me up" → `workflows/daily-pm.md`.
 
 ## Memory Retrieval Protocol
 

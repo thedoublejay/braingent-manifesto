@@ -42,6 +42,7 @@ export const docsNav: NavSection[] = [
       { title: 'The Capture Loop', slug: 'guides/capture-loop' },
       { title: 'Search & Recall', slug: 'guides/search-and-recall' },
       { title: 'Multi-Agent Coordination', slug: 'guides/multi-agent-tasks' },
+      { title: 'Daily Log', slug: 'guides/daily-log', badge: 'New' },
       { title: 'Index Your Repos', slug: 'guides/index-your-repos' },
       { title: 'QA Test Planning', slug: 'guides/qa-test-planning', badge: 'Flagship' },
       { title: 'Local Dashboard', slug: 'guides/dashboard' },
