@@ -18,9 +18,14 @@ If facts change, add a new record and set `supersedes` / `superseded_by` to repo
 - Commits/PRs: `preferences/pr-and-commit.md`
 - Naming: `preferences/naming.md`
 - Live `BGT-*` tasks: `tasks/CLAUDE.md`
+- Daily log and PM catch-up: `daily/README.md` and `workflows/daily-pm.md`
 
 Never tag, mention, or assign another person unless JJ names them for that action.
 
 ## Capture
 
 Use `templates/task-record-minimal.md` unless the work is an incident or an accepted decision. Set `captured_by` to the agent that wrote the record. Then `braingent validate` and `braingent reindex`.
+
+## Daily Log
+
+When you start, finish, hand off for review, get blocked, or spawn a ticket or PR, append one line to today's log: `braingent daily-log <kind> "<what>" --ref <ticket-or-pr> --as <your-agent-id>`. See `daily/README.md`. "Run the daily PM" or "catch me up" → `workflows/daily-pm.md`.

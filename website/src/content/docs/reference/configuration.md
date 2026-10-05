@@ -73,6 +73,13 @@ scope_topics = ["company-research", "deep-research"]
 slop_domains = ["contentfarm.example", "ai-rewrite-mill.example"]
 prwire_domains = ["myindustrywire.example"]
 tier12_domains = ["mytrustedjournal.example"]
+
+[daily]
+# Timezone that decides which day file an event lands in. IANA name.
+# Default: the machine's local timezone.
+timezone = "Asia/Singapore"
+# Spawned tickets or PRs per day before the status block shows a sprawl warning.
+sprawl_threshold = 10
 ```
 
 ## What each section does
@@ -87,6 +94,8 @@ tier12_domains = ["mytrustedjournal.example"]
 | `[task_ids] prefix` / `pad` | Prefix and zero-pad width for generated task IDs (and the matching validation). |
 | `[factcheck] scope_topics` | Topics that opt a record into `factcheck` when it has no `verification` field. Additive. |
 | `[factcheck] slop_domains` / `prwire_domains` / `tier12_domains` | Source-credibility tiers used by `factcheck`. Additive to the built-in defaults. |
+| `[daily] timezone` | IANA timezone for daily log dates and event times. Defaults to the machine's local zone. |
+| `[daily] sprawl_threshold` | Spawned items per day before `daily-status` raises the sprawl warning. Default 10. |
 
 The built-in `[safety]` patterns are always active even with no config file, so
 `doctor` flags common secret formats out of the box.

@@ -12,6 +12,10 @@ migrations.
 
 ## Latest
 
+### Unreleased
+
+- **Daily log.** `braingent daily-log` and `braingent daily-status` keep one append-only `daily/YYYY-MM-DD.md` per day across every agent, with a generated ongoing/review/blocked/todo/done view, carry-over of unfinished work, and a sprawl warning at `[daily] sprawl_threshold`. `workflows/daily-pm.md` adds a PM catch-up agent that backfills from GitHub, the issue tracker, and Braingent records.
+
 ### `17 September 2026`: `1.0.1`
 
 - **PyPI republish.** `1.0.0` is already on PyPI (26 June 2026) and cannot be replaced. This patch ships the post-1.0 work: MCP SDK 2.2 (`MCPServer`), `braingent factcheck`, token-efficient retrieval, and hatchling metadata 2.5 with a matching publish action.

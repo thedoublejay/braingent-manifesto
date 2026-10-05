@@ -54,8 +54,11 @@ Copy this directory into a new memory repo.
 |   |-- task-record.md
 |   |-- ticket-stub.md
 |   `-- tool-version-record.md
+|-- daily/
+|   `-- README.md
 |-- workflows/
 |   |-- cleanup-braingent.md
+|   |-- daily-pm.md
 |   |-- index-repo.md
 |   `-- retrieve-context.md
 |-- tasks/

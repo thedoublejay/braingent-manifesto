@@ -28,6 +28,7 @@ DEFAULT_STALE_DAYS = 180
 DEFAULT_RECALL_LIMIT = 8
 DEFAULT_TASK_ID_PREFIX = "BGT"
 DEFAULT_TASK_ID_PAD = 4
+DEFAULT_DAILY_SPRAWL_THRESHOLD = 10
 
 # Topics that opt a record into the `braingent factcheck` loop when it has no
 # explicit `verification` field. Empty by default: a record opts in either by
@@ -71,6 +72,8 @@ class BraingentConfig:
     factcheck_slop_domains: tuple[str, ...] = ()
     factcheck_prwire_domains: tuple[str, ...] = DEFAULT_FACTCHECK_PRWIRE_DOMAINS
     factcheck_tier12_domains: tuple[str, ...] = DEFAULT_FACTCHECK_TIER12_DOMAINS
+    daily_timezone: str | None = None
+    daily_sprawl_threshold: int = DEFAULT_DAILY_SPRAWL_THRESHOLD
     issues: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -158,5 +161,7 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
         factcheck_slop_domains=tuple(domains("slop_domains")),
         factcheck_prwire_domains=DEFAULT_FACTCHECK_PRWIRE_DOMAINS + tuple(domains("prwire_domains")),
         factcheck_tier12_domains=DEFAULT_FACTCHECK_TIER12_DOMAINS + tuple(domains("tier12_domains")),
+        daily_timezone=nonempty_str("daily", "timezone", "") or None,
+        daily_sprawl_threshold=positive_int("daily", "sprawl_threshold", DEFAULT_DAILY_SPRAWL_THRESHOLD),
         issues=tuple(issues),
     )

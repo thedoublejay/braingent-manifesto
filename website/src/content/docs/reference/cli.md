@@ -228,6 +228,23 @@ Coordinate optional live `BGT-NNNN` task files under `tasks/`.
 | `braingent task-list --count` | Print status counts. |
 | `braingent task-archive BGT-0001 --resolution completed --as agent--codex-cli` | Close and archive. |
 
+## Daily Log Commands
+
+Record what every agent did today in `daily/YYYY-MM-DD.md`. See the
+[Daily Log guide](/guides/daily-log/).
+
+| Command | Purpose |
+| --- | --- |
+| `braingent daily-log started "<text>" --ref EX-1 --as agent--claude-code` | Append an event. Kinds: `todo`, `started`, `review`, `blocked`, `done`, `dropped`, `spawned`, `note`. |
+| `braingent daily-log note "<text>" --as agent--codex-cli --date 2026-10-05` | Log against another day. |
+| `braingent daily-status` | Regenerate the status block and print counts plus the sprawl flag. |
+| `braingent daily-status --json` | Machine-readable summary for a PM agent. |
+| `braingent daily-status --path` | Print the day file path. |
+
+The first write of a day creates the file and carries over the previous
+day's unfinished items. Writes take a file lock, so concurrent agents are
+safe.
+
 ## MCP Server
 
 Expose token-efficient retrieval tools to MCP-aware agents. Requires the
