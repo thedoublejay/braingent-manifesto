@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from braingent import __version__
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = REPO_ROOT / "src"
 
@@ -29,6 +31,19 @@ class PackageCliTests(unittest.TestCase):
             )
 
         self.assertIn("Braingent metadata helper", result.stdout)
+
+    def test_module_version_matches_package_outside_memory_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            result = subprocess.run(
+                [sys.executable, "-m", "braingent", "--version"],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+        self.assertEqual(result.stdout.strip(), f"braingent {__version__}")
 
     def test_root_option_runs_command_from_outside_memory_repo(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
