@@ -32,6 +32,11 @@ CARRY_ACTOR = "carry-over"
 STATUS_START = "<!-- braingent:daily-status:start -->"
 STATUS_END = "<!-- braingent:daily-status:end -->"
 LOG_HEADING = "## Log"
+LOG_PATTERN = re.compile(r"^## Log[ \t]*\r?\n(.*?)(?=^## |\Z)", re.MULTILINE | re.DOTALL)
+STATUS_PATTERN = re.compile(
+    rf"^{re.escape(STATUS_START)}\r?\n## Status\r?\n.*?^{re.escape(STATUS_END)}(?=\r?$)",
+    re.MULTILINE | re.DOTALL,
+)
 
 KINDS = ("todo", "started", "review", "blocked", "done", "dropped", "spawned", "note")
 BUCKET_OF = {
@@ -114,7 +119,10 @@ def clean(value: str) -> str:
 
 def parse_events(text: str) -> list[Event]:
     events: list[Event] = []
-    for line in text.splitlines():
+    section = LOG_PATTERN.search(text)
+    if section is None:
+        return events
+    for line in section.group(1).splitlines():
         match = EVENT_PATTERN.match(line)
         if match and match.group(3) in KINDS:
             time, actor, kind, ref, body = match.groups()
@@ -167,12 +175,13 @@ def render_status(status: Status, sprawl_threshold: int) -> str:
 
 def with_status(text: str, sprawl_threshold: int) -> str:
     block = render_status(derive_status(parse_events(text)), sprawl_threshold)
-    if STATUS_START in text and STATUS_END in text:
-        head, rest = text.split(STATUS_START, 1)
-        tail = rest.split(STATUS_END, 1)[1]
-        return f"{head}{block}{tail}"
-    head, sep, tail = text.partition(LOG_HEADING)
-    return f"{head.rstrip()}\n\n{block}\n\n{sep}{tail}"
+    section = LOG_PATTERN.search(text)
+    existing = STATUS_PATTERN.search(text, 0, section.start() if section else len(text))
+    if existing is not None:
+        return f"{text[:existing.start()]}{block}{text[existing.end():]}"
+    if section is None:
+        return f"{text}\n\n{block}\n\n{LOG_HEADING}\n\n"
+    return f"{text[:section.start()]}{block}\n\n{text[section.start():]}"
 
 
 def previous_day_file(root: Path, day: date) -> Path | None:
@@ -189,7 +198,8 @@ def carried_events(root: Path, day: date) -> list[Event]:
     source = previous_day_file(root, day)
     if source is None:
         return []
-    status = derive_status(parse_events(source.read_text(encoding="utf-8")))
+    with locked(source) as handle:
+        status = derive_status(parse_events(handle.read()))
     return [
         Event("00:00", CARRY_ACTOR, "todo" if event.kind == "spawned" else event.kind, event.ref, event.text)
         for name in UNFINISHED
@@ -214,14 +224,22 @@ def new_day(root: Path, day: date, tz: tzinfo) -> str:
 def locked(path: Path) -> Iterator[IO[str]]:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.touch(exist_ok=True)
-    with path.open("r+", encoding="utf-8") as handle:
+    with path.open("r+", encoding="utf-8", newline="") as handle:
         if fcntl is not None:
             fcntl.flock(handle, fcntl.LOCK_EX)
+        else:
+            import msvcrt
+
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
         try:
             yield handle
         finally:
+            handle.flush()
+            handle.seek(0)
             if fcntl is not None:
                 fcntl.flock(handle, fcntl.LOCK_UN)
+            else:
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def rewrite(handle: IO[str], text: str) -> None:
@@ -235,7 +253,14 @@ def update_day(root: Path, day: date, tz: tzinfo, sprawl_threshold: int, event: 
     with locked(path) as handle:
         text = handle.read() or new_day(root, day, tz)
         if event is not None:
-            text = text.rstrip("\n") + "\n" + event.line() + "\n"
+            section = LOG_PATTERN.search(text)
+            if section is None:
+                text += f"\n\n{LOG_HEADING}\n\n"
+                section = LOG_PATTERN.search(text)
+            assert section is not None
+            end = section.end()
+            separator = "" if text[:end].endswith("\n") else "\n"
+            text = f"{text[:end]}{separator}{event.line()}\n{text[end:]}"
         rewrite(handle, with_status(text, sprawl_threshold))
     return path
 
@@ -256,10 +281,13 @@ def log_event(
     body = clean(text)
     if not body:
         raise ValueError("event text must not be empty")
+    actor_value = "-".join(actor.split())
+    if not actor_value:
+        raise ValueError("event actor must not be empty")
     zone = tz or resolve_tz(None)
     moment = (now or datetime.now(zone)).astimezone(zone)
     ref_value = "-".join(ref.split()) if ref and ref.strip() else None
-    event = Event(moment.strftime("%H:%M"), "-".join(actor.split()), kind, ref_value, body)
+    event = Event(moment.strftime("%H:%M"), actor_value, kind, ref_value, body)
     return update_day(root, moment.date(), zone, sprawl_threshold, event)
 
 
@@ -271,7 +299,8 @@ def summarise(
     root: Path, day: date, sprawl_threshold: int = DEFAULT_SPRAWL_THRESHOLD, tz: tzinfo | None = None
 ) -> dict[str, Any]:
     path = refresh(root, day, sprawl_threshold, tz)
-    status = derive_status(parse_events(path.read_text(encoding="utf-8")))
+    with locked(path) as handle:
+        status = derive_status(parse_events(handle.read()))
 
     def as_dict(event: Event) -> dict[str, Any]:
         return {"time": event.time, "actor": event.actor, "kind": event.kind, "ref": event.ref, "text": event.text}

@@ -8,6 +8,7 @@ import tempfile
 import unittest
 from datetime import date, datetime
 from pathlib import Path
+from unittest import mock
 from zoneinfo import ZoneInfo
 
 from braingent import config as bgconfig
@@ -100,6 +101,100 @@ class DailyLogTests(unittest.TestCase):
         status_block = text.split(daily.STATUS_START, 1)[1].split(daily.STATUS_END, 1)[0]
         self.assertIn("### Done (1)", status_block)
         self.assertIn("### Ongoing (0)", status_block)
+
+    def test_goals_and_other_sections_are_not_events(self) -> None:
+        path = self.log("started", "Actual work", ref="GET-1")
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("## Goals\n", "## Goals\n\n- 09:00 · human · done · GET-1 · Goal example\n", 1)
+        text += "\n## Notes\n\n- 10:00 · human · done · GET-1 · Another example\n"
+        path.write_text(text, encoding="utf-8")
+        self.log("note", "Still working")
+        summary = daily.summarise(self.root, self.day, tz=SGT)
+        self.assertEqual(summary["counts"]["ongoing"], 1)
+        self.assertEqual(summary["counts"]["done"], 0)
+        events = daily.parse_events(path.read_text(encoding="utf-8"))
+        self.assertEqual([event.text for event in events], ["Actual work", "Still working"])
+        self.assertTrue(path.read_text(encoding="utf-8").endswith("· Another example\n"))
+
+    def test_markers_in_event_text_do_not_corrupt_status(self) -> None:
+        body = f"Explain {daily.STATUS_START} and {daily.STATUS_END}"
+        path = self.log("started", body, ref="GET-1")
+        original_line = daily.parse_events(path.read_text(encoding="utf-8"))[0].line()
+        self.log("done", "Explained markers", ref="GET-1")
+        text = path.read_text(encoding="utf-8")
+        self.assertEqual(text.splitlines().count(daily.STATUS_START), 1)
+        self.assertEqual(text.splitlines().count(daily.STATUS_END), 1)
+        self.assertEqual(text.splitlines().count(original_line), 1)
+        self.assertEqual([event.kind for event in daily.parse_events(text)], ["started", "done"])
+
+    def test_empty_actor_is_rejected_before_creating_file(self) -> None:
+        for actor in ("", " ", "\n\t"):
+            with self.subTest(actor=actor), self.assertRaises(ValueError):
+                self.log("started", "Invalid metadata", actor=actor, ref="GET-1")
+        self.assertFalse((self.root / "daily").exists())
+
+    def test_summary_and_carry_over_read_under_lock(self) -> None:
+        path = self.log("started", "Long running", ref="GET-1")
+        with mock.patch.object(daily, "locked", wraps=daily.locked) as acquire:
+            daily.summarise(self.root, self.day, tz=SGT)
+            self.assertEqual([call.args[0] for call in acquire.call_args_list], [path, path])
+        with mock.patch.object(daily, "locked", wraps=daily.locked) as acquire:
+            self.log("note", "Tomorrow", day=date(2026, 10, 7))
+            self.assertIn(path, [call.args[0] for call in acquire.call_args_list])
+
+    def test_windows_locks_the_day_file_and_flushes_before_unlock(self) -> None:
+        windows = mock.Mock(LK_LOCK=1, LK_UNLCK=0)
+        path = daily.day_path(self.root, self.day)
+
+        def check_unlock(descriptor: int, mode: int, count: int) -> None:
+            if mode == windows.LK_UNLCK:
+                self.assertEqual(path.read_text(encoding="utf-8"), "Logged event\n")
+
+        windows.locking.side_effect = check_unlock
+        with mock.patch.object(daily, "fcntl", None), mock.patch.dict(sys.modules, {"msvcrt": windows}):
+            with daily.locked(path) as handle:
+                windows.locking.assert_called_once_with(handle.fileno(), windows.LK_LOCK, 1)
+                handle.write("Logged event\n")
+                descriptor = handle.fileno()
+            self.assertEqual(windows.locking.call_args_list[-1], mock.call(descriptor, windows.LK_UNLCK, 1))
+        self.assertEqual(path.read_text(encoding="utf-8"), "Logged event\n")
+
+    def test_crlf_goals_are_preserved_byte_for_byte(self) -> None:
+        path = self.log("started", "First task", ref="GET-1")
+        text = path.read_text(encoding="utf-8").replace("\n", "\r\n")
+        path.write_bytes(text.encode("utf-8"))
+        original_goals = path.read_bytes().split(daily.STATUS_START.encode())[0]
+        self.log("done", "First task", ref="GET-1")
+        self.assertEqual(path.read_bytes().split(daily.STATUS_START.encode())[0], original_goals)
+        self.assertEqual(daily.summarise(self.root, self.day, tz=SGT)["counts"]["done"], 1)
+
+    def test_concurrent_writers_keep_every_event(self) -> None:
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(SRC_DIR)
+        script = (
+            "import sys; from pathlib import Path; from datetime import datetime; "
+            "from zoneinfo import ZoneInfo; from braingent import daily; "
+            "zone = ZoneInfo('Asia/Singapore'); "
+            "daily.log_event(Path(sys.argv[1]), 'started', 'Task ' + sys.argv[2], "
+            "actor='agent-' + sys.argv[2], ref='TASK-' + sys.argv[2], "
+            "now=datetime(2026, 10, 6, 9, tzinfo=zone), tz=zone)"
+        )
+        processes = [
+            subprocess.Popen(
+                [sys.executable, "-c", script, str(self.root), str(index)],
+                env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            for index in range(12)
+        ]
+        for process in processes:
+            _, stderr = process.communicate(timeout=30)
+            self.assertEqual(process.returncode, 0, stderr)
+        summary = daily.summarise(self.root, self.day, tz=SGT)
+        self.assertEqual(summary["counts"]["ongoing"], 12)
+        path = daily.day_path(self.root, self.day)
+        events = daily.parse_events(path.read_text(encoding="utf-8"))
+        self.assertEqual({event.ref for event in events}, {f"TASK-{index}" for index in range(12)})
+        self.assertEqual(len(events), 12)
 
     def test_sprawl_flag_trips_at_threshold(self) -> None:
         for index in range(3):

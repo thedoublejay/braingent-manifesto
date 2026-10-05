@@ -21,7 +21,7 @@ braingent daily-log spawned "Flaky checkout test" --ref EX-1240 --as agent--clau
 braingent daily-log done "Verdict lock merged" --ref EX-1234 --as agent--claude-code
 ```
 
-Each call appends a line such as `- 09:42 · agent--claude-code · started · EX-1234 · Verdict lock fix` under a file lock, so several CLIs can log at once.
+Each call appends a line such as `- 09:42 · agent--claude-code · started · EX-1234 · Verdict lock fix` under a file lock, so several CLIs can log at once. Writers, status readers and carry-over readers use the same lock. Unix uses `flock`; Windows uses `msvcrt.locking`.
 
 | Kind | Status bucket | Use when |
 | --- | --- | --- |
@@ -34,7 +34,7 @@ Each call appends a line such as `- 09:42 · agent--claude-code · started · EX
 | `spawned` | Todo, plus Spawned today | An agent creates a new ticket, PR, or task. |
 | `note` | Log only | Context worth keeping that changes no status. |
 
-Events with the same `--ref` are one item, and the latest event decides its bucket. Without `--ref`, the event text is the key.
+Events with the same `--ref` are one item, and the latest event decides its bucket. Without `--ref`, the event text is the key. Only events within `## Log` count towards status. Examples in Goals or other sections do not change it. `--as` must identify a non-empty actor.
 
 ## Reading the day
 
