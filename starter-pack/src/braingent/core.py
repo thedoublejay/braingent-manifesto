@@ -1388,7 +1388,7 @@ def render_memory_summary(records: list[Record]) -> str:
 
 
 def render_current_state(records: list[Record]) -> str:
-    today = date.today().isoformat()
+    latest_record_date = max((record.date_sort for record in records if record.date_sort), default="-")
     kinds: dict[str, int] = {}
     for record in records:
         kinds[record.kind] = kinds.get(record.kind, 0) + 1
@@ -1403,7 +1403,7 @@ def render_current_state(records: list[Record]) -> str:
     lines = generated_header("Current State")
     lines.extend(
         [
-            f"Last generated: {today}",
+            f"Latest record date: {latest_record_date}",
             "Timezone: Asia/Singapore",
             "",
             "This file is generated. Do not hand-edit. Durable evidence stays in records.",
