@@ -200,12 +200,8 @@ def carried_events(root: Path, day: date) -> list[Event]:
 def new_day(root: Path, day: date, tz: tzinfo) -> str:
     carried = "\n".join(event.line() for event in carried_events(root, day))
     return (
-        "---\n"
-        "record_kind: daily-log\n"
-        f"date: {day.isoformat()}\n"
-        f"timezone: {tz}\n"
-        "---\n\n"
         f"# Daily log: {human_date(day)}\n\n"
+        f"Timezone: {tz}\n\n"
         "## Goals\n\n"
         "<!-- Human-owned. Up to three outcomes for today. Agents never edit this section. -->\n\n"
         f"{LOG_HEADING}\n\n"

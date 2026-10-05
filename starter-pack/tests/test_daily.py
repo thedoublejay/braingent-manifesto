@@ -60,6 +60,8 @@ class DailyLogTests(unittest.TestCase):
         text = path.read_text(encoding="utf-8")
         self.assertIn("# Daily log: 6 October 2026", text)
         self.assertIn("## Goals", text)
+        self.assertIn("Timezone: Asia/Singapore", text)
+        self.assertFalse(text.startswith("---"))
         self.assertIn("- 09:42 · agent--claude-code · started · GET-1234 · Verdict lock fix", text)
 
     def test_event_text_is_flattened_to_one_line(self) -> None:
