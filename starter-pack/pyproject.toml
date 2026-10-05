@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling>=1.32.0"]
+requires = ["hatchling>=1.32.4"]
 build-backend = "hatchling.build"
 
 [project]
@@ -20,6 +20,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Software Development",
 ]
 dependencies = [
@@ -28,17 +29,17 @@ dependencies = [
 
 [project.optional-dependencies]
 mcp = [
-  "mcp>=2.2.0,<3",
+  "mcp>=2.3.0,<3",
 ]
 tokens = [
   "tiktoken>=0.14.0,<1",
 ]
 dev = [
   "build>=1.6.1",
-  "hatchling>=1.32.0",
-  "mypy>=2.3.1",
+  "hatchling>=1.32.4",
+  "mypy>=2.4.0",
   "pytest>=9.1.1",
-  "ruff>=0.16.8",
+  "ruff>=0.16.10",
   "twine>=7.0.0",
   "types-PyYAML>=6.0.12.20260906",
 ]
