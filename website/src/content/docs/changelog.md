@@ -12,9 +12,14 @@ migrations.
 
 ## Latest
 
-### Unreleased
+### `6 October 2026`: `1.1.0`
 
-- **Daily log.** `braingent daily-log` and `braingent daily-status` keep one append-only `daily/YYYY-MM-DD.md` per day across every agent, with a generated ongoing/review/blocked/todo/done view, carry-over of unfinished work, and a sprawl warning at `[daily] sprawl_threshold`. `workflows/daily-pm.md` adds a PM catch-up agent that backfills from GitHub, the issue tracker, and Braingent records.
+- **Daily log.** `braingent daily-log` and `braingent daily-status` keep one append-only `daily/YYYY-MM-DD.md` per day across every agent, with a generated ongoing/review/blocked/todo/done view, carry-over of unfinished work, and a sprawl warning at `[daily] sprawl_threshold`. `workflows/daily-pm.md` adds a PM catch-up agent that reconciles GitHub, the issue tracker, and Braingent records.
+- **Reliable concurrent logging.** Readers and writers share file locks, human Goals are preserved, and only Log entries affect status. Windows uses its native locking backend.
+- **Deterministic indexes.** `CURRENT_STATE.md` reports the latest source-record date, so unchanged indexes remain current across midnight.
+- **CLI version string.** `braingent --version` reports the package version instead of a leftover `0.1.0`.
+- **Dependencies.** Refreshed Python tooling, MCP, website and example dashboard packages; Python 3.14 joins the supported CI matrix.
+
 
 ### `17 September 2026`: `1.0.1`
 
