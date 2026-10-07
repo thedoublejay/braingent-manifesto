@@ -23,6 +23,7 @@ OPEN_STATUSES = ("pending", "pr-open", "applied")
 PROGRESS_RANK = {"pending": 0, "pr-open": 1, "applied": 2, "verified": 3}
 TERMINAL_STATUSES = ("not-needed", "dormant")
 MAX_VALUE_LENGTH = 300
+SEARCH_LIMIT = 100
 DEFAULT_AUTHOR = "@me"
 ACTOR_PATTERN = re.compile(r"^(?:@me|[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?)$")
 TABLE_COLUMNS = ("key", "kind", "repo/path", "env", "target", "introduced_by", "enabled_by", "status", "verify")
@@ -83,7 +84,9 @@ def _scalar(value: Any, label: str = "value") -> str | None:
         raise ConfigLedgerError(f"{label}: must be a scalar, not a mapping or list")
     if isinstance(value, bool):
         value = "true" if value else "false"
-    text = " ".join(str(value).split())[:MAX_VALUE_LENGTH]
+    text = " ".join(str(value).split())
+    if len(text) > MAX_VALUE_LENGTH:
+        raise ConfigLedgerError(f"{label}: value longer than {MAX_VALUE_LENGTH} characters")
     return text or None
 
 
@@ -263,7 +266,7 @@ def collect_pr_items(
     """Collect config items from PR bodies labelled `epic:<slug>` and written by trusted authors."""
 
     for value in (*owners, *authors):
-        if not ACTOR_PATTERN.match(value):
+        if not ACTOR_PATTERN.fullmatch(value):
             raise ConfigLedgerError(f"invalid GitHub owner or author `{value}`")
     fields = "number,repository,url,body,state"
     owner_scopes: list[list[str]] = [["--owner", owner] for owner in owners] or [[]]
@@ -272,7 +275,7 @@ def collect_pr_items(
         for scope in owner_scopes:
             command = [
                 "search", "prs", "--label", f"epic:{epic_slug}", "--author", author, *scope,
-                "--json", fields, "--limit", "100",
+                "--json", fields, "--limit", str(SEARCH_LIMIT),
             ]
             try:
                 payload = json.loads(runner(command) or "[]")
@@ -280,9 +283,20 @@ def collect_pr_items(
                 raise ConfigLedgerError(f"gh returned invalid JSON ({exc})") from exc
             if not isinstance(payload, list):
                 raise ConfigLedgerError("gh returned an unexpected payload; expected a JSON list")
+            if len(payload) >= SEARCH_LIMIT:
+                raise ConfigLedgerError(f"PR search reached its limit of {SEARCH_LIMIT}; narrow the owner or author scope before syncing")
             entries = [entry for entry in payload if isinstance(entry, dict)]
-            for pr in sorted(entries, key=lambda entry: (_repository_name(entry), str(entry.get("number", "")))):
+            for pr in sorted(entries, key=lambda entry: (_repository_name(entry), int(entry.get("number", 0)))):
                 reference = f"{_repository_name(pr)}#{pr.get('number')}"
+                if str(pr.get("state", "")).lower() == "closed":
+                    try:
+                        details = json.loads(runner(["pr", "view", pr["url"], "--json", "state"]))
+                    except (KeyError, json.JSONDecodeError) as exc:
+                        raise ConfigLedgerError(f"{reference}: could not verify whether the PR was merged") from exc
+                    if not isinstance(details, dict) or details.get("state") not in ("MERGED", "CLOSED", "OPEN"):
+                        raise ConfigLedgerError(f"{reference}: could not verify whether the PR was merged")
+                    if details["state"] == "CLOSED":
+                        continue
                 try:
                     items.extend(parse_blocks(str(pr.get("body") or "")))
                 except ConfigLedgerError as exc:

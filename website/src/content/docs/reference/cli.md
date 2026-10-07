@@ -236,6 +236,11 @@ Coordinate optional live `BGT-NNNN` task files under `tasks/`.
 An epic groups work across tickets and repositories. See `STRUCTURE.md` for the
 page layout and the `config-to-enable/v1` block format.
 
+`config-ledger` trusts PRs by the active GitHub account (`@me`) by default.
+Use repeatable `--author` options or `[config_ledger] authors` to select trusted
+authors. Closed, unmerged PRs are excluded. Values longer than 300 characters
+are rejected, and reaching the search limit stops collection before any sync.
+
 | Command | Purpose |
 | --- | --- |
 | `braingent new epic --org acme --slug checkout-latency [--title "<text>"] [--parent <slug>]` | Create `orgs/org--acme/epics/epic--acme--checkout-latency/README.md` from `templates/epic.md`. |

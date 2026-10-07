@@ -156,8 +156,10 @@ def derive_status(events: list[Event]) -> Status:
         if event.epic:
             status.epics.setdefault(event.epic, EpicRollup()).spawned += 1
     for _, event in latest.values():
-        if event.kind == "spawned" and event.epic:
-            status.epics.setdefault(event.epic, EpicRollup()).untouched += 1
+        if event.epic:
+            rollup = status.epics.setdefault(event.epic, EpicRollup())
+            if event.kind == "spawned":
+                rollup.untouched += 1
     return status
 
 

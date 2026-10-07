@@ -139,6 +139,33 @@ class RenderTests(unittest.TestCase):
 
 
 class CollectTests(unittest.TestCase):
+    def test_search_limit_is_an_error(self) -> None:
+        payload = [{"number": n, "repository": {"name": "app-repo"}, "body": BLOCK} for n in range(100)]
+        with self.assertRaisesRegex(ConfigLedgerError, "limit"):
+            config_ledger.collect_pr_items("x", [], ["@me"], lambda _: json.dumps(payload), lambda _: None)
+
+    def test_pr_numbers_are_sorted_numerically(self) -> None:
+        payload = [
+            {"number": 10, "repository": {"name": "app-repo"}, "body": BLOCK.replace("pending", "not-needed")},
+            {"number": 9, "repository": {"name": "app-repo"}, "body": BLOCK.replace("pending", "dormant")},
+        ]
+        items = config_ledger.collect_pr_items("x", [], ["@me"], lambda _: json.dumps(payload), lambda _: None)
+        self.assertEqual(config_ledger.merge_items([items])[0].status, "not-needed")
+
+    def test_closed_unmerged_prs_are_excluded(self) -> None:
+        payload = [
+            {"number": 1, "repository": {"name": "app-repo"}, "url": "https://example.test/1", "body": BLOCK, "state": "closed"},
+            {"number": 2, "repository": {"name": "app-repo"}, "url": "https://example.test/2", "body": BLOCK.replace("FEATURE_X", "FEATURE_Y"), "state": "closed"},
+        ]
+
+        def runner(args: list[str]) -> str:
+            if args[:2] == ["search", "prs"]:
+                return json.dumps(payload)
+            return json.dumps({"state": "CLOSED" if args[2].endswith("/1") else "MERGED"})
+
+        items = config_ledger.collect_pr_items("x", [], ["@me"], runner, lambda _: None)
+        self.assertEqual([item.key for item in items], ["FEATURE_Y_ENABLED"])
+
     def test_collects_from_pr_bodies_with_injected_runner(self) -> None:
         calls: list[list[str]] = []
         payload = [
@@ -168,6 +195,12 @@ class CollectTests(unittest.TestCase):
 
 
 class UntrustedInputTests(unittest.TestCase):
+    def test_overlength_identity_is_rejected(self) -> None:
+        for field in ("key", "env", "target"):
+            text = BLOCK.replace("  status: pending", f"  {field}: {'K' * 300}A\n  status: pending")
+            with self.subTest(field=field), self.assertRaisesRegex(ConfigLedgerError, "300"):
+                config_ledger.parse_blocks(text)
+
     def test_one_query_per_author_and_owner(self) -> None:
         calls: list[list[str]] = []
 
@@ -200,11 +233,11 @@ class UntrustedInputTests(unittest.TestCase):
                 with self.assertRaisesRegex(ConfigLedgerError, "scalar"):
                     config_ledger.parse_blocks(text)
 
-    def test_values_are_flattened_and_capped(self) -> None:
+    def test_values_are_flattened_and_bounded(self) -> None:
         text = (
             "```yaml\n# config-to-enable/v1\n- key: K\n  kind: env\n  status: pending\n"
             '  verify: "line one\\n## Injected heading\\n```\\nmore"\n'
-            f"  target: {'x' * 500}\n"
+            f"  target: {'x' * 300}\n"
             '  depends_on: ["a\\nb"]\n```\n'
         )
         (item,) = config_ledger.parse_blocks(text)

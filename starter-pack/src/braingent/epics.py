@@ -308,8 +308,12 @@ def scaffold_epic(
         "<parent-epic-id-or-null>": parent_value,
         "<yyyy-mm-dd>": stamp,
     }
+    frontmatter, separator, body = text.partition("\n---\n")
     for placeholder, value in replacements.items():
-        text = text.replace(placeholder, value)
+        frontmatter_value = json.dumps(value) if placeholder == "<epic-title>" else value
+        frontmatter = frontmatter.replace(placeholder, frontmatter_value)
+        body = body.replace(placeholder, value)
+    text = frontmatter + separator + body
     directory.mkdir(parents=True)
     page = directory / "README.md"
     page.write_text(text, encoding="utf-8")

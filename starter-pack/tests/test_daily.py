@@ -275,6 +275,12 @@ class DailyEpicTests(unittest.TestCase):
         self.assertEqual((event.text, event.epic), ("Index audit", "db-audit"))
         self.assertEqual(event.line(), "- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit")
 
+    def test_existing_work_is_in_the_epic_rollup_without_new_items(self) -> None:
+        self.log("review", "Existing PR", ref="app-repo#12", epic="db-audit")
+        summary = daily.summarise(self.root, self.day, tz=SGT)
+        self.assertEqual(summary["epics"], {"db-audit": {"spawned": 0, "untouched": 0}})
+        self.assertIn("### By epic", daily.day_path(self.root, self.day).read_text(encoding="utf-8"))
+
     def test_epic_id_is_reduced_to_its_slug(self) -> None:
         path = self.log("note", "Link", epic="epic--acme--db-audit")
         self.assertEqual(daily.parse_events(path.read_text(encoding="utf-8"))[0].epic, "db-audit")
@@ -321,6 +327,7 @@ class DailyEpicTests(unittest.TestCase):
         path = daily.log_event(self.root, "note", "Next day", actor="agent--claude-code", now=at(next_day, "09:00"), tz=SGT)
         carried = [event for event in daily.parse_events(path.read_text(encoding="utf-8")) if event.actor == daily.CARRY_ACTOR]
         self.assertEqual([event.epic for event in carried], ["db-audit"])
+        self.assertEqual(daily.summarise(self.root, next_day, tz=SGT)["epics"], {"db-audit": {"spawned": 0, "untouched": 0}})
 
 
 if __name__ == "__main__":

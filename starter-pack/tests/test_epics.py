@@ -79,6 +79,18 @@ class SlugTests(unittest.TestCase):
 
 
 class ScaffoldAndValidateTests(EpicTestCase):
+    def test_scaffold_preserves_titles_as_yaml_strings(self) -> None:
+        titles = ("Login: latency", "true", "# Login", 'Login "speed"', "Login\nlatency")
+        for index, title in enumerate(titles):
+            with self.subTest(title=title):
+                page = self.scaffold(f"title-{index}", title=title)
+                frontmatter, _, error = core.split_frontmatter(page)
+                self.assertIsNone(error)
+                self.assertIsNotNone(frontmatter)
+                assert frontmatter is not None
+                self.assertEqual(frontmatter["title"], title)
+        self.assertEqual(self.errors(), [])
+
     def test_scaffolded_page_validates_and_records_resolve(self) -> None:
         page = self.scaffold(title="Checkout latency")
         self.assertEqual(page, self.root / "orgs" / "org--acme" / "epics" / EPIC_ID / "README.md")
