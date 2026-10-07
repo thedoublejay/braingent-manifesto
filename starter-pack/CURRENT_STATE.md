@@ -25,6 +25,10 @@ This file is generated. Do not hand-edit. Durable evidence stays in records.
 
 - None
 
+## Active epics
+
+- None
+
 ## Capture
 
 After durable work, write a record, then `braingent validate` and `braingent reindex`.

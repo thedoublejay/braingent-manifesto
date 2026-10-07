@@ -32,7 +32,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 try:
     import yaml
@@ -44,6 +44,9 @@ except ImportError as exc:  # pragma: no cover - exercised by wrapper fallback.
 
 from braingent import __version__
 from braingent.config import CONFIG_RELATIVE_PATH, DEFAULT_CONFIG, BraingentConfig, load_config
+
+if TYPE_CHECKING:
+    from braingent.epics import Epic
 
 YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
 
@@ -638,6 +641,12 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
         if field not in fm:
             issues.append(ValidationIssue(path, f"missing required field `{field}`"))
 
+    from braingent import epics
+
+    if epics.is_epic_page(record):
+        issues.extend(epics.validate_epic_page(record, taxonomy))
+        return issues
+
     kind = fm.get("record_kind")
     if not isinstance(kind, str) or not kind:
         issues.append(ValidationIssue(path, "`record_kind` must be a non-empty string"))
@@ -822,6 +831,7 @@ def validate_entity_values(record: Record, field: str, value: Any, spec: dict[st
     issues: list[ValidationIssue] = []
     values = as_list(value)
     prefix = spec.get("prefix")
+    severity = "error" if field in {"epic", "parent_epic"} else "warning"
 
     for item in values:
         if is_nullish(item):
@@ -832,7 +842,7 @@ def validate_entity_values(record: Record, field: str, value: Any, spec: dict[st
                 ValidationIssue(
                     record.path,
                     f"`{field}` value `{item_str}` must start with `{prefix}`",
-                    severity="warning",
+                    severity=severity,
                 )
             )
             continue
@@ -841,7 +851,7 @@ def validate_entity_values(record: Record, field: str, value: Any, spec: dict[st
                 ValidationIssue(
                     record.path,
                     f"`{field}` value `{item_str}` has no matching directory",
-                    severity="warning",
+                    severity=severity,
                 )
             )
 
@@ -1388,7 +1398,7 @@ def render_memory_summary(records: list[Record]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_current_state(records: list[Record]) -> str:
+def render_current_state(records: list[Record], epics: list[Epic] | None = None) -> str:
     latest_record_date = max((record.date_sort for record in records if record.date_sort), default="-")
     kinds: dict[str, int] = {}
     for record in records:
@@ -1433,6 +1443,10 @@ def render_current_state(records: list[Record]) -> str:
         lines.append(
             f"- `{record.relpath}`: {record.title} ({record.date_sort or '-'})"
         )
+    if epics is not None:
+        from braingent.epics import render_active_epics
+
+        lines.extend(render_active_epics(epics))
     lines.extend(["", "## Capture", "", "After durable work, write a record, then `braingent validate` and `braingent reindex`.", ""])
     return "\n".join(lines)
 
@@ -1581,7 +1595,10 @@ def render_agent_task_graph(records: list[Record]) -> str:
 
 
 def build_index_outputs(records: list[Record]) -> dict[Path, str]:
+    from braingent import epics as epic_module
+
     entities = build_entities(records)
+    epics = epic_module.epics_from_records(records)
     return {
         INDEX_DIR / "organizations.md": render_organizations(records, entities),
         INDEX_DIR / "projects.md": render_projects(records, entities),
@@ -1589,6 +1606,8 @@ def build_index_outputs(records: list[Record]) -> dict[Path, str]:
         INDEX_DIR / "topics.md": render_topics(records, entities),
         INDEX_DIR / "tools.md": render_tools(records, entities),
         INDEX_DIR / "people.md": render_people(records, entities),
+        INDEX_DIR / "epics.md": epic_module.render_epics_index(records, epics),
+        INDEX_DIR / "config-ledger.md": epic_module.render_config_ledger(epics),
         INDEX_DIR / "records.md": render_records_index(records),
         RECORDS_ROLLUP_MD_PATH: render_records_rollup(records),
         INDEX_DIR / "memory-summary.md": render_memory_summary(records),
@@ -1597,7 +1616,7 @@ def build_index_outputs(records: list[Record]) -> dict[Path, str]:
         INDEX_DIR / "stale-candidates.md": render_stale_candidates_index(records),
         INDEX_DIR / "followups.md": render_followups_index(scan_unchecked_followups(FOLLOWUP_SCAN_ROOTS)),
         TASKS_DIR / "INDEX.md": render_task_index(records),
-        REPO_ROOT / "CURRENT_STATE.md": render_current_state(records),
+        REPO_ROOT / "CURRENT_STATE.md": render_current_state(records, epics),
         RECORDS_JSON_PATH: records_json(records),
         RECORDS_COMPACT_JSON_PATH: records_compact_json(records),
     }
@@ -1653,6 +1672,21 @@ def write_sqlite_index(records: list[Record], db_path: Path = SQLITE_PATH) -> No
             CREATE TABLE record_ai_tools (path TEXT NOT NULL, value TEXT NOT NULL);
             CREATE TABLE record_prs (path TEXT NOT NULL, value TEXT NOT NULL);
             CREATE TABLE record_commits (path TEXT NOT NULL, value TEXT NOT NULL);
+            CREATE TABLE record_epics (path TEXT NOT NULL, value TEXT NOT NULL);
+            CREATE TABLE config_items (
+              epic TEXT NOT NULL,
+              key TEXT NOT NULL,
+              kind TEXT NOT NULL,
+              status TEXT NOT NULL,
+              service TEXT,
+              repo TEXT,
+              path TEXT,
+              env TEXT,
+              target TEXT,
+              introduced_by TEXT,
+              enabled_by TEXT,
+              verify TEXT
+            );
 
             CREATE INDEX idx_records_kind_status ON records(record_kind, status);
             CREATE INDEX idx_records_org ON records(organization);
@@ -1664,6 +1698,8 @@ def write_sqlite_index(records: list[Record], db_path: Path = SQLITE_PATH) -> No
             CREATE INDEX idx_record_tools_value ON record_tools(value);
             CREATE INDEX idx_record_people_value ON record_people(value);
             CREATE INDEX idx_record_ai_tools_value ON record_ai_tools(value);
+            CREATE INDEX idx_record_epics_value ON record_epics(value);
+            CREATE INDEX idx_config_items_epic ON config_items(epic, status);
             """
         )
 
@@ -1697,6 +1733,18 @@ def write_sqlite_index(records: list[Record], db_path: Path = SQLITE_PATH) -> No
             write_many_to_link_table(conn, "record_ai_tools", path, as_list(fm.get("ai_tools")))
             write_many_to_link_table(conn, "record_prs", path, as_list(fm.get("prs")) + as_list(fm.get("related_prs")))
             write_many_to_link_table(conn, "record_commits", path, as_list(fm.get("commits")))
+            write_many_to_link_table(conn, "record_epics", path, as_list(fm.get("epic")))
+
+        from braingent import epics
+
+        conn.executemany(
+            "INSERT INTO config_items VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                (epic, item.key, item.kind, item.status, item.service, item.repo, item.path, item.env, item.target,
+                 item.introduced_by, item.enabled_by, item.verify)
+                for epic, item in epics.config_item_rows(epics.epics_from_records(records))
+            ],
+        )
 
         conn.commit()
     finally:
@@ -1764,7 +1812,7 @@ def run_reindex(
     for path, content in outputs.items():
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-    write_sqlite_index(records)
+    write_sqlite_index(records, SQLITE_PATH)
     print(f"Reindexed {len(records)} records and rebuilt .braingent.db.")
     return run_dashboard_e2e() if dashboard_e2e else 0
 
@@ -1829,6 +1877,10 @@ def normalize_filter(key: str, value: str) -> tuple[str, str]:
         return key, resolve_project_filter_value(value)
     if key == "repositories":
         return key, resolve_repository_filter_value(value)
+    if key == "epic":
+        from braingent import epics
+
+        return key, epics.resolve_epic_id(value)
     prefix_by_key = {
         "organization": "org--",
         "people": "person--",
@@ -2414,9 +2466,13 @@ def run_doctor(output_json: bool = False, strict: bool = False, stale_days: int 
 
 
 def synthesis_scope(args: argparse.Namespace) -> tuple[str, str, tuple[str, ...], str]:
-    provided = [value for value in (args.topic, args.repo, args.project) if value]
+    provided = [value for value in (args.topic, args.repo, args.project, args.epic) if value]
     if len(provided) != 1:
-        raise SystemExit("Provide exactly one of --topic, --repo, or --project.")
+        raise SystemExit("Provide exactly one of --topic, --repo, --project, or --epic.")
+    if args.epic:
+        from braingent import epics
+
+        return "epics", epics.resolve_epic_id(args.epic), ("epic",), "Epic"
     if args.topic:
         value = args.topic if args.topic.startswith("topic--") else f"topic--{args.topic}"
         return "topics", value, ("topic", "topics"), "Topic"
@@ -2472,7 +2528,12 @@ def run_synthesize(args: argparse.Namespace) -> int:
     output_dir = REPO_ROOT / "synthesis" / scope_dir
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{key}.md"
-    output_path.write_text(render_synthesis(scope_label, key, matched, output_path), encoding="utf-8")
+    rendered = render_synthesis(scope_label, key, matched, output_path)
+    if scope_dir == "epics":
+        from braingent import epics
+
+        rendered = epics.with_ledger_section(rendered, key, matched)
+    output_path.write_text(rendered, encoding="utf-8")
     print(output_path.relative_to(REPO_ROOT).as_posix())
     return 0
 
@@ -2776,14 +2837,18 @@ def cmd_reindex(args: argparse.Namespace) -> int:
     )
 
 
+def with_epic_filter(filters: list[str], epic: str | None) -> list[str]:
+    return [*filters, f"epic={epic}"] if epic else filters
+
+
 def cmd_find(args: argparse.Namespace) -> int:
-    return run_find(args.filters, output_json=args.json, paths_only=args.paths, count_only=args.count, limit=args.limit)
+    return run_find(with_epic_filter(args.filters, args.epic), output_json=args.json, paths_only=args.paths, count_only=args.count, limit=args.limit)
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
     limit = args.limit if args.limit is not None else CONFIG.recall_limit
     stale_days = args.stale_days if args.stale_days is not None else CONFIG.recall_stale_days
-    return run_recall(args.filters, output_json=args.json, limit=limit, stale_days=stale_days)
+    return run_recall(with_epic_filter(args.filters, args.epic), output_json=args.json, limit=limit, stale_days=stale_days)
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
@@ -2839,6 +2904,7 @@ def cmd_daily_log(args: argparse.Namespace) -> int:
             args.text,
             actor=args.as_agent,
             ref=args.ref,
+            epic=args.epic,
             now=now,
             tz=tz,
             sprawl_threshold=CONFIG.daily_sprawl_threshold,
@@ -2870,6 +2936,41 @@ def cmd_daily_status(args: argparse.Namespace) -> int:
     if summary["sprawl"]:
         print(f"sprawl: {summary['spawned']} spawned today, threshold {summary['sprawl_threshold']}")
     return 0
+
+
+def cmd_new_epic(args: argparse.Namespace) -> int:
+    from braingent import epics
+
+    try:
+        page = epics.scaffold_epic(REPO_ROOT, args.org, args.slug, title=args.title, parent=args.parent)
+    except (ValueError, FileNotFoundError, FileExistsError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    print(page.relative_to(REPO_ROOT).as_posix())
+    return 0
+
+
+def cmd_config_ledger(args: argparse.Namespace) -> int:
+    from braingent import epics
+
+    return epics.run_config_ledger(args.epic, args.owner or [], sync=args.sync, output_json=args.json)
+
+
+def cmd_config_drift(args: argparse.Namespace) -> int:
+    from braingent import config_drift
+
+    contracts = args.contracts or CONFIG.config_drift_contracts
+    deployed = args.deployed or CONFIG.config_drift_deployed
+    if not contracts or not deployed:
+        print("Provide --contracts and --deployed, or set [config_drift] in .braingent/config.toml.", file=sys.stderr)
+        return 2
+    try:
+        report = config_drift.run_config_drift(Path(contracts), Path(deployed))
+    except config_drift.ContractError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    print(json.dumps(report.to_dict(), indent=2) if args.json else config_drift.render_report(report))
+    return 1 if report.has_drift else 0
 
 
 def template_root() -> Any:
@@ -2904,7 +3005,6 @@ def build_template_manifest() -> dict[str, str]:
 
 
 def read_existing_manifest(root: Path) -> dict[str, str]:
-            epic=args.epic,
     path = root / TEMPLATE_MANIFEST_PATH
     if not path.exists():
         return {}
@@ -3113,6 +3213,7 @@ def build_parser() -> argparse.ArgumentParser:
     find_parser.add_argument("--paths", action="store_true", help="emit only paths")
     find_parser.add_argument("--count", action="store_true", help="emit only count")
     find_parser.add_argument("--limit", type=int, help="maximum results to emit")
+    find_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
     find_parser.set_defaults(func=cmd_find)
 
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
@@ -3120,6 +3221,7 @@ def build_parser() -> argparse.ArgumentParser:
     recall_parser.add_argument("--json", action="store_true", help="emit JSON")
     recall_parser.add_argument("--limit", type=int, default=None, help="number of must_read records to return (config [recall] limit, default 8)")
     recall_parser.add_argument("--stale-days", type=int, default=None, help="age threshold for stale records (config [recall] stale_days, default 180)")
+    recall_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
     recall_parser.set_defaults(func=cmd_recall)
 
     doctor_parser = subparsers.add_parser("doctor", help="report Braingent health checks")
@@ -3133,6 +3235,7 @@ def build_parser() -> argparse.ArgumentParser:
     synthesize_scope_group.add_argument("--topic", help="topic key, with or without topic-- prefix")
     synthesize_scope_group.add_argument("--repo", help="repository key, with or without repo-- prefix")
     synthesize_scope_group.add_argument("--project", help="project key")
+    synthesize_scope_group.add_argument("--epic", help="epic slug or full epic-- id")
     synthesize_parser.set_defaults(func=cmd_synthesize)
 
     factcheck_parser = subparsers.add_parser("factcheck", help="audit research records for source credibility and unsourced claims")
@@ -3148,8 +3251,35 @@ def build_parser() -> argparse.ArgumentParser:
     daily_log_parser.add_argument("text")
     daily_log_parser.add_argument("--as", dest="as_agent", required=True)
     daily_log_parser.add_argument("--ref", help="ticket key, PR reference, or task ID the event is about")
+    daily_log_parser.add_argument("--epic", help="epic slug or full epic-- id this event belongs to")
     daily_log_parser.add_argument("--date", help="log against YYYY-MM-DD instead of today")
     daily_log_parser.set_defaults(func=cmd_daily_log)
+
+    new_parser = subparsers.add_parser("new", help="scaffold a new entity page")
+    new_subparsers = new_parser.add_subparsers(dest="new_command", required=True)
+    new_epic_parser = new_subparsers.add_parser("epic", help="create an epic page under an organization")
+    new_epic_parser.add_argument("--org", required=True, help="organization key, with or without org-- prefix")
+    new_epic_parser.add_argument("--slug", required=True, help="lowercase kebab-case slug, 1 to 4 words")
+    new_epic_parser.add_argument("--title", help="page title; defaults to the slug")
+    new_epic_parser.add_argument("--parent", help="parent epic slug or full id")
+    new_epic_parser.set_defaults(func=cmd_new_epic)
+
+    config_ledger_parser = subparsers.add_parser(
+        "config-ledger", help="merge config-to-enable blocks from an epic page and labelled PRs"
+    )
+    config_ledger_parser.add_argument("--epic", required=True, help="epic slug or full epic-- id")
+    config_ledger_parser.add_argument("--owner", action="append", help="GitHub owner to search; repeatable")
+    config_ledger_parser.add_argument("--sync", action="store_true", help="rewrite the epic page's Config to enable section")
+    config_ledger_parser.add_argument("--json", action="store_true", help="emit JSON")
+    config_ledger_parser.set_defaults(func=cmd_config_ledger)
+
+    config_drift_parser = subparsers.add_parser(
+        "config-drift", help="compare per-service environment contracts with a deployed mirror"
+    )
+    config_drift_parser.add_argument("--contracts", help="directory of per-service JSON contracts (config [config_drift] contracts)")
+    config_drift_parser.add_argument("--deployed", help="directory holding the deployed mirror (config [config_drift] deployed)")
+    config_drift_parser.add_argument("--json", action="store_true", help="emit JSON")
+    config_drift_parser.set_defaults(func=cmd_config_drift)
 
     daily_status_parser = subparsers.add_parser("daily-status", help="regenerate and summarise a daily log")
     daily_status_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today in [daily] timezone")
@@ -3221,11 +3351,11 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    if args.command not in {"init", "update", "qa"} and (args.command != "mcp" or args.root):
+    standalone_drift = args.command == "config-drift" and args.contracts and args.deployed
+    if args.command not in {"init", "update", "qa"} and not standalone_drift and (args.command != "mcp" or args.root):
         set_repo_root(args.root)
     return args.func(args)
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-    daily_log_parser.add_argument("--epic", help="epic slug or full epic-- id this event belongs to")

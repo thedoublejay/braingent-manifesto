@@ -74,6 +74,8 @@ class BraingentConfig:
     factcheck_tier12_domains: tuple[str, ...] = DEFAULT_FACTCHECK_TIER12_DOMAINS
     daily_timezone: str | None = None
     daily_sprawl_threshold: int = DEFAULT_DAILY_SPRAWL_THRESHOLD
+    config_drift_contracts: str | None = None
+    config_drift_deployed: str | None = None
     issues: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -163,5 +165,7 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
         factcheck_tier12_domains=DEFAULT_FACTCHECK_TIER12_DOMAINS + tuple(domains("tier12_domains")),
         daily_timezone=nonempty_str("daily", "timezone", "") or None,
         daily_sprawl_threshold=positive_int("daily", "sprawl_threshold", DEFAULT_DAILY_SPRAWL_THRESHOLD),
+        config_drift_contracts=nonempty_str("config_drift", "contracts", "") or None,
+        config_drift_deployed=nonempty_str("config_drift", "deployed", "") or None,
         issues=tuple(issues),
     )

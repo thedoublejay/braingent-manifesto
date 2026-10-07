@@ -25,6 +25,7 @@ statuses:
   profile: [active, archived, superseded]
   ticket-stub: [active, completed, abandoned]
   agent-task: [triage, todo, in-progress, in-review, blocked, closed]
+  epic: [active, paused, done, dropped]
 
 required_fields:
   common: [title, record_kind, status]
@@ -37,6 +38,7 @@ required_fields:
   summary: [date_imported, timezone, source, source_location, import_scope, raw_retained_until]
   profile: [repo, organization, project, last_reviewed]
   ticket-stub: [ticket, ticket_system, organization, projects, repositories, people]
+  epic: [title, epic, organization, status, created, updated]
   agent-task: [id, date, timezone, organization, project, repositories, ticket, prs, commits, ai_tools, people, topics, tools, status_category, resolution, type, priority, assignee, reviewer, observers, claimed_by, claimed_at, created, updated, parent, depends_on, duplicate_of, closed]
 
 allowed_fields:
@@ -59,16 +61,19 @@ allowed_fields:
   - duplicate_of
   - duration_hours
   - entity
+  - epic
   - id
   - import_scope
   - last_checked
   - last_revalidated
   - last_reviewed
+  - labels
   - local_path
   - observers
   - opened
   - organization
   - parent
+  - parent_epic
   - people
   - person
   - priority
@@ -122,6 +127,7 @@ list_fields:
   - branches
   - commits
   - depends_on
+  - epic
   - observers
   - people
   - primary_languages
@@ -159,6 +165,12 @@ nullable_fields:
   - verification_score
 
 entity_fields:
+  epic:
+    prefix: epic--
+    directory_glob: orgs/*/epics/{value}
+  parent_epic:
+    prefix: epic--
+    directory_glob: orgs/*/epics/{value}
   organization:
     prefix: org--
     directory_root: orgs

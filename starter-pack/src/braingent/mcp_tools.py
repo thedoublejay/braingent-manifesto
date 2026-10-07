@@ -38,6 +38,7 @@ LINK_FILTER_TABLES = {
     "ai_tools": "record_ai_tools",
     "prs": "record_prs",
     "commits": "record_commits",
+    "epic": "record_epics",
 }
 
 
@@ -146,6 +147,7 @@ def find(query: dict[str, Any] | None = None, limit: int = 10) -> list[dict[str,
     Empty queries return the compact index prefix. Non-empty queries use the
     same normalization and matching logic as scripts/find.sh, but return only
     the compact 9-field projection to keep first-pass retrieval small.
+    `epic` accepts a bare slug or a full `epic--<org>--<slug>` id.
     """
 
     max_results = _limit(limit)
