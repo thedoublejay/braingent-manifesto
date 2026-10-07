@@ -13,6 +13,7 @@ Use it as a durable memory layer for AI-assisted software engineering work. Clau
 - Reusable learnings.
 - Tool and version notes.
 - Ticket stubs for cross-cutting work.
+- Epic pages that group work across tickets and repositories, with a config-to-enable ledger.
 - Optional live `BGT-NNNN` agent tasks for active coordination.
 - Optional dashboard docs for a read-only live task UI.
 - An installable `braingent` helper CLI for search, validation, reindexing,
@@ -67,6 +68,7 @@ Use the packaged structured search helper:
 ```bash
 braingent find kind=decision
 braingent recall repo=repo--example--owner--repo
+braingent find --epic <slug>
 ```
 
 You can also search frontmatter fields directly:

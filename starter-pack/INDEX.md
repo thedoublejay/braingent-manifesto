@@ -26,6 +26,11 @@ This is the manually curated map of the memory repo.
 
 - `orgs/org--example/projects/project--example--memory/README.md`
 
+## Epics
+
+- `indexes/epics.md` - generated list of epics. Each epic has a page at `orgs/<org>/epics/epic--<org>--<slug>/README.md`.
+- `indexes/config-ledger.md` - generated list of config that must be set before epic work is live.
+
 ## Repositories
 
 - `repositories/repo--example--owner--repo/README.md`

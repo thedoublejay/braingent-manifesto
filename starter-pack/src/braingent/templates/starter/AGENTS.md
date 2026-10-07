@@ -98,6 +98,10 @@ Use the templates in `templates/`. Quick captures (triggered by phrases like "ca
 - What versions, commits, PRs, tickets, repos, and people were involved?
 - What should future agents know before repeating similar work?
 
+## Epics
+
+Work spanning many tickets or repositories gets one epic: `braingent new epic --org <org> --slug <slug>`. Tag records with `epic: [epic--<org>--<slug>]`, and tickets and PRs with the label `epic:<slug>`. Retrieve with `braingent find --epic <slug>`. Link to tickets and PRs from the epic page, never copy their status. Record config that must be set before the work is live in the page's `## Config to enable` ledger, and never write a secret's value. See `preferences/capture-policy.md`.
+
 ## Capture Triggers
 
 Create or update a record when:

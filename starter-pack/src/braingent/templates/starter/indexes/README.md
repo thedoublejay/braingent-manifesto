@@ -9,6 +9,8 @@ Suggested files:
 - `topics.md`
 - `tools.md`
 - `people.md`
+- `epics.md`
+- `config-ledger.md`
 - `records.md`
 - `records.json`
 - `followups.md`

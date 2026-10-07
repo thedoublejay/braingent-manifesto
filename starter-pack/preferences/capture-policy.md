@@ -14,6 +14,7 @@ Capture enough detail that a future agent can understand what happened without r
 - Important professional conversations or decisions.
 - User preferences that affect future work.
 - Completed live `BGT-NNNN` tasks that produced durable decisions, changes, reviews, or learnings.
+- Config that must be set before work is live. When a PR or ticket introduces such config, add or update the epic page's `## Config to enable` ledger (see `## Epics`).
 
 ## Do Not Capture
 
@@ -55,6 +56,7 @@ people: []
 topics: []
 tools: []
 agent_task: <BGT-NNNN-or-null>
+epic: []
 ---
 ```
 
@@ -83,6 +85,16 @@ Explicit phrases that should trigger capture:
 - "done thanks"
 
 A casual "thanks" without task context is not enough.
+
+## Epics
+
+An epic groups work that spans many tickets and repositories around one idea. Create it the first time the work starts (`braingent new epic --org <org> --slug <slug>`), then tag every ticket, PR and record with the same slug.
+
+- Records carry `epic: [epic--<org>--<slug>]`. Tickets use a flat `epic:<slug>` label and PRs the same label.
+- The epic page links to tickets and PRs. Never copy their status into it.
+- Record cross-cutting decisions on the page under `## Decisions`.
+- The `## Config to enable` section holds a `config-to-enable/v1` block per setting: its key, kind, where it lives and its status. Write the value only when it is safe in source control. For a secret write "secret, see <store>". Write `None` when nothing must be set.
+- Run `braingent config-ledger --epic <slug> --owner <owner>` to merge the ledgers in labelled PR bodies into the page, and `--sync` to write the result back.
 
 ## Quick Capture Vs Full Capture
 

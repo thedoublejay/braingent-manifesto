@@ -19,6 +19,7 @@ braingent daily-log started "Verdict lock fix" --ref EX-1234 --as agent--claude-
 braingent daily-log review "Two findings on the lock PR" --ref app#201 --as agent--codex-cli
 braingent daily-log spawned "Flaky checkout test" --ref EX-1240 --as agent--claude-code
 braingent daily-log done "Verdict lock merged" --ref EX-1234 --as agent--claude-code
+braingent daily-log spawned "Index audit ticket" --ref app#202 --epic db-audit --as agent--claude-code
 ```
 
 Each call appends a line such as `- 09:42 · agent--claude-code · started · EX-1234 · Verdict lock fix` under a file lock, so several CLIs can log at once. Writers, status readers and carry-over readers use the same lock. Unix uses `flock`; Windows uses `msvcrt.locking`.
@@ -33,6 +34,8 @@ Each call appends a line such as `- 09:42 · agent--claude-code · started · EX
 | `dropped` | Done (dropped) | Work is intentionally abandoned. |
 | `spawned` | Todo, plus Spawned today | An agent creates a new ticket, PR, or task. |
 | `note` | Log only | Context worth keeping that changes no status. |
+
+`--epic` is optional and takes a slug or a full `epic--<org>--<slug>` id. It is stored as the slug and appended as ` · epic:<slug>`, so lines without it are unchanged. The status block adds a per-epic spawned and untouched roll-up, and the sprawl warning names the epics driving it.
 
 Events with the same `--ref` are one item, and the latest event decides its bucket. Without `--ref`, the event text is the key. Only events within `## Log` count towards status. Examples in Goals or other sections do not change it. `--as` must identify a non-empty actor.
 
