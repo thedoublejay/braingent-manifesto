@@ -39,6 +39,7 @@ rg -n "^- \[ \]" --type md orgs repositories topics tools tickets inbox imports
 - Check repo profiles for old `last_reviewed` dates.
 - Review `indexes/stale-candidates.md` for both durable records and live tasks.
 - Confirm completed live tasks have durable records linked with `agent_task: BGT-NNNN`.
+- Review `indexes/epics.md`: mark finished epics `done` or `dropped`, and clear items in `indexes/config-ledger.md` that are still `pending` or `pr-open`.
 
 ### Monthly: 60-90 Minutes
 

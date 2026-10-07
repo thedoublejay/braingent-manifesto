@@ -49,6 +49,14 @@ rg -n "agent_task: BGT-[0-9]{4}" orgs repositories topics tools tickets
 rg -n "repo--github--owner--repo-name" .
 ```
 
+## By Epic
+
+```bash
+braingent find --epic <slug>
+braingent recall --epic <slug> --limit 8
+braingent synthesize --epic <slug>
+```
+
 ## By Topic Or Tool
 
 ```bash

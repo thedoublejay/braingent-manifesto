@@ -100,6 +100,14 @@ Braingent should never contain:
 
 The public version should use placeholders and examples, not local names or private workspace paths.
 
+### 10. Group By Intent, Not By Tracker
+
+Work that spans many tickets and repositories deserves one anchor that explains why it exists.
+
+An epic is that anchor: a short-lived, ad hoc label that every ticket, pull request and memory record carries. It is created the first time the work starts, never pre-declared.
+
+Its page links to tickets and PRs rather than copying their status, and records the decisions that cut across them. It also keeps a ledger of the configuration that must be set before the work is truly live. The ledger names each setting and where it lives. The value stays in source control or a secret store.
+
 ## What Good Memory Feels Like
 
 Good Braingent memory lets a future agent answer:

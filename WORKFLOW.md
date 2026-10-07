@@ -74,6 +74,8 @@ entries as handoff breadcrumbs. Activity belongs in the live task while the work
 is in motion; durable records are written when the result matters after the
 session ends.
 
+If the work belongs to an epic, tag the ticket and PR with the label `epic:<slug>` and the record with `epic: [epic--<org>--<slug>]`. Create the epic the first time the work starts. When a PR or ticket introduces config that must be set before the work is live, add or update the epic page's `## Config to enable` ledger.
+
 ### 5. Capture At The End
 
 Create or update a record when:

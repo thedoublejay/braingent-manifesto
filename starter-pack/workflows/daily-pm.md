@@ -30,11 +30,15 @@ The PM agent reports on the day. It does not do the work, open tickets, change t
    - Deduplicate source results and compare against events added during this sweep so rerunning the workflow adds nothing when sources are unchanged. Do not rewrite or delete existing lines.
    → verify: the Log gains exactly the events added, status buckets match the verified states, and the spawned count rises only by newly discovered creations. A second sweep with unchanged sources adds zero events.
 
-5. **Report** to the user, short and scannable:
+5. **Per epic.** Read `indexes/epics.md` for active epics and `indexes/config-ledger.md` for their config items. For each active epic that appears in today's log or has open items, note progress, open items and pending config (any `pending`, `pr-open` or `applied` item). Re-run `braingent config-ledger --epic <slug>` when PR bodies may have changed. Read only; do not edit epic pages.
+   → verify: every epic named in the report appears in `indexes/epics.md`, and every pending item cited is in `indexes/config-ledger.md`.
+
+6. **Report** to the user, short and scannable:
    - Goals: each goal with progress and the items that serve it.
    - Ongoing and in review: what is moving, and who is reviewing.
    - Blocked: each blocker and the single decision or input it needs.
    - Spawned today: count, untouched count, and the sprawl flag. If the flag is up, suggest which spawned items to defer, merge, or close. Do not act on them.
+   - Epics: per active epic, progress, open items and pending config.
    - Carry-over: what will roll into tomorrow if nothing changes.
    - Sources used and skipped.
 

@@ -32,6 +32,7 @@ This file defines the controlled vocabulary for durable records and optional liv
 | `summary` | `draft`, `completed` |
 | `profile` | `active`, `archived`, `superseded` |
 | `ticket-stub` | `active`, `completed`, `abandoned` |
+| `epic` page (a `profile`) | `active`, `paused`, `done`, `dropped` |
 | `agent-task` | `triage`, `ready`, `in-progress`, `blocked`, `in-review`, `completed`, `closed` |
 
 ## Entity Key Prefixes
@@ -44,6 +45,7 @@ This file defines the controlled vocabulary for durable records and optional liv
 | `person`, `people` | `person--` | `people/` |
 | `topic`, `topics` | `topic--` | `topics/` |
 | `tool`, `tools` | `tool--` | `tools/` |
+| `epic`, `parent_epic` | `epic--` | `orgs/*/epics/` |
 | `agent_task` | `BGT-` | `tasks/` |
 
 ## AI Tools

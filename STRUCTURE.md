@@ -15,7 +15,7 @@ This is the recommended structure for a Braingent-style memory repo.
 |-- workflows/
 |-- tasks/                  # optional live agent-task queue
 |-- dashboard/              # optional local task dashboard
-|-- orgs/
+|-- orgs/                   # includes <org>/epics/ for epic pages
 |-- repositories/
 |-- topics/
 |-- tools/
@@ -35,7 +35,7 @@ This is the recommended structure for a Braingent-style memory repo.
 | `CLAUDE.md` | Claude-style agent instructions and read order. |
 | `CHATGPT_PROJECT_BRIEF.md` | Copyable ChatGPT project instructions. |
 | `INDEX.md` | Human-curated map of important pages and records. |
-| `CURRENT_STATE.md` | Current initiatives, defaults, open questions, and recent changes. |
+| `CURRENT_STATE.md` | Current defaults, open questions, and recent changes. Active work lives in epics: see `indexes/epics.md`. |
 | `AGENT-TASK-COORDINATION.md` | Optional v3 module for Markdown-based multi-agent task coordination. |
 
 ## Core Directories
@@ -71,6 +71,7 @@ Copyable Markdown templates for durable records:
 - tool version
 - person interaction
 - ticket stub
+- epic page
 - import summary
 
 ### `workflows/`
@@ -111,6 +112,53 @@ Recommended key format:
 ```text
 project--<org-slug>--<project-slug>
 ```
+
+### `orgs/<org>/epics/`
+
+Epics: ad hoc groupings of work around one idea, such as `performance` or `checkout-latency`. An epic is created the first time work on the idea starts and is retired when the work ends.
+
+Recommended key format:
+
+```text
+epic--<org-slug>--<slug>
+```
+
+The slug is lowercase kebab-case, one to four words. Use the same slug everywhere:
+
+| Surface | Form |
+| --- | --- |
+| Tracker | A flat label `epic:<slug>`, so a ticket can be in two epics. |
+| Pull requests | The same label `epic:<slug>`. |
+| Entity | `orgs/<org>/epics/epic--<org-slug>--<slug>/README.md` |
+| Record frontmatter | `epic: [epic--<org-slug>--<slug>]` |
+| Daily log | `braingent daily-log ... --epic <slug>` |
+
+The page is a mutable profile with the sections `## Goal`, `## Scope and sub-groups`, `## Links`, `## Decisions`, `## Config to enable` and `## Log`. It links to tickets and PRs and never copies their status. Frontmatter carries `status` (`active`, `paused`, `done` or `dropped`), an optional `parent_epic` for a sub-group that grew into its own epic, `created` and `updated`.
+
+Create one with `braingent new epic --org <org> --slug <slug>`.
+
+#### Config to enable
+
+Anything that must be set before the work is live goes in the page's `## Config to enable` section as a fenced YAML block whose first line is `# config-to-enable/v1`. The same block is valid in a PR body or a ticket description, so `braingent config-ledger` can merge them.
+
+```yaml
+# config-to-enable/v1
+- key: FEATURE_X_ENABLED
+  kind: env          # env | flag | tf_var | helm_value | db_setting | db_role | operator_step | verify_check
+  service: app
+  repo: infra-repo
+  path: apps/app/overlays/<env>/values.yaml
+  env: staging       # staging | prod | all
+  default: "false"
+  target: "true"
+  introduced_by: app-repo#12
+  enabled_by: null   # repo#n once raised
+  depends_on: []
+  status: pending    # pending | pr-open | applied | verified | not-needed | dormant
+  verify: "feature_x.batch > 0 within 1h"
+```
+
+`key`, `kind` and `status` are required. The ledger names each setting and where it lives. The value stays in source control, and a secret is written as "secret, see <store>". A section containing only `None` means nothing must be set.
 
 ### `orgs/<org>/projects/<project>/records/`
 

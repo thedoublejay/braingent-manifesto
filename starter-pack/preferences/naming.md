@@ -19,6 +19,7 @@ Allowed entity kinds:
 - `person`
 - `tool`
 - `topic`
+- `epic`
 
 Examples:
 
@@ -30,6 +31,7 @@ ticket--github--owner-repo-123
 person--first-last
 tool--node
 topic--testing
+epic--example--checkout-latency
 ```
 
 ## Record Filenames

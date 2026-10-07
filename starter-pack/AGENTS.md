@@ -22,6 +22,10 @@ If facts change, add a new record and set `supersedes` / `superseded_by` to repo
 
 Never tag, mention, or assign another person unless JJ names them for that action.
 
+## Epics
+
+Work spanning many tickets or repositories gets one epic: `braingent new epic --org <org> --slug <slug>`. Tag records with `epic: [epic--<org>--<slug>]`, and tickets and PRs with the label `epic:<slug>`. Retrieve with `braingent find --epic <slug>`. Link to tickets and PRs from the epic page, never copy their status. Record config that must be set before the work is live in the page's `## Config to enable` ledger, and never write a secret's value. See `preferences/capture-policy.md`.
+
 ## Capture
 
 Use `templates/task-record-minimal.md` unless the work is an incident or an accepted decision. Set `captured_by` to the agent that wrote the record. Then `braingent validate` and `braingent reindex`.
