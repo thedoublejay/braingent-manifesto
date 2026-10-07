@@ -255,5 +255,73 @@ class DailyCliTests(unittest.TestCase):
             self.assertFalse(payload["sprawl"])
 
 
+class DailyEpicTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self._tmp.name)
+        self.day = date(2026, 10, 6)
+
+    def tearDown(self) -> None:
+        self._tmp.cleanup()
+
+    def log(self, kind: str, text: str, ref: str | None = None, epic: str | None = None, hhmm: str = "09:00") -> Path:
+        return daily.log_event(self.root, kind, text, actor="agent--claude-code", ref=ref, epic=epic, now=at(self.day, hhmm), tz=SGT)
+
+    def test_epic_round_trips_through_the_log_line(self) -> None:
+        path = self.log("started", "Index audit", ref="app-repo#12", epic="db-audit")
+        text = path.read_text(encoding="utf-8")
+        self.assertIn("- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit", text)
+        (event,) = daily.parse_events(text)
+        self.assertEqual((event.text, event.epic), ("Index audit", "db-audit"))
+        self.assertEqual(event.line(), "- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit")
+
+    def test_epic_id_is_reduced_to_its_slug(self) -> None:
+        path = self.log("note", "Link", epic="epic--acme--db-audit")
+        self.assertEqual(daily.parse_events(path.read_text(encoding="utf-8"))[0].epic, "db-audit")
+
+    def test_invalid_epic_is_rejected(self) -> None:
+        with self.assertRaises(ValueError):
+            self.log("note", "Bad", epic="Not A Slug")
+
+    def test_lines_without_an_epic_still_parse_and_render_unchanged(self) -> None:
+        legacy = "- 09:42 · agent--claude-code · started · GET-1234 · Verdict lock fix"
+        text = f"# Daily log\n\n## Log\n\n{legacy}\n"
+        (event,) = daily.parse_events(text)
+        self.assertIsNone(event.epic)
+        self.assertEqual(event.line(), legacy)
+        path = self.log("started", "No epic", ref="GET-2")
+        self.assertNotIn("epic:", path.read_text(encoding="utf-8"))
+        self.assertNotIn("### By epic", path.read_text(encoding="utf-8"))
+
+    def test_text_containing_epic_text_mid_line_is_preserved(self) -> None:
+        path = self.log("note", "mentions epic:x in passing and more", epic="db-audit")
+        (event,) = daily.parse_events(path.read_text(encoding="utf-8"))
+        self.assertEqual((event.text, event.epic), ("mentions epic:x in passing and more", "db-audit"))
+
+    def test_per_epic_rollup_counts_spawned_and_untouched(self) -> None:
+        self.log("spawned", "Ticket A", ref="GET-1", epic="db-audit")
+        self.log("spawned", "Ticket B", ref="GET-2", epic="db-audit")
+        self.log("started", "Ticket B", ref="GET-2", epic="db-audit")
+        self.log("spawned", "Ticket C", ref="GET-3", epic="performance")
+        summary = daily.summarise(self.root, self.day, tz=SGT)
+        self.assertEqual(summary["epics"], {"db-audit": {"spawned": 2, "untouched": 1}, "performance": {"spawned": 1, "untouched": 1}})
+        text = daily.day_path(self.root, self.day).read_text(encoding="utf-8")
+        self.assertIn("- epic:db-audit: 2 spawned (1 untouched)", text)
+
+    def test_sprawl_warning_names_driving_epics(self) -> None:
+        for index in range(3):
+            self.log("spawned", f"Ticket {index}", ref=f"GET-{index}", epic="db-audit")
+        self.log("spawned", "Other", ref="GET-9", epic="performance")
+        path = daily.update_day(self.root, self.day, SGT, sprawl_threshold=4)
+        self.assertIn("> Spawned by epic: db-audit (3), performance (1).", path.read_text(encoding="utf-8"))
+
+    def test_carry_over_keeps_the_epic(self) -> None:
+        self.log("started", "Long running", ref="GET-1", epic="db-audit")
+        next_day = date(2026, 10, 7)
+        path = daily.log_event(self.root, "note", "Next day", actor="agent--claude-code", now=at(next_day, "09:00"), tz=SGT)
+        carried = [event for event in daily.parse_events(path.read_text(encoding="utf-8")) if event.actor == daily.CARRY_ACTOR]
+        self.assertEqual([event.epic for event in carried], ["db-audit"])
+
+
 if __name__ == "__main__":
     unittest.main()

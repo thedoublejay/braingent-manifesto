@@ -2904,6 +2904,7 @@ def build_template_manifest() -> dict[str, str]:
 
 
 def read_existing_manifest(root: Path) -> dict[str, str]:
+            epic=args.epic,
     path = root / TEMPLATE_MANIFEST_PATH
     if not path.exists():
         return {}
@@ -3227,3 +3228,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+    daily_log_parser.add_argument("--epic", help="epic slug or full epic-- id this event belongs to")

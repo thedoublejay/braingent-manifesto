@@ -56,7 +56,9 @@ BUCKETS = (
     ("done", "Done"),
 )
 UNFINISHED = ("ongoing", "review", "blocked", "todo")
-EVENT_PATTERN = re.compile(r"^- (\d{2}:\d{2}) · (\S+) · (\S+) · (\S+) · (.*)$")
+EVENT_PATTERN = re.compile(r"^- (\d{2}:\d{2}) · (\S+) · (\S+) · (\S+) · (.*?)(?: · epic:(\S+))?$")
+EPIC_ID_PATTERN = re.compile(r"^epic--[a-z0-9][a-z0-9-]*?--([a-z0-9]+(?:-[a-z0-9]+)*)$")
+EPIC_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DAY_FILE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}\.md$")
 
 
@@ -67,13 +69,21 @@ class Event:
     kind: str
     ref: str | None
     text: str
+    epic: str | None = None
 
     @property
     def key(self) -> str:
         return self.ref or self.text.strip().lower()
 
     def line(self) -> str:
-        return f"- {self.time} · {self.actor} · {self.kind} · {self.ref or '-'} · {self.text}"
+        suffix = f" · epic:{self.epic}" if self.epic else ""
+        return f"- {self.time} · {self.actor} · {self.kind} · {self.ref or '-'} · {self.text}{suffix}"
+
+
+@dataclass
+class EpicRollup:
+    spawned: int = 0
+    untouched: int = 0
 
 
 @dataclass
@@ -82,6 +92,7 @@ class Status:
     spawned: list[Event] = field(default_factory=list)
     spawned_untouched: int = 0
     carried: int = 0
+    epics: dict[str, EpicRollup] = field(default_factory=dict)
 
 
 def resolve_tz(name: str | None) -> tzinfo:
@@ -125,8 +136,8 @@ def parse_events(text: str) -> list[Event]:
     for line in section.group(1).splitlines():
         match = EVENT_PATTERN.match(line)
         if match and match.group(3) in KINDS:
-            time, actor, kind, ref, body = match.groups()
-            events.append(Event(time, actor, kind, None if ref == "-" else ref, body))
+            time, actor, kind, ref, body, epic = match.groups()
+            events.append(Event(time, actor, kind, None if ref == "-" else ref, body, epic))
     return events
 
 
@@ -141,13 +152,25 @@ def derive_status(events: list[Event]) -> Status:
     status.spawned = [event for event in events if event.kind == "spawned"]
     status.spawned_untouched = sum(1 for _, event in latest.values() if event.kind == "spawned")
     status.carried = sum(1 for event in events if event.actor == CARRY_ACTOR)
+    for event in status.spawned:
+        if event.epic:
+            status.epics.setdefault(event.epic, EpicRollup()).spawned += 1
+    for _, event in latest.values():
+        if event.kind == "spawned" and event.epic:
+            status.epics.setdefault(event.epic, EpicRollup()).untouched += 1
     return status
 
 
 def render_item(event: Event) -> str:
     ref = f"[{event.ref}] " if event.ref else ""
     suffix = " (dropped)" if event.kind == "dropped" else ""
-    return f"- {ref}{event.text}{suffix} · {event.actor} · {event.time}"
+    epic = f" · epic:{event.epic}" if event.epic else ""
+    return f"- {ref}{event.text}{suffix} · {event.actor} · {event.time}{epic}"
+
+
+def driving_epics(status: Status) -> str:
+    ranked = sorted(status.epics.items(), key=lambda pair: (-pair[1].spawned, pair[0]))
+    return ", ".join(f"{epic} ({rollup.spawned})" for epic, rollup in ranked if rollup.spawned)
 
 
 def render_status(status: Status, sprawl_threshold: int) -> str:
@@ -165,10 +188,18 @@ def render_status(status: Status, sprawl_threshold: int) -> str:
             f"> Sprawl: {len(status.spawned)} tickets or PRs spawned today (threshold {sprawl_threshold}). "
             "Triage these before starting new work.",
         ]
+        if driving := driving_epics(status):
+            lines.append(f"> Spawned by epic: {driving}.")
     sections = [(title, status.buckets[name]) for name, title in BUCKETS] + [("Spawned today", status.spawned)]
     for title, events in sections:
         lines += ["", f"### {title} ({len(events)})", ""]
         lines += [render_item(event) for event in events] or ["- None"]
+    if status.epics:
+        lines += ["", f"### By epic ({len(status.epics)})", ""]
+        lines += [
+            f"- epic:{epic}: {rollup.spawned} spawned ({rollup.untouched} untouched)"
+            for epic, rollup in sorted(status.epics.items())
+        ]
     lines.append(STATUS_END)
     return "\n".join(lines)
 
@@ -201,7 +232,7 @@ def carried_events(root: Path, day: date) -> list[Event]:
     with locked(source) as handle:
         status = derive_status(parse_events(handle.read()))
     return [
-        Event("00:00", CARRY_ACTOR, "todo" if event.kind == "spawned" else event.kind, event.ref, event.text)
+        Event("00:00", CARRY_ACTOR, "todo" if event.kind == "spawned" else event.kind, event.ref, event.text, event.epic)
         for name in UNFINISHED
         for event in status.buckets[name]
     ]
@@ -272,6 +303,7 @@ def log_event(
     *,
     actor: str,
     ref: str | None = None,
+    epic: str | None = None,
     now: datetime | None = None,
     tz: tzinfo | None = None,
     sprawl_threshold: int = DEFAULT_SPRAWL_THRESHOLD,
@@ -287,8 +319,21 @@ def log_event(
     zone = tz or resolve_tz(None)
     moment = (now or datetime.now(zone)).astimezone(zone)
     ref_value = "-".join(ref.split()) if ref and ref.strip() else None
-    event = Event(moment.strftime("%H:%M"), actor_value, kind, ref_value, body)
+    event = Event(moment.strftime("%H:%M"), actor_value, kind, ref_value, body, normalise_epic(epic))
     return update_day(root, moment.date(), zone, sprawl_threshold, event)
+
+
+def normalise_epic(value: str | None) -> str | None:
+    """Reduce an epic slug or `epic--<org>--<slug>` id to its slug."""
+
+    if value is None or not value.strip():
+        return None
+    text = value.strip()
+    if match := EPIC_ID_PATTERN.match(text):
+        return match.group(1)
+    if not EPIC_SLUG_PATTERN.match(text):
+        raise ValueError(f"epic {value!r} must be a lowercase kebab-case slug or an epic-- id")
+    return text
 
 
 def refresh(root: Path, day: date, sprawl_threshold: int = DEFAULT_SPRAWL_THRESHOLD, tz: tzinfo | None = None) -> Path:
@@ -303,7 +348,14 @@ def summarise(
         status = derive_status(parse_events(handle.read()))
 
     def as_dict(event: Event) -> dict[str, Any]:
-        return {"time": event.time, "actor": event.actor, "kind": event.kind, "ref": event.ref, "text": event.text}
+        return {
+            "time": event.time,
+            "actor": event.actor,
+            "kind": event.kind,
+            "ref": event.ref,
+            "text": event.text,
+            "epic": event.epic,
+        }
 
     return {
         "date": day.isoformat(),
@@ -313,6 +365,7 @@ def summarise(
         "spawned": len(status.spawned),
         "spawned_untouched": status.spawned_untouched,
         "carried": status.carried,
+        "epics": {epic: {"spawned": rollup.spawned, "untouched": rollup.untouched} for epic, rollup in sorted(status.epics.items())},
         "sprawl_threshold": sprawl_threshold,
         "sprawl": len(status.spawned) >= sprawl_threshold,
     }
