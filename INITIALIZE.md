@@ -149,7 +149,7 @@ Update `CURRENT_STATE.md` with:
 - Today's date as "Last reviewed"
 - The timezone from Step 2
 - A summary of what was just initialized
-- Active initiatives: personalize remaining placeholders, add first task record
+- Remaining setup: personalize placeholders, add first task record. Point active work to `indexes/epics.md` rather than listing initiatives by hand
 
 ---
 

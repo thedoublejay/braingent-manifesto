@@ -122,6 +122,7 @@ braingent find q="pagination state" --json
 | `--paths` | Emit only matching paths. |
 | `--count` | Emit only the result count. |
 | `--limit <n>` | Limit result count. |
+| `--epic <slug>` | Only records tagged with one epic. Takes a slug or a full `epic--<org>--<slug>` id. |
 
 ## `braingent recall`
 
@@ -138,6 +139,7 @@ braingent recall ticket=ACME-123 --json
 | `--json` | Emit JSON. |
 | `--limit <n>` | Number of `must_read` records. Default `8`. |
 | `--stale-days <n>` | Staleness threshold. Default `180`. |
+| `--epic <slug>` | Only records tagged with one epic. |
 
 ## `braingent qa generate`
 
@@ -181,9 +183,10 @@ Generate a source-indexed synthesis page from records.
 braingent synthesize --topic topic--ai-memory
 braingent synthesize --repo repo--example--owner--repo
 braingent synthesize --project project--example--memory
+braingent synthesize --epic checkout-latency
 ```
 
-Exactly one of `--topic`, `--repo`, or `--project` is required.
+Exactly one of `--topic`, `--repo`, `--project`, or `--epic` is required. An epic synthesis also lists the epic's config ledger.
 
 ## `braingent factcheck`
 
@@ -228,6 +231,22 @@ Coordinate optional live `BGT-NNNN` task files under `tasks/`.
 | `braingent task-list --count` | Print status counts. |
 | `braingent task-archive BGT-0001 --resolution completed --as agent--codex-cli` | Close and archive. |
 
+## Epic Commands
+
+An epic groups work across tickets and repositories. See `STRUCTURE.md` for the
+page layout and the `config-to-enable/v1` block format.
+
+| Command | Purpose |
+| --- | --- |
+| `braingent new epic --org acme --slug checkout-latency [--title "<text>"] [--parent <slug>]` | Create `orgs/org--acme/epics/epic--acme--checkout-latency/README.md` from `templates/epic.md`. |
+| `braingent config-ledger --epic checkout-latency --owner acme` | Merge `config-to-enable/v1` blocks from PRs labelled `epic:checkout-latency` (via `gh search prs`) with the epic page ledger and print the table. Repeat `--owner` for several owners, add `--json` for machine output. |
+| `braingent config-ledger --epic checkout-latency --owner acme --sync` | Also rewrite the page's `## Config to enable` section, after saving the page as `README.md.bak`. Other sections are untouched. |
+| `braingent config-drift --contracts <dir> --deployed <dir> [--json]` | Compare per-service JSON environment contracts with a deployed mirror. Reports keys missing on either side and exits non-zero on drift. Defaults may be set under `[config_drift]` in `.braingent/config.toml`. |
+
+`braingent reindex` also generates `indexes/epics.md` and
+`indexes/config-ledger.md`, and fails validation when a record names an epic
+that does not exist.
+
 ## Daily Log Commands
 
 Record what every agent did today in `daily/YYYY-MM-DD.md`. See the
@@ -237,6 +256,7 @@ Record what every agent did today in `daily/YYYY-MM-DD.md`. See the
 | --- | --- |
 | `braingent daily-log started "<text>" --ref EX-1 --as agent--claude-code` | Append an event. Kinds: `todo`, `started`, `review`, `blocked`, `done`, `dropped`, `spawned`, `note`. |
 | `braingent daily-log note "<text>" --as agent--codex-cli --date 2026-10-05` | Log against another day. |
+| `braingent daily-log spawned "<text>" --ref app#202 --epic db-audit --as agent--claude-code` | Tag an event with an epic. The status block adds a per-epic roll-up. |
 | `braingent daily-status` | Regenerate the status block and print counts plus the sprawl flag. |
 | `braingent daily-status --json` | Machine-readable summary for a PM agent. |
 | `braingent daily-status --path` | Print the day file path. |

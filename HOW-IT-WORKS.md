@@ -128,6 +128,7 @@ Entity pages are stable anchors:
 
 - organizations
 - projects
+- epics
 - repositories
 - topics
 - tools
@@ -144,6 +145,10 @@ A repository profile, for example, should tell agents:
 - important records
 
 This keeps agents from rediscovering basic context every time.
+
+An epic page is the anchor for work that spans many tickets and repositories. Tickets, PRs and records all carry the same `epic:<slug>` label or `epic:` frontmatter, so `braingent find --epic <slug>` returns everything about one idea. The page links out instead of copying tracker status, records the decisions that cut across tickets, and keeps a `## Config to enable` ledger of `config-to-enable/v1` blocks: each setting, where it lives and whether it is pending, applied or verified. Values stay in source control or a secret store.
+
+`braingent config-ledger --epic <slug>` merges the ledgers found in labelled PR bodies with the page, and `braingent config-drift --contracts <dir> --deployed <dir>` reports environment keys that exist in one place but not the other.
 
 ## 7. Templates
 
@@ -191,6 +196,7 @@ Useful indexes:
 - topics
 - tools
 - people
+- epics and the config ledger
 - records
 - follow-ups
 - memory summary

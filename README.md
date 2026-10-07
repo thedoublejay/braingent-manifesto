@@ -166,7 +166,12 @@ Everyday commands:
 | `braingent doctor` | Report health: missing files, stale placeholders, invalid frontmatter, path leaks, stale indexes. |
 | `braingent find <filters>` | Structured search, e.g. `braingent find kind=decision topic=auth`. Supports `--json`, `--paths`, `--count`, `--limit`. |
 | `braingent recall <filters>` | Build a focused context pack for a ticket, repo, or topic. |
-| `braingent synthesize --topic\|--repo\|--project <id>` | Generate source-indexed synthesis pages. |
+| `braingent synthesize --topic\|--repo\|--project\|--epic <id>` | Generate source-indexed synthesis pages. |
+| `braingent new epic --org <org> --slug <slug>` | Create an epic page that groups work across tickets and repositories. |
+| `braingent find --epic <slug>` | Everything tagged with one epic. `recall` and the MCP `braingent_find` take the same filter. |
+| `braingent config-ledger --epic <slug> [--owner <owner>] [--sync]` | Merge `config-to-enable/v1` blocks from labelled PR bodies with the epic page ledger. `--sync` rewrites the page section after a `.bak` backup. |
+| `braingent config-drift --contracts <dir> --deployed <dir>` | Compare per-service environment contracts with a deployed mirror. Exits non-zero on drift. |
+| `braingent daily-log <kind> <text> --as <agent> [--epic <slug>]` | Append an event to today's daily log. |
 | `braingent validate [paths]` | Validate record frontmatter. |
 | `braingent mcp serve --path <repo>` | Serve MCP retrieval tools (needs the `[mcp]` extra; also installed as `braingent-mcp`). |
 | `braingent task-new` / `task-list` / `task-status` … | Manage `BGT-NNNN` live task files. |
