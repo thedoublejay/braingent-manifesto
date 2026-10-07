@@ -152,9 +152,10 @@ class CollectTests(unittest.TestCase):
             return json.dumps(payload)
 
         warnings: list[str] = []
-        items = config_ledger.collect_pr_items("checkout-latency", ["acme", "other"], runner, warnings.append)
+        items = config_ledger.collect_pr_items("checkout-latency", ["acme", "other"], ["@me"], runner, warnings.append)
         self.assertEqual(len(calls), 2)
         self.assertIn("epic:checkout-latency", calls[0])
+        self.assertEqual(calls[0][calls[0].index("--author") + 1], "@me")
         self.assertEqual(calls[0][calls[0].index("--owner") + 1], "acme")
         self.assertEqual(calls[1][calls[1].index("--owner") + 1], "other")
         self.assertEqual({entry.key for entry in items}, {"FEATURE_X_ENABLED"})
@@ -163,7 +164,64 @@ class CollectTests(unittest.TestCase):
 
     def test_invalid_gh_output_is_an_error(self) -> None:
         with self.assertRaises(ConfigLedgerError):
-            config_ledger.collect_pr_items("x", [], lambda _: "not json", lambda _: None)
+            config_ledger.collect_pr_items("x", [], ["@me"], lambda _: "not json", lambda _: None)
+
+
+class UntrustedInputTests(unittest.TestCase):
+    def test_one_query_per_author_and_owner(self) -> None:
+        calls: list[list[str]] = []
+
+        def runner(arguments: list[str]) -> str:
+            calls.append(arguments)
+            return "[]"
+
+        config_ledger.collect_pr_items("x", ["acme"], ["@me", "trusted-bot[bot]"], runner, lambda _: None)
+        self.assertEqual([call[call.index("--author") + 1] for call in calls], ["@me", "trusted-bot[bot]"])
+
+    def test_default_author_is_me(self) -> None:
+        calls: list[list[str]] = []
+
+        def runner(arguments: list[str]) -> str:
+            calls.append(arguments)
+            return "[]"
+
+        config_ledger.collect_pr_items("x", [], [], runner, lambda _: None)
+        self.assertEqual(calls[0][calls[0].index("--author") + 1], config_ledger.DEFAULT_AUTHOR)
+
+    def test_option_like_author_or_owner_is_rejected(self) -> None:
+        for authors, owners in ((["--json"], []), (["a b"], []), (["@me"], ["-x"])):
+            with self.subTest(authors=authors, owners=owners), self.assertRaises(ConfigLedgerError):
+                config_ledger.collect_pr_items("x", owners, authors, lambda _: "[]", lambda _: None)
+
+    def test_non_scalar_values_are_rejected(self) -> None:
+        for field, value in (("service", "{a: b}"), ("verify", "[a, b]"), ("key", "[K]"), ("depends_on", "[{a: b}]"), ("depends_on", "[[x]]")):
+            with self.subTest(field=field, value=value):
+                text = f"```yaml\n# config-to-enable/v1\n- key: K\n  kind: env\n  status: pending\n  {field}: {value}\n```\n"
+                with self.assertRaisesRegex(ConfigLedgerError, "scalar"):
+                    config_ledger.parse_blocks(text)
+
+    def test_values_are_flattened_and_capped(self) -> None:
+        text = (
+            "```yaml\n# config-to-enable/v1\n- key: K\n  kind: env\n  status: pending\n"
+            '  verify: "line one\\n## Injected heading\\n```\\nmore"\n'
+            f"  target: {'x' * 500}\n"
+            '  depends_on: ["a\\nb"]\n```\n'
+        )
+        (item,) = config_ledger.parse_blocks(text)
+        self.assertEqual(item.verify, "line one ## Injected heading ``` more")
+        self.assertEqual(len(item.target or ""), config_ledger.MAX_VALUE_LENGTH)
+        self.assertEqual(item.depends_on, ("a b",))
+        rendered = config_ledger.render_blocks([item])
+        self.assertEqual(rendered.count("```"), 3)
+        self.assertNotIn("\n## Injected", rendered)
+
+    def test_table_cells_escape_pipes_and_backticks(self) -> None:
+        item = ConfigItem(key="A`B|C", kind="env", status="pending", target="x|y`z`", verify="a | b")
+        row = config_ledger.render_table([item])[2]
+        self.assertTrue(row.startswith("| `A'B\\|C` |"))
+        self.assertIn("x\\|y\\`z\\`", row)
+        self.assertIn("a \\| b", row)
+        self.assertEqual(len(row.replace("\\|", "").split("|")), 11)
 
 
 if __name__ == "__main__":

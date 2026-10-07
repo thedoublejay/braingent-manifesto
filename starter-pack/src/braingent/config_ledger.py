@@ -22,6 +22,9 @@ STATUS_ORDER = ("pending", "pr-open", "applied", "dormant", "verified", "not-nee
 OPEN_STATUSES = ("pending", "pr-open", "applied")
 PROGRESS_RANK = {"pending": 0, "pr-open": 1, "applied": 2, "verified": 3}
 TERMINAL_STATUSES = ("not-needed", "dormant")
+MAX_VALUE_LENGTH = 300
+DEFAULT_AUTHOR = "@me"
+ACTOR_PATTERN = re.compile(r"^(?:@me|[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?)$")
 TABLE_COLUMNS = ("key", "kind", "repo/path", "env", "target", "introduced_by", "enabled_by", "status", "verify")
 
 BLOCK_PATTERN = re.compile(
@@ -73,23 +76,29 @@ class ConfigItem:
         return data
 
 
-def _scalar(value: Any) -> str | None:
+def _scalar(value: Any, label: str = "value") -> str | None:
     if value is None:
         return None
+    if isinstance(value, dict | list | tuple | set):
+        raise ConfigLedgerError(f"{label}: must be a scalar, not a mapping or list")
     if isinstance(value, bool):
-        return "true" if value else "false"
-    text = str(value).strip()
+        value = "true" if value else "false"
+    text = " ".join(str(value).split())[:MAX_VALUE_LENGTH]
     return text or None
 
 
 def _parse_item(raw: Any, label: str) -> ConfigItem:
     if not isinstance(raw, dict):
         raise ConfigLedgerError(f"{label}: item must be a mapping")
+
+    def field_value(name: str) -> str | None:
+        return _scalar(raw.get(name), f"{label}: `{name}`")
+
     for name in ("key", "kind", "status"):
-        if _scalar(raw.get(name)) is None:
+        if field_value(name) is None:
             raise ConfigLedgerError(f"{label}: missing required field `{name}`")
-    kind = str(_scalar(raw["kind"]))
-    status = str(_scalar(raw["status"]))
+    kind = str(field_value("kind"))
+    status = str(field_value("status"))
     if kind not in KINDS:
         raise ConfigLedgerError(f"{label}: unknown kind `{kind}`; allowed: {', '.join(KINDS)}")
     if status not in STATUSES:
@@ -98,23 +107,25 @@ def _parse_item(raw: Any, label: str) -> ConfigItem:
     if depends_raw is None:
         depends_on: tuple[str, ...] = ()
     elif isinstance(depends_raw, list):
-        depends_on = tuple(text for text in (_scalar(item) for item in depends_raw) if text)
+        depends_on = tuple(
+            text for text in (_scalar(item, f"{label}: `depends_on` entry") for item in depends_raw) if text
+        )
     else:
         raise ConfigLedgerError(f"{label}: `depends_on` must be a list")
     return ConfigItem(
-        key=str(_scalar(raw["key"])),
+        key=str(field_value("key")),
         kind=kind,
         status=status,
-        service=_scalar(raw.get("service")),
-        repo=_scalar(raw.get("repo")),
-        path=_scalar(raw.get("path")),
-        env=_scalar(raw.get("env")),
-        default=_scalar(raw.get("default")),
-        target=_scalar(raw.get("target")),
-        introduced_by=_scalar(raw.get("introduced_by")),
-        enabled_by=_scalar(raw.get("enabled_by")),
+        service=field_value("service"),
+        repo=field_value("repo"),
+        path=field_value("path"),
+        env=field_value("env"),
+        default=field_value("default"),
+        target=field_value("target"),
+        introduced_by=field_value("introduced_by"),
+        enabled_by=field_value("enabled_by"),
         depends_on=depends_on,
-        verify=_scalar(raw.get("verify")),
+        verify=field_value("verify"),
     )
 
 
@@ -211,13 +222,17 @@ def replace_section(body: str, items: Iterable[ConfigItem]) -> str:
 
 
 def _cell(value: str | None) -> str:
-    return (value or "-").replace("|", "\\|").replace("\n", " ")
+    return " ".join((value or "-").split()).replace("|", "\\|").replace("`", "\\`")
+
+
+def _code(value: str) -> str:
+    return " ".join(value.split()).replace("|", "\\|").replace("`", "'")
 
 
 def table_row(item: ConfigItem) -> list[str]:
     location = " ".join(part for part in (item.repo, item.path) if part) or None
     return [
-        f"`{item.key}`",
+        f"`{_code(item.key)}`",
         item.kind,
         _cell(location),
         _cell(item.env),
@@ -241,28 +256,37 @@ GhRunner = Callable[[list[str]], str]
 def collect_pr_items(
     epic_slug: str,
     owners: list[str],
+    authors: list[str],
     runner: GhRunner,
     warn: Callable[[str], None],
 ) -> list[ConfigItem]:
-    """Collect config items from PR bodies labelled `epic:<slug>` via `gh search prs`."""
+    """Collect config items from PR bodies labelled `epic:<slug>` and written by trusted authors."""
 
+    for value in (*owners, *authors):
+        if not ACTOR_PATTERN.match(value):
+            raise ConfigLedgerError(f"invalid GitHub owner or author `{value}`")
     fields = "number,repository,url,body,state"
-    scopes: list[list[str]] = [["--owner", owner] for owner in owners] or [[]]
+    owner_scopes: list[list[str]] = [["--owner", owner] for owner in owners] or [[]]
     items: list[ConfigItem] = []
-    for scope in scopes:
-        command = ["search", "prs", "--label", f"epic:{epic_slug}", *scope, "--json", fields, "--limit", "100"]
-        try:
-            payload = json.loads(runner(command) or "[]")
-        except json.JSONDecodeError as exc:
-            raise ConfigLedgerError(f"gh returned invalid JSON ({exc})") from exc
-        if not isinstance(payload, list):
-            raise ConfigLedgerError("gh returned an unexpected payload; expected a JSON list")
-        for pr in sorted(payload, key=lambda entry: (str(_repository_name(entry)), int(entry.get("number", 0)))):
-            reference = f"{_repository_name(pr)}#{pr.get('number')}"
+    for author in authors or [DEFAULT_AUTHOR]:
+        for scope in owner_scopes:
+            command = [
+                "search", "prs", "--label", f"epic:{epic_slug}", "--author", author, *scope,
+                "--json", fields, "--limit", "100",
+            ]
             try:
-                items.extend(parse_blocks(str(pr.get("body") or "")))
-            except ConfigLedgerError as exc:
-                warn(f"{reference}: skipped, {exc}")
+                payload = json.loads(runner(command) or "[]")
+            except json.JSONDecodeError as exc:
+                raise ConfigLedgerError(f"gh returned invalid JSON ({exc})") from exc
+            if not isinstance(payload, list):
+                raise ConfigLedgerError("gh returned an unexpected payload; expected a JSON list")
+            entries = [entry for entry in payload if isinstance(entry, dict)]
+            for pr in sorted(entries, key=lambda entry: (_repository_name(entry), str(entry.get("number", "")))):
+                reference = f"{_repository_name(pr)}#{pr.get('number')}"
+                try:
+                    items.extend(parse_blocks(str(pr.get("body") or "")))
+                except ConfigLedgerError as exc:
+                    warn(f"{reference}: skipped, {exc}")
     return items
 
 

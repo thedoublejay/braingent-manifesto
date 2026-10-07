@@ -24,6 +24,8 @@ from braingent.config_ledger import ConfigItem, ConfigLedgerError
 EPIC_PREFIX = "epic--"
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MAX_SLUG_WORDS = 4
+ID_PATTERN = re.compile(r"^epic--[a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*$")
+ORG_PATTERN = re.compile(r"^(?:org--)?[a-z0-9]+(?:-[a-z0-9]+)*$")
 DEFAULT_STATUSES = ("active", "paused", "done", "dropped")
 DEFAULT_REQUIRED_FIELDS = ("title", "epic", "organization", "status", "created", "updated")
 EPIC_TEMPLATE = Path("templates") / "epic.md"
@@ -110,10 +112,26 @@ def load_epics() -> list[Epic]:
     return epics_from_records(records)
 
 
-def resolve_epic_id(value: str) -> str:
-    """Resolve a bare slug or id to an existing epic id; fall back to `epic--<value>`."""
+def is_valid_slug(value: str) -> bool:
+    return bool(SLUG_PATTERN.match(value)) and len(value.split("-")) <= MAX_SLUG_WORDS
 
-    if not value or value.startswith(EPIC_PREFIX):
+
+def is_valid_epic_id(value: str) -> bool:
+    return bool(ID_PATTERN.match(value))
+
+
+def is_valid_epic_ref(value: str) -> bool:
+    return is_valid_epic_id(value) or is_valid_slug(value)
+
+
+def resolve_epic_id(value: str) -> str:
+    """Resolve a bare slug or id to an existing epic id; fall back to `epic--<value>`.
+
+    Anything that is not a valid slug or id is returned unchanged and never reaches a
+    glob or path join, so it simply matches nothing.
+    """
+
+    if not value or not is_valid_epic_ref(value) or value.startswith(EPIC_PREFIX):
         return value
     matches = sorted(core.REPO_ROOT.glob(f"orgs/*/epics/{EPIC_PREFIX}*--{value}"))
     if len(matches) == 1:
@@ -122,6 +140,8 @@ def resolve_epic_id(value: str) -> str:
 
 
 def find_epic(epics: list[Epic], value: str) -> Epic:
+    if not is_valid_epic_ref(value):
+        raise LookupError(f"no epic matches `{value}`")
     resolved = resolve_epic_id(value)
     matches = [epic for epic in epics if epic.id == resolved or (not value.startswith(EPIC_PREFIX) and epic.slug == value)]
     if not matches:
@@ -261,6 +281,8 @@ def scaffold_epic(
     parent: str | None = None,
     today: date | None = None,
 ) -> Path:
+    if not ORG_PATTERN.match(org):
+        raise ValueError(f"organization `{org}` must be a lowercase kebab-case key")
     org_key = org if org.startswith("org--") else f"org--{org}"
     if not (root / "orgs" / org_key).is_dir():
         raise FileNotFoundError(f"organization `{org_key}` does not exist under orgs/")
@@ -273,6 +295,8 @@ def scaffold_epic(
         raise FileNotFoundError(f"missing template {EPIC_TEMPLATE.as_posix()}")
     parent_value = "null"
     if parent:
+        if parent.startswith(EPIC_PREFIX) and not is_valid_epic_id(parent):
+            raise ValueError(f"parent epic `{parent}` is not a valid epic id")
         parent_value = parent if parent.startswith(EPIC_PREFIX) else epic_id(org_key, parent)
     stamp = (today or date.today()).isoformat()
     text = template_path.read_text(encoding="utf-8")
@@ -317,11 +341,13 @@ def default_gh_runner(arguments: list[str]) -> str:
 def run_config_ledger(
     epic_value: str,
     owners: list[str],
+    authors: list[str] | None = None,
     *,
     sync: bool = False,
     output_json: bool = False,
-    runner: Callable[[list[str]], str] = default_gh_runner,
+    runner: Callable[[list[str]], str] | None = None,
 ) -> int:
+    runner = runner or default_gh_runner
     records, parse_issues = core.load_records(include_parse_errors=False)
     if parse_issues:
         core.print_issues(parse_issues)
@@ -330,7 +356,7 @@ def run_config_ledger(
         epic = find_epic(epics_from_records(records), epic_value)
         page_items = epic.config_items()
         pr_items = config_ledger.collect_pr_items(
-            epic.slug, owners, runner, lambda message: print(message, file=sys.stderr)
+            epic.slug, owners, authors or [config_ledger.DEFAULT_AUTHOR], runner, lambda message: print(message, file=sys.stderr)
         )
     except (LookupError, ConfigLedgerError, FileNotFoundError) as exc:
         print(str(exc), file=sys.stderr)

@@ -846,6 +846,12 @@ def validate_entity_values(record: Record, field: str, value: Any, spec: dict[st
                 )
             )
             continue
+        if field in {"epic", "parent_epic"}:
+            from braingent import epics
+
+            if not epics.is_valid_epic_id(item_str):
+                issues.append(ValidationIssue(record.path, f"`{field}` value `{item_str}` is not a valid epic id", severity=severity))
+                continue
         if not entity_exists(item_str, spec):
             issues.append(
                 ValidationIssue(
@@ -2472,6 +2478,8 @@ def synthesis_scope(args: argparse.Namespace) -> tuple[str, str, tuple[str, ...]
     if args.epic:
         from braingent import epics
 
+        if not epics.is_valid_epic_ref(args.epic):
+            raise SystemExit(f"`{args.epic}` is not a valid epic slug or id.")
         return "epics", epics.resolve_epic_id(args.epic), ("epic",), "Epic"
     if args.topic:
         value = args.topic if args.topic.startswith("topic--") else f"topic--{args.topic}"
@@ -2951,9 +2959,10 @@ def cmd_new_epic(args: argparse.Namespace) -> int:
 
 
 def cmd_config_ledger(args: argparse.Namespace) -> int:
-    from braingent import epics
+    from braingent import config_ledger, epics
 
-    return epics.run_config_ledger(args.epic, args.owner or [], sync=args.sync, output_json=args.json)
+    authors = args.author or list(CONFIG.config_ledger_authors) or [config_ledger.DEFAULT_AUTHOR]
+    return epics.run_config_ledger(args.epic, args.owner or [], authors, sync=args.sync, output_json=args.json)
 
 
 def cmd_config_drift(args: argparse.Namespace) -> int:
@@ -3269,6 +3278,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     config_ledger_parser.add_argument("--epic", required=True, help="epic slug or full epic-- id")
     config_ledger_parser.add_argument("--owner", action="append", help="GitHub owner to search; repeatable")
+    config_ledger_parser.add_argument(
+        "--author", action="append", help="trusted PR author; repeatable (config [config_ledger] authors, default @me)"
+    )
     config_ledger_parser.add_argument("--sync", action="store_true", help="rewrite the epic page's Config to enable section")
     config_ledger_parser.add_argument("--json", action="store_true", help="emit JSON")
     config_ledger_parser.set_defaults(func=cmd_config_ledger)
