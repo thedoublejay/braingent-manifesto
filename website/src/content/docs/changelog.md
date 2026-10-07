@@ -12,6 +12,15 @@ migrations.
 
 ## Latest
 
+### `7 October 2026`: `1.2.0`
+
+- **Epics.** An epic is an ad hoc anchor for work that spans many tickets and repositories. It has a page at `orgs/<org>/epics/epic--<org>--<slug>/`, an optional `epic:` list on records, a tracker and PR label `epic:<slug>`, and `braingent new epic` to scaffold it. Dangling epic references fail validation.
+- **Config-to-enable ledger.** A `config-to-enable/v1` YAML block records each setting that must be set before work is live, where it lives and its status. `braingent config-ledger` merges the blocks in labelled PR bodies with the epic page and can `--sync` the page.
+- **Config drift.** `braingent config-drift --contracts <dir> --deployed <dir>` reports environment keys present in one place and missing from the other.
+- **Epic indexes and queries.** `reindex` writes `indexes/epics.md` and `indexes/config-ledger.md`, adds an Active epics section to `CURRENT_STATE.md`, and fills `record_epics` and `config_items` in the SQLite cache. `find`, `recall`, `synthesize` and MCP `braingent_find` accept `--epic`.
+- **Daily log.** `braingent daily-log --epic` tags events, the status block rolls up spawned work per epic, and the sprawl warning names the epics behind it. Lines without an epic are unchanged.
+- **Fix.** `braingent --root <dir> reindex` writes the SQLite cache under the selected root instead of the directory the package was imported from.
+
 ### `6 October 2026`: `1.1.0`
 
 - **Daily log.** `braingent daily-log` and `braingent daily-status` keep one append-only `daily/YYYY-MM-DD.md` per day across every agent, with a generated ongoing/review/blocked/todo/done view, carry-over of unfinished work, and a sprawl warning at `[daily] sprawl_threshold`. `workflows/daily-pm.md` adds a PM catch-up agent that reconciles GitHub, the issue tracker, and Braingent records.
