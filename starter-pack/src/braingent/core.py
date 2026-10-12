@@ -3086,6 +3086,8 @@ def copy_template_file(relative: str, resource: Any, target_root: Path) -> None:
     target = target_root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(resource.read_bytes())
+    if target.suffix == ".sh":
+        target.chmod(target.stat().st_mode | 0o111)
 
 
 def target_has_user_content(path: Path) -> bool:
