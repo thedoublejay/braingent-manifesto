@@ -2946,6 +2946,46 @@ def cmd_daily_status(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_weekly(args: argparse.Namespace) -> int:
+    from braingent import weekly
+
+    tz = daily_tz()
+    summary = weekly.summarise(REPO_ROOT, daily_day(tz, args.date), tz)
+    if args.path:
+        print(summary["path"])
+        return 0
+    if args.json:
+        print(json.dumps(summary, indent=2))
+        return 0
+    print(f"{summary['path']} ({summary['range']})")
+    for key, title in (("priorities", "Priorities"), ("notes", "Notes"), ("not_this_week", "Not this week")):
+        items = summary[key]
+        print(f"\n{title} ({len(items)})")
+        for index, item in enumerate(items, start=1):
+            mark = "" if item["done"] is None else ("[x] " if item["done"] else "[ ] ")
+            prefix = f"{index}. " if key == "priorities" else "- "
+            print(f"{prefix}{mark}{item['text']}")
+    progress = summary["progress"]
+    open_counts = progress["open"]
+    print(
+        f"\nprogress: done {len(progress['done'])} · spawned {progress['spawned']} · open now "
+        f"{open_counts['ongoing']} ongoing, {open_counts['review']} in review, {open_counts['blocked']} blocked, {open_counts['todo']} todo"
+    )
+    return 0
+
+
+def cmd_weekly_add(args: argparse.Namespace) -> int:
+    from braingent import weekly
+
+    tz = daily_tz()
+    try:
+        path = weekly.add_item(REPO_ROOT, args.section, args.text, day=daily_day(tz, args.date), tz=tz)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    print(path.relative_to(REPO_ROOT).as_posix())
+    return 0
+
+
 def cmd_new_epic(args: argparse.Namespace) -> int:
     from braingent import epics
 
@@ -3299,6 +3339,19 @@ def build_parser() -> argparse.ArgumentParser:
     daily_status_output.add_argument("--json", action="store_true", help="emit JSON")
     daily_status_output.add_argument("--path", action="store_true", help="emit only the day file path")
     daily_status_parser.set_defaults(func=cmd_daily_status)
+
+    weekly_parser = subparsers.add_parser("weekly", help="show this week's plan and regenerate its progress")
+    weekly_parser.add_argument("--date", help="any YYYY-MM-DD in the week; defaults to today in [daily] timezone")
+    weekly_output = weekly_parser.add_mutually_exclusive_group()
+    weekly_output.add_argument("--json", action="store_true", help="emit JSON")
+    weekly_output.add_argument("--path", action="store_true", help="emit only the week file path")
+    weekly_parser.set_defaults(func=cmd_weekly)
+
+    weekly_add_parser = subparsers.add_parser("weekly-add", help="add an item to this week's plan")
+    weekly_add_parser.add_argument("text")
+    weekly_add_parser.add_argument("--section", choices=["priorities", "notes", "not-this-week"], default="notes")
+    weekly_add_parser.add_argument("--date", help="any YYYY-MM-DD in the week; defaults to today in [daily] timezone")
+    weekly_add_parser.set_defaults(func=cmd_weekly_add)
 
     task_new_parser = subparsers.add_parser("task-new", help="create an agent task")
     task_new_parser.add_argument("title")

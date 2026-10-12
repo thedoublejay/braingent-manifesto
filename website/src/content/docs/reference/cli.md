@@ -270,6 +270,21 @@ The first write of a day creates the file and carries over the previous
 day's unfinished items. Writes take a file lock, so concurrent agents are
 safe.
 
+## Weekly Plan Commands
+
+Keep a human-written plan for the week in `weekly/YYYY-Www.md`. See the
+[Weekly Plan guide](/guides/weekly-plan/).
+
+| Command | Purpose |
+| --- | --- |
+| `braingent weekly` | Create this week's file if needed, regenerate its progress block, and print priorities, notes and not-this-week. |
+| `braingent weekly --json` | Machine-readable plan and progress for an agent. |
+| `braingent weekly --path` | Print the week file path. |
+| `braingent weekly-add "<text>" --section priorities` | Append an item. Sections: `priorities`, `notes` (default), `not-this-week`. |
+| `braingent weekly --date 2026-10-14` | Select the week that contains that day. Works on both commands. |
+
+A new week's file carries over last week's unticked priorities and notes.
+
 ## MCP Server
 
 Expose token-efficient retrieval tools to MCP-aware agents. Requires the
