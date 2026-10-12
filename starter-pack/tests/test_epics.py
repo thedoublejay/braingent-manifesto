@@ -91,6 +91,15 @@ class ScaffoldAndValidateTests(EpicTestCase):
                 self.assertEqual(frontmatter["title"], title)
         self.assertEqual(self.errors(), [])
 
+    def test_scaffold_fills_the_goal_when_given(self) -> None:
+        page = self.scaffold(title="Checkout latency", goal="  Cut p95 checkout latency below 300 ms.  ")
+        text = page.read_text(encoding="utf-8")
+        self.assertIn("## Goal\n\nCut p95 checkout latency below 300 ms.\n", text)
+        self.assertNotIn("<Why this epic exists", text)
+        untouched = self.scaffold("no-goal").read_text(encoding="utf-8")
+        self.assertIn("<Why this epic exists, in one or two sentences.>", untouched)
+        self.assertEqual(self.errors(), [])
+
     def test_scaffolded_page_validates_and_records_resolve(self) -> None:
         page = self.scaffold(title="Checkout latency")
         self.assertEqual(page, self.root / "orgs" / "org--acme" / "epics" / EPIC_ID / "README.md")
