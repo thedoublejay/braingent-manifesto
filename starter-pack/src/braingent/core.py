@@ -3086,6 +3086,8 @@ def copy_template_file(relative: str, resource: Any, target_root: Path) -> None:
     target = target_root / relative
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(resource.read_bytes())
+    if target.suffix == ".sh":
+        target.chmod(target.stat().st_mode | 0o111)
 
 
 def target_has_user_content(path: Path) -> bool:
@@ -3136,7 +3138,10 @@ def update_plan_for_target(target: Path, manifest: dict[str, str], previous: dic
         if current_hash is None:
             plan["add"].append(relative)
         elif current_hash == expected_hash:
-            plan["unchanged"].append(relative)
+            if os.name == "posix" and path.suffix == ".sh" and path.stat().st_mode & 0o111 == 0:
+                plan["update"].append(relative)
+            else:
+                plan["unchanged"].append(relative)
         elif previous.get(relative) == current_hash:
             plan["update"].append(relative)
         else:

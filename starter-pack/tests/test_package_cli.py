@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -125,6 +126,91 @@ class PackageCliTests(unittest.TestCase):
 
             self.assertIn("unchanged:", result.stdout)
             self.assertIn("Dry run only", result.stdout)
+
+    def assert_installed_weekly_wrappers_run(self, target: Path) -> None:
+        for name in ("weekly.sh", "weekly-add.sh"):
+            script = target / "scripts" / name
+            with self.subTest(script=name):
+                self.assertTrue(os.access(script, os.X_OK), f"{name} must be executable after copying")
+                result = subprocess.run(
+                    [str(script), "--help"],
+                    cwd=target,
+                    env=self.python_env(),
+                    text=True,
+                    capture_output=True,
+                    check=True,
+                )
+                self.assertIn("usage:", result.stdout)
+        self.assertEqual((target / "README.md").stat().st_mode & 0o111, 0)
+
+    @unittest.skipUnless(os.name == "posix", "Direct shell execution requires POSIX")
+    def test_init_installs_executable_weekly_wrappers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            target = Path(tmp_dir) / "memory"
+            subprocess.run(
+                [sys.executable, "-m", "braingent", "init", str(target)],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assert_installed_weekly_wrappers_run(target)
+
+    @unittest.skipUnless(os.name == "posix", "Shell permission checks require POSIX")
+    def test_update_preserves_modified_nonexecutable_wrapper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            target = Path(tmp_dir) / "memory"
+            subprocess.run(
+                [sys.executable, "-m", "braingent", "init", str(target)],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            shutil.copytree(target, Path(tmp_dir) / "backup")
+            script = target / "scripts" / "weekly.sh"
+            custom_script = "#!/bin/sh\nprintf '%s\\n' 'custom wrapper'\n"
+            script.write_text(custom_script, encoding="utf-8")
+            script.chmod(0o644)
+            result = subprocess.run(
+                [sys.executable, "-m", "braingent", "update", str(target), "--write"],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(script.read_text(encoding="utf-8"), custom_script)
+            self.assertEqual(script.stat().st_mode & 0o111, 0)
+
+    @unittest.skipUnless(os.name == "posix", "Direct shell execution requires POSIX")
+    def test_update_restores_executable_weekly_wrappers(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            target = Path(tmp_dir) / "memory"
+            subprocess.run(
+                [sys.executable, "-m", "braingent", "init", str(target)],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            shutil.copytree(target, Path(tmp_dir) / "backup")
+            for relative in ("scripts/weekly.sh", "scripts/weekly-add.sh"):
+                (target / relative).chmod(0o644)
+            (target / "README.md").unlink()
+            subprocess.run(
+                [sys.executable, "-m", "braingent", "update", str(target), "--write"],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            self.assert_installed_weekly_wrappers_run(target)
 
     def test_qa_generate_runs_from_package(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
