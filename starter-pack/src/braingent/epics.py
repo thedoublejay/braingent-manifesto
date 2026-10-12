@@ -272,6 +272,9 @@ def config_item_rows(epics: list[Epic]) -> list[tuple[str, ConfigItem]]:
     return rows
 
 
+GOAL_PLACEHOLDER = "<Why this epic exists, in one or two sentences.>"
+
+
 def scaffold_epic(
     root: Path,
     org: str,
@@ -279,6 +282,7 @@ def scaffold_epic(
     *,
     title: str | None = None,
     parent: str | None = None,
+    goal: str | None = None,
     today: date | None = None,
 ) -> Path:
     if not ORG_PATTERN.match(org):
@@ -313,6 +317,8 @@ def scaffold_epic(
         frontmatter_value = json.dumps(value) if placeholder == "<epic-title>" else value
         frontmatter = frontmatter.replace(placeholder, frontmatter_value)
         body = body.replace(placeholder, value)
+    if goal and goal.strip():
+        body = body.replace(GOAL_PLACEHOLDER, goal.strip(), 1)
     text = frontmatter + separator + body
     directory.mkdir(parents=True)
     page = directory / "README.md"

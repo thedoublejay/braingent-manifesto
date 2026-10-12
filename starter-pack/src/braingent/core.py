@@ -2990,7 +2990,9 @@ def cmd_new_epic(args: argparse.Namespace) -> int:
     from braingent import epics
 
     try:
-        page = epics.scaffold_epic(REPO_ROOT, args.org, args.slug, title=args.title, parent=args.parent)
+        page = epics.scaffold_epic(
+            REPO_ROOT, args.org, args.slug, title=args.title, parent=args.parent, goal=args.goal
+        )
     except (ValueError, FileNotFoundError, FileExistsError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
@@ -3316,6 +3318,7 @@ def build_parser() -> argparse.ArgumentParser:
     new_epic_parser.add_argument("--slug", required=True, help="lowercase kebab-case slug, 1 to 4 words")
     new_epic_parser.add_argument("--title", help="page title; defaults to the slug")
     new_epic_parser.add_argument("--parent", help="parent epic slug or full id")
+    new_epic_parser.add_argument("--goal", help="one or two sentences for the Goal section")
     new_epic_parser.set_defaults(func=cmd_new_epic)
 
     config_ledger_parser = subparsers.add_parser(
