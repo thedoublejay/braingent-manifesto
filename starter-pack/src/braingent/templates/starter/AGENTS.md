@@ -50,6 +50,10 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 
 When you start, finish, hand off for review, get blocked, or spawn a ticket or PR, append one line to today's log: `braingent daily-log <kind> "<what>" --ref <ticket-or-pr> --as <your-agent-id>`. See `daily/README.md`. "Run the daily PM" or "catch me up" → `workflows/daily-pm.md`.
 
+## Weekly Plan
+
+Before non-trivial work, and whenever choosing what to do next, read this week's plan: `braingent weekly` (or `--json`). Prefer work that serves `## Priorities`, in order. Do not start anything under `## Not this week` without asking. When the user asks you to note or prioritise something for the week, add it with `braingent weekly-add "<text>" --section priorities|notes|not-this-week`. Never tick, reorder, or delete the user's items. See `weekly/README.md`.
+
 ## Memory Retrieval Protocol
 
 Before planning or answering from memory:

@@ -56,6 +56,8 @@ Copy this directory into a new memory repo.
 |   `-- tool-version-record.md
 |-- daily/
 |   `-- README.md
+|-- weekly/
+|   `-- README.md
 |-- workflows/
 |   |-- cleanup-braingent.md
 |   |-- daily-pm.md

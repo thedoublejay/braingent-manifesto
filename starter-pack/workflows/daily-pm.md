@@ -2,14 +2,14 @@
 
 Use this when the user says "run the daily PM", "catch me up", "daily standup", or "what did the agents do today".
 
-The PM agent reports on the day. It does not do the work, open tickets, change trackers, or edit `## Goals`. The only file it writes is today's daily log, and only through `braingent daily-log`.
+The PM agent reports on the day. It does not do the work, open tickets, change trackers, or edit `## Goals`. The only file it writes is today's daily log, and only through `braingent daily-log`. It reads the week's plan but never edits it.
 
 ## Steps
 
 1. **Open the day.** Run `braingent daily-status --json`. This creates today's file with carry-over if it does not exist yet. Read today's file and yesterday's file when it exists. Carry-over may come from the most recent earlier log if there was a gap.
    → verify: the JSON `path` exists and `carried` matches the carried items you see.
 
-2. **Check goals.** If `## Goals` is empty, ask the user for up to three goals for today and stop the workflow until they answer or decline. Do not invent goals.
+2. **Check goals.** Run `braingent weekly --json` for the week's priorities, notes and not-this-week list. If `## Goals` is empty, ask the user for up to three goals for today, suggesting the open weekly priorities first, and stop the workflow until they answer or decline. Do not invent goals.
 
 3. **Sweep sources for today** in the `[daily] timezone` window. Use whichever sources are available and skip the rest:
    - GitHub: calculate the start of today and tomorrow in `[daily] timezone`, then convert both boundaries to ISO 8601 UTC timestamps. Search authored and reviewed PRs with `gh search prs --author @me --updated "$start..$end" --limit 1000` and `gh search prs --reviewed-by @me --updated "$start..$end" --limit 1000`. Filter returned timestamps to the half-open interval `start <= updatedAt < end`; a date-only query uses the wrong midnight outside UTC. If the limit is reached, narrow by repository or time and report any incomplete coverage. Also fetch the live state of every unfinished PR already in today's log, including carried items, using `gh pr view <number> --repo <owner>/<repo> --json state,createdAt,closedAt,mergedAt,url,title`. Confirm the authenticated account covers the intended repositories.
@@ -35,6 +35,7 @@ The PM agent reports on the day. It does not do the work, open tickets, change t
 
 6. **Report** to the user, short and scannable:
    - Goals: each goal with progress and the items that serve it.
+   - Week: each open weekly priority with what moved on it today, any priority nothing touched this week, and any work started on a `Not this week` item.
    - Ongoing and in review: what is moving, and who is reviewing.
    - Blocked: each blocker and the single decision or input it needs.
    - Spawned today: count, untouched count, and the sprawl flag. If the flag is up, suggest which spawned items to defer, merge, or close. Do not act on them.

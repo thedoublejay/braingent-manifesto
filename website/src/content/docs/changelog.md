@@ -12,6 +12,11 @@ migrations.
 
 ## Latest
 
+### `12 October 2026`: `1.3.0`
+
+- **Weekly plan.** `braingent weekly` and `braingent weekly-add` keep one human-written `weekly/YYYY-Www.md` per ISO week with Priorities, Notes and Not this week, plus a Progress block rolled up from the week's daily logs. Unticked priorities and notes carry into the next week. Agents read it before choosing work, and `workflows/daily-pm.md` reports against it.
+- **Carry-over and agent entry points.** Plain notes survive carry-over alongside unticked checklists. Claude and ChatGPT starter instructions also load the weekly plan before choosing work.
+
 ### `7 October 2026`: `1.2.0`
 
 - **Epics.** An epic is an ad hoc anchor for work that spans many tickets and repositories. It has a page at `orgs/<org>/epics/epic--<org>--<slug>/`, an optional `epic:` list on records, a tracker and PR label `epic:<slug>`, and `braingent new epic` to scaffold it. Dangling epic references fail validation.

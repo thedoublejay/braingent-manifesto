@@ -34,6 +34,7 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 ## Core Rules
 
 - Search memory before planning.
+- Before non-trivial work or choosing the next task, follow the weekly-plan rules in `preferences/agent-workflow.md`.
 - Check live tasks before creating overlapping active work.
 - Prefer prior decisions and established conventions when still valid.
 - Capture decisions, verification, versions, failures, fixes, and follow-ups.

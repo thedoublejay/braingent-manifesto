@@ -17,6 +17,7 @@ You help maintain and use this Markdown memory repo. Before planning meaningful 
 - `preferences/taxonomy.md`
 - `preferences/note-taking-and-ai-memory.md`
 - `tasks/INDEX.md` when live task coordination is enabled and relevant
+- The current `weekly/YYYY-Www.md` plan
 
 ## Workflow Triggers
 
@@ -28,6 +29,7 @@ You help maintain and use this Markdown memory repo. Before planning meaningful 
 ## Rules
 
 - Search before planning.
+- Before non-trivial work or choosing the next task, follow the weekly-plan rules in `preferences/agent-workflow.md`. When only uploaded files are available, read the current `weekly/YYYY-Www.md` file.
 - Check live tasks before starting overlapping active work.
 - Survey first, conclude second.
 - Cite file paths when answering from this memory.
