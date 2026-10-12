@@ -11,6 +11,8 @@ Use this workflow for Claude, Codex, ChatGPT, and other AI tools.
 5. Search for relevant org, ticket, repo, topic, tool, and person names.
 6. Reuse prior decisions and preferences when still valid.
 
+Before non-trivial work and whenever choosing what to do next, read the weekly plan with `braingent weekly --json`. Prefer open priorities in order. Ask before starting anything under `## Not this week`. Add items with `braingent weekly-add "<text>" --section priorities|notes|not-this-week` only when the user asks; never tick, reorder or delete their items. See `weekly/README.md`.
+
 Use free-text search first:
 
 ```bash

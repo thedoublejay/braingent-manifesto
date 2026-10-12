@@ -110,9 +110,9 @@ def carried_items(root: Path, day: date) -> dict[str, list[Item]]:
         text = handle.read()
     carried: dict[str, list[Item]] = {}
     for section in CARRIED_SECTIONS:
-        open_items = [item for item in parse_items(text, section) if item.done is False]
+        open_items = [item for item in parse_items(text, section) if item.done is not True]
         carried[section] = [
-            Item(item.text if CARRIED_SUFFIX.search(item.text) else f"{item.text} (from {source.stem})", False)
+            Item(item.text if CARRIED_SUFFIX.search(item.text) else f"{item.text} (from {source.stem})", item.done)
             for item in open_items
         ]
     return carried

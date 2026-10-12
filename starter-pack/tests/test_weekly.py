@@ -112,6 +112,12 @@ class WeeklyPlanTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.add("notes", "   ")
 
+    def test_plain_notes_survive_carry_over(self) -> None:
+        path = self.add("notes", "Ask about the cert", day=date(2026, 10, 7))
+        path.write_text(path.read_text(encoding="utf-8").replace("- [ ] Ask about the cert", "- Ask about the cert"), encoding="utf-8")
+        summary = weekly.summarise(self.root, self.day, SGT)
+        self.assertEqual(summary["notes"], [{"text": "Ask about the cert (from 2026-W41)", "done": None}])
+
 
 class WeeklyCliTests(unittest.TestCase):
     def setUp(self) -> None:
