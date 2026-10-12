@@ -3138,7 +3138,10 @@ def update_plan_for_target(target: Path, manifest: dict[str, str], previous: dic
         if current_hash is None:
             plan["add"].append(relative)
         elif current_hash == expected_hash:
-            plan["unchanged"].append(relative)
+            if os.name == "posix" and path.suffix == ".sh" and path.stat().st_mode & 0o111 == 0:
+                plan["update"].append(relative)
+            else:
+                plan["unchanged"].append(relative)
         elif previous.get(relative) == current_hash:
             plan["update"].append(relative)
         else:

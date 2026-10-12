@@ -157,6 +157,35 @@ class PackageCliTests(unittest.TestCase):
             )
             self.assert_installed_weekly_wrappers_run(target)
 
+    @unittest.skipUnless(os.name == "posix", "Shell permission checks require POSIX")
+    def test_update_preserves_modified_nonexecutable_wrapper(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            target = Path(tmp_dir) / "memory"
+            subprocess.run(
+                [sys.executable, "-m", "braingent", "init", str(target)],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            shutil.copytree(target, Path(tmp_dir) / "backup")
+            script = target / "scripts" / "weekly.sh"
+            custom_script = "#!/bin/sh\nprintf '%s\\n' 'custom wrapper'\n"
+            script.write_text(custom_script, encoding="utf-8")
+            script.chmod(0o644)
+            result = subprocess.run(
+                [sys.executable, "-m", "braingent", "update", str(target), "--write"],
+                cwd=tmp_dir,
+                env=self.python_env(),
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(script.read_text(encoding="utf-8"), custom_script)
+            self.assertEqual(script.stat().st_mode & 0o111, 0)
+
     @unittest.skipUnless(os.name == "posix", "Direct shell execution requires POSIX")
     def test_update_restores_executable_weekly_wrappers(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -170,8 +199,9 @@ class PackageCliTests(unittest.TestCase):
                 check=True,
             )
             shutil.copytree(target, Path(tmp_dir) / "backup")
-            for relative in ("scripts/weekly.sh", "scripts/weekly-add.sh", "README.md"):
-                (target / relative).unlink()
+            for relative in ("scripts/weekly.sh", "scripts/weekly-add.sh"):
+                (target / relative).chmod(0o644)
+            (target / "README.md").unlink()
             subprocess.run(
                 [sys.executable, "-m", "braingent", "update", str(target), "--write"],
                 cwd=tmp_dir,
