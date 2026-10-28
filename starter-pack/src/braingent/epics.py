@@ -362,11 +362,12 @@ def run_config_ledger(
     if parse_issues:
         core.print_issues(parse_issues)
         return 1
+    skipped: list[str] = []
     try:
         epic = find_epic(epics_from_records(records), epic_value)
         page_items = epic.config_items()
         pr_items = config_ledger.collect_pr_items(
-            epic.slug, owners, authors or [config_ledger.DEFAULT_AUTHOR], runner, lambda message: print(message, file=sys.stderr)
+            epic.slug, owners, authors or [config_ledger.DEFAULT_AUTHOR], runner, skipped.append
         )
     except (LookupError, ConfigLedgerError, FileNotFoundError) as exc:
         print(str(exc), file=sys.stderr)
@@ -388,4 +389,6 @@ def run_config_ledger(
         print(json.dumps({"epic": epic.id, "items": [item.to_dict() for item in merged]}, indent=2))
     else:
         print("\n".join(config_ledger.render_table(merged)))
-    return 0
+    for message in skipped:
+        print(message, file=sys.stderr)
+    return 1 if skipped else 0

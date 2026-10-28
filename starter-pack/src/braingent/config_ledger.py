@@ -23,6 +23,8 @@ OPEN_STATUSES = ("pending", "pr-open", "applied")
 PROGRESS_RANK = {"pending": 0, "pr-open": 1, "applied": 2, "verified": 3}
 TERMINAL_STATUSES = ("not-needed", "dormant")
 MAX_VALUE_LENGTH = 300
+MAX_PROSE_LENGTH = 2000
+PROSE_FIELDS = ("default", "target", "verify")
 SEARCH_LIMIT = 100
 DEFAULT_AUTHOR = "@me"
 ACTOR_PATTERN = re.compile(r"^(?:@me|[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\[bot\])?)$")
@@ -77,7 +79,7 @@ class ConfigItem:
         return data
 
 
-def _scalar(value: Any, label: str = "value") -> str | None:
+def _scalar(value: Any, label: str = "value", limit: int = MAX_VALUE_LENGTH) -> str | None:
     if value is None:
         return None
     if isinstance(value, dict | list | tuple | set):
@@ -85,8 +87,8 @@ def _scalar(value: Any, label: str = "value") -> str | None:
     if isinstance(value, bool):
         value = "true" if value else "false"
     text = " ".join(str(value).split())
-    if len(text) > MAX_VALUE_LENGTH:
-        raise ConfigLedgerError(f"{label}: value longer than {MAX_VALUE_LENGTH} characters")
+    if len(text) > limit:
+        raise ConfigLedgerError(f"{label}: value longer than {limit} characters")
     return text or None
 
 
@@ -95,7 +97,8 @@ def _parse_item(raw: Any, label: str) -> ConfigItem:
         raise ConfigLedgerError(f"{label}: item must be a mapping")
 
     def field_value(name: str) -> str | None:
-        return _scalar(raw.get(name), f"{label}: `{name}`")
+        limit = MAX_PROSE_LENGTH if name in PROSE_FIELDS else MAX_VALUE_LENGTH
+        return _scalar(raw.get(name), f"{label}: `{name}`", limit)
 
     for name in ("key", "kind", "status"):
         if field_value(name) is None:

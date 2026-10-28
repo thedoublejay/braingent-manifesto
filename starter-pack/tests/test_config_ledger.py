@@ -196,10 +196,21 @@ class CollectTests(unittest.TestCase):
 
 class UntrustedInputTests(unittest.TestCase):
     def test_overlength_identity_is_rejected(self) -> None:
-        for field in ("key", "env", "target"):
+        for field in ("key", "env", "path"):
             text = BLOCK.replace("  status: pending", f"  {field}: {'K' * 300}A\n  status: pending")
-            with self.subTest(field=field), self.assertRaisesRegex(ConfigLedgerError, "300"):
+            with self.subTest(field=field), self.assertRaisesRegex(ConfigLedgerError, f"`{field}`.*300"):
                 config_ledger.parse_blocks(text)
+
+    def test_prose_fields_accept_long_values_up_to_their_own_bound(self) -> None:
+        for field in ("default", "target", "verify"):
+            def block(length: int, field: str = field) -> str:
+                return f"```yaml\n# config-to-enable/v1\n- key: K\n  kind: env\n  status: pending\n  {field}: {'v' * length}\n```\n"
+
+            with self.subTest(field=field):
+                (item,) = config_ledger.parse_blocks(block(347))
+                self.assertEqual(len(getattr(item, field) or ""), 347)
+                with self.assertRaisesRegex(ConfigLedgerError, f"`{field}`.*2000"):
+                    config_ledger.parse_blocks(block(2001))
 
     def test_one_query_per_author_and_owner(self) -> None:
         calls: list[list[str]] = []
