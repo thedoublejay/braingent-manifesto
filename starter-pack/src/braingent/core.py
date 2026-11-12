@@ -627,6 +627,9 @@ def validate_record(record: Record, taxonomy: dict[str, Any]) -> list[Validation
     path = record.path
 
     allowed_fields = set(taxonomy.get("allowed_fields", []))
+    record_kind = fm.get("record_kind")
+    if isinstance(record_kind, str):
+        allowed_fields.update(taxonomy.get("kind_allowed_fields", {}).get(record_kind, []))
     for field in sorted(fm):
         if field not in allowed_fields:
             suggestion = ""
@@ -3004,7 +3007,8 @@ def cmd_config_ledger(args: argparse.Namespace) -> int:
     from braingent import config_ledger, epics
 
     authors = args.author or list(CONFIG.config_ledger_authors) or [config_ledger.DEFAULT_AUTHOR]
-    return epics.run_config_ledger(args.epic, args.owner or [], authors, sync=args.sync, output_json=args.json)
+    owners = args.owner or list(CONFIG.config_ledger_owners)
+    return epics.run_config_ledger(args.epic, owners, authors, sync=args.sync, output_json=args.json)
 
 
 def cmd_config_drift(args: argparse.Namespace) -> int:
@@ -3325,7 +3329,7 @@ def build_parser() -> argparse.ArgumentParser:
         "config-ledger", help="merge config-to-enable blocks from an epic page and labelled PRs"
     )
     config_ledger_parser.add_argument("--epic", required=True, help="epic slug or full epic-- id")
-    config_ledger_parser.add_argument("--owner", action="append", help="GitHub owner to search; repeatable")
+    config_ledger_parser.add_argument("--owner", action="append", help="GitHub owner to search; repeatable (config [config_ledger] owners)")
     config_ledger_parser.add_argument(
         "--author", action="append", help="trusted PR author; repeatable (config [config_ledger] authors, default @me)"
     )

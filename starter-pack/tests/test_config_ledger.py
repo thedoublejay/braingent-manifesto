@@ -140,7 +140,7 @@ class RenderTests(unittest.TestCase):
 
 class CollectTests(unittest.TestCase):
     def test_search_limit_is_an_error(self) -> None:
-        payload = [{"number": n, "repository": {"name": "app-repo"}, "body": BLOCK} for n in range(100)]
+        payload = [{"number": n, "repository": {"name": "app-repo"}, "body": BLOCK} for n in range(config_ledger.SEARCH_LIMIT)]
         with self.assertRaisesRegex(ConfigLedgerError, "limit"):
             config_ledger.collect_pr_items("x", [], ["@me"], lambda _: json.dumps(payload), lambda _: None)
 

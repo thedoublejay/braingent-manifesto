@@ -22,6 +22,8 @@ from braingent import config_ledger, core
 from braingent.config_ledger import ConfigItem, ConfigLedgerError
 
 EPIC_PREFIX = "epic--"
+RECORD_KIND = "epic"
+LEGACY_RECORD_KIND = "profile"
 SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 MAX_SLUG_WORDS = 4
 ID_PATTERN = re.compile(r"^epic--[a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*$")
@@ -169,13 +171,22 @@ def validate_epic_page(record: core.Record, taxonomy: dict[str, Any]) -> list[co
         if core.is_nullish(fm.get(name)):
             issues.append(core.ValidationIssue(path, f"missing required field `{name}` for epic"))
 
-    if fm.get("record_kind") != "profile":
-        issues.append(core.ValidationIssue(path, "epic page `record_kind` must be `profile`"))
+    record_kind = fm.get("record_kind")
+    if record_kind == LEGACY_RECORD_KIND:
+        issues.append(
+            core.ValidationIssue(
+                path, f"`record_kind: {LEGACY_RECORD_KIND}` on an epic page is deprecated; use `{RECORD_KIND}`", severity="warning"
+            )
+        )
+    elif record_kind != RECORD_KIND:
+        issues.append(core.ValidationIssue(path, f"epic page `record_kind` must be `{RECORD_KIND}`"))
 
     directory = path.parent.name
-    declared = core.as_scalar(fm.get("epic"))
-    if declared and declared != directory:
-        issues.append(core.ValidationIssue(path, f"`epic` value `{declared}` does not match directory `{directory}`"))
+    declared = [core.as_scalar(item) for item in core.as_list(fm.get("epic")) if not core.is_nullish(item)]
+    if declared and directory not in declared:
+        issues.append(
+            core.ValidationIssue(path, f"`epic` value `{', '.join(declared)}` does not include directory `{directory}`")
+        )
     try:
         slug = validate_slug(slug_of(directory))
     except ValueError as exc:

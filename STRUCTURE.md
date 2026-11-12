@@ -133,7 +133,7 @@ The slug is lowercase kebab-case, one to four words. Use the same slug everywher
 | Record frontmatter | `epic: [epic--<org-slug>--<slug>]` |
 | Daily log | `braingent daily-log ... --epic <slug>` |
 
-The page is a mutable profile with the sections `## Goal`, `## Scope and sub-groups`, `## Links`, `## Decisions`, `## Config to enable` and `## Log`. It links to tickets and PRs and never copies their status. Frontmatter carries `status` (`active`, `paused`, `done` or `dropped`), an optional `parent_epic` for a sub-group that grew into its own epic, `created` and `updated`.
+The page has `record_kind: epic` and `epic: [<its own id>]`, and is mutable, with the sections `## Goal`, `## Scope and sub-groups`, `## Links`, `## Decisions`, `## Config to enable` and `## Log`. It links to tickets and PRs and never copies their status. Frontmatter carries `status` (`active`, `paused`, `done` or `dropped`), an optional `parent_epic` for a sub-group that grew into its own epic, `created` and `updated`. Pages written by 1.4.0 and earlier, with `record_kind: profile` and a scalar `epic`, still validate with a deprecation warning.
 
 Create one with `braingent new epic --org <org> --slug <slug>`.
 

@@ -12,6 +12,16 @@ migrations.
 
 ## Latest
 
+### `12 November 2026`: `1.5.0`
+
+- **Epic pages are `record_kind: epic`.** New pages carry `record_kind: epic` and an `epic:` list holding their own id. Pages written by 1.2.0 to 1.4.0 (`record_kind: profile`, scalar `epic`) still validate, with a deprecation warning; change those two lines to clear it.
+- **`labels` and `parent_epic` are epic-only.** The taxonomy gains `kind_allowed_fields`, and these two fields now warn on any record that is not an epic page. Move them off other records, or add them back under `allowed_fields` in your own `preferences/taxonomy.yml`.
+- **Daily-log epic position.** `--epic` is now written after the ref: `- HH:MM · agent · kind · ref · epic:<slug> · text`. Lines with ` · epic:<slug>` at the end still parse, so existing logs keep their per-epic counts.
+- **Config-ledger owners and search size.** `[config_ledger] owners` sets the default `--owner` list. The labelled-PR search asks for up to 1,000 results, GitHub search's ceiling, instead of 100; an epic with 1,000 or more labelled PRs still refuses to sync rather than miss items.
+- **Ledger precedence, stated.** When an epic page and a PR body hold the same item, the side whose status is further along (`pending`, `pr-open`, `applied`, `verified`) supplies the whole item, and the other side only fills blank fields. On equal status the page wins, so a PR body corrected after its first sync does not change the page; edit the page instead. `not-needed` and `dormant` override only a `pending` item.
+- **`new-record.sh` fills its own templates.** Titles of interaction, version and ticket-stub records, and `ticket_system`, are now filled instead of left as placeholders.
+- **Wrappers.** `scripts/daily-log.sh` and `scripts/daily-status.sh` join `weekly.sh`.
+
 ### `28 October 2026`: `1.4.0`
 
 - **Epic goals.** `braingent new epic --goal "<one line>"` writes the goal into the new epic page.

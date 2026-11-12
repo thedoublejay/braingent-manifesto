@@ -270,10 +270,25 @@ class DailyEpicTests(unittest.TestCase):
     def test_epic_round_trips_through_the_log_line(self) -> None:
         path = self.log("started", "Index audit", ref="app-repo#12", epic="db-audit")
         text = path.read_text(encoding="utf-8")
-        self.assertIn("- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit", text)
+        self.assertIn("- 09:00 · agent--claude-code · started · app-repo#12 · epic:db-audit · Index audit", text)
         (event,) = daily.parse_events(text)
         self.assertEqual((event.text, event.epic), ("Index audit", "db-audit"))
-        self.assertEqual(event.line(), "- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit")
+        self.assertEqual(event.line(), "- 09:00 · agent--claude-code · started · app-repo#12 · epic:db-audit · Index audit")
+
+    def test_trailing_epic_layout_still_parses(self) -> None:
+        legacy = "- 09:00 · agent--claude-code · started · app-repo#12 · Index audit · epic:db-audit"
+        (event,) = daily.parse_events(f"# Daily log\n\n## Log\n\n{legacy}\n")
+        self.assertEqual((event.ref, event.text, event.epic), ("app-repo#12", "Index audit", "db-audit"))
+
+    def test_both_layouts_count_in_one_rollup(self) -> None:
+        text = (
+            "# Daily log\n\n## Log\n\n"
+            "- 09:00 · agent--claude-code · spawned · EX-1 · epic:db-audit · Ticket A\n"
+            "- 09:05 · agent--claude-code · spawned · EX-2 · Ticket B · epic:db-audit\n"
+        )
+        status = daily.derive_status(daily.parse_events(text))
+        self.assertEqual([event.epic for event in status.spawned], ["db-audit", "db-audit"])
+        self.assertEqual([event.text for event in status.spawned], ["Ticket A", "Ticket B"])
 
     def test_existing_work_is_in_the_epic_rollup_without_new_items(self) -> None:
         self.log("review", "Existing PR", ref="app-repo#12", epic="db-audit")
@@ -290,14 +305,15 @@ class DailyEpicTests(unittest.TestCase):
             self.log("note", "Bad", epic="Not A Slug")
 
     def test_lines_without_an_epic_still_parse_and_render_unchanged(self) -> None:
-        legacy = "- 09:42 · agent--claude-code · started · GET-1234 · Verdict lock fix"
+        legacy = "- 09:42 · agent--claude-code · started · EX-1234 · Lock fix"
         text = f"# Daily log\n\n## Log\n\n{legacy}\n"
         (event,) = daily.parse_events(text)
         self.assertIsNone(event.epic)
         self.assertEqual(event.line(), legacy)
-        path = self.log("started", "No epic", ref="GET-2")
-        self.assertNotIn("epic:", path.read_text(encoding="utf-8"))
-        self.assertNotIn("### By epic", path.read_text(encoding="utf-8"))
+        path = self.log("started", "No epic", ref="EX-2")
+        text = path.read_text(encoding="utf-8")
+        self.assertTrue(text.rstrip("\n").endswith("- 09:00 · agent--claude-code · started · EX-2 · No epic"))
+        self.assertNotIn("### By epic", text)
 
     def test_text_containing_epic_text_mid_line_is_preserved(self) -> None:
         path = self.log("note", "mentions epic:x in passing and more", epic="db-audit")

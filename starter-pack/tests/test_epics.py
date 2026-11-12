@@ -151,6 +151,44 @@ class ScaffoldAndValidateTests(EpicTestCase):
         warnings = [issue.message for issue in core.issue_warnings(core.validate())]
         self.assertTrue(any("missing `## Config to enable` section" in message for message in warnings))
 
+    def test_scaffold_writes_epic_kind_and_epic_list(self) -> None:
+        page = self.scaffold()
+        frontmatter, _, _ = core.split_frontmatter(page)
+        assert frontmatter is not None
+        self.assertEqual(frontmatter["record_kind"], "epic")
+        self.assertEqual(frontmatter["epic"], [EPIC_ID])
+
+    def test_legacy_profile_kind_and_scalar_epic_still_validate_with_a_warning(self) -> None:
+        page = self.scaffold()
+        text = page.read_text(encoding="utf-8")
+        text = text.replace("record_kind: epic", "record_kind: profile", 1).replace(f"epic: [{EPIC_ID}]", f"epic: {EPIC_ID}", 1)
+        page.write_text(text, encoding="utf-8")
+        self.assertEqual(self.errors(), [])
+        warnings = [issue.message for issue in core.issue_warnings(core.validate())]
+        self.assertTrue(any("`record_kind: profile` on an epic page is deprecated" in message for message in warnings))
+
+    def test_epic_list_must_include_the_directory_id(self) -> None:
+        page = self.scaffold()
+        page.write_text(page.read_text(encoding="utf-8").replace(f"epic: [{EPIC_ID}]", "epic: [epic--acme--other]", 1), encoding="utf-8")
+        self.assertTrue(any("does not include directory" in message for message in self.errors()))
+
+    def test_unknown_record_kind_on_an_epic_page_is_an_error(self) -> None:
+        page = self.scaffold()
+        page.write_text(page.read_text(encoding="utf-8").replace("record_kind: epic", "record_kind: note", 1), encoding="utf-8")
+        self.assertTrue(any("epic page `record_kind` must be `epic`" in message for message in self.errors()))
+
+    def test_kind_allowed_fields_scope_extra_fields_to_one_kind(self) -> None:
+        taxonomy_path = self.root / "preferences" / "taxonomy.yml"
+        taxonomy = core.yaml.safe_load(taxonomy_path.read_text(encoding="utf-8"))
+        taxonomy["allowed_fields"] = [name for name in taxonomy["allowed_fields"] if name not in {"labels", "parent_epic"}]
+        taxonomy["kind_allowed_fields"] = {"epic": ["labels", "parent_epic"]}
+        taxonomy_path.write_text(core.yaml.safe_dump(taxonomy, sort_keys=False), encoding="utf-8")
+        self.scaffold()
+        record = self.write_record("2026-10-07--note--labelled.md", "Labelled", None)
+        record.write_text(record.read_text(encoding="utf-8").replace("project: null\n", "project: null\nlabels: [x]\n"), encoding="utf-8")
+        warnings = [issue for issue in core.issue_warnings(core.validate()) if "unknown frontmatter field" in issue.message]
+        self.assertEqual([issue.path.name for issue in warnings], ["2026-10-07--note--labelled.md"])
+
 
 class QueryTests(EpicTestCase):
     def test_find_filter_accepts_slug_or_id(self) -> None:
@@ -369,6 +407,18 @@ class ConfigLedgerCommandTests(EpicTestCase):
         self.assertEqual(page.read_text(encoding="utf-8"), before)
         self.assertFalse(page.with_name("README.md.bak").exists())
 
+    def test_search_asks_for_the_api_ceiling_and_refuses_a_full_page(self) -> None:
+        self.scaffold()
+        calls: list[list[str]] = []
+        with contextlib.redirect_stdout(io.StringIO()):
+            epics.run_config_ledger("checkout-latency", [], runner=self.runner(calls))
+        self.assertEqual(calls[0][calls[0].index("--limit") + 1], "1000")
+        full = json.dumps([{"number": n, "repository": {"name": "r"}, "url": "u", "state": "OPEN", "body": ""} for n in range(1000)])
+        stderr = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+            self.assertEqual(epics.run_config_ledger("checkout-latency", [], runner=lambda _: full), 1)
+        self.assertIn("reached its limit of 1000", stderr.getvalue())
+
     def test_authors_are_passed_to_gh(self) -> None:
         self.scaffold()
         calls: list[list[str]] = []
@@ -386,6 +436,17 @@ class ConfigLedgerCommandTests(EpicTestCase):
                 with mock.patch.object(epics, "default_gh_runner", self.runner(calls)), contextlib.redirect_stdout(io.StringIO()):
                     core.main(["--root", str(self.root), "config-ledger", "--epic", "checkout-latency", *argv])
                 self.assertEqual([call[call.index("--author") + 1] for call in calls], expected)
+
+    def test_owners_flag_and_config_reach_the_command(self) -> None:
+        self.scaffold()
+        (self.root / ".braingent").mkdir()
+        (self.root / ".braingent" / "config.toml").write_text('[config_ledger]\nowners = ["cfg-owner"]\n', encoding="utf-8")
+        for argv, expected in (([], ["cfg-owner"]), (["--owner", "cli-owner"], ["cli-owner"])):
+            with self.subTest(argv=argv):
+                calls: list[list[str]] = []
+                with mock.patch.object(epics, "default_gh_runner", self.runner(calls)), contextlib.redirect_stdout(io.StringIO()):
+                    core.main(["--root", str(self.root), "config-ledger", "--epic", "checkout-latency", *argv])
+                self.assertEqual([call[call.index("--owner") + 1] for call in calls], expected)
 
     def test_malformed_pr_is_skipped_with_a_warning_and_nonzero_exit(self) -> None:
         page = self.scaffold()

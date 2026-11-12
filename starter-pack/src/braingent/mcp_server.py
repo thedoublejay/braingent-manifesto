@@ -20,7 +20,8 @@ def braingent_find(query: dict | None = None, limit: int = 10) -> list[dict]:
     """Search Braingent records by frontmatter fields.
 
     Prefer this over reading indexes/records.json or indexes/records.md.
-    Empty queries return the compact generated index prefix.
+    Empty queries return the compact generated index prefix. Filter by epic
+    with {"epic": "<slug or epic-- id>"}.
     """
 
     return mcp_tools.find(query=query, limit=limit)
