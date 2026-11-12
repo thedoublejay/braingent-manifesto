@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 from braingent import core, mcp_tools, search
@@ -138,6 +139,21 @@ class SearchTests(SearchTestCase):
         self.assertEqual(len(search.search("zebra")), 1)
         path.unlink()
         self.assertEqual(search.search("zebra"), [])
+
+    def test_renaming_a_record_never_leaves_its_old_path_as_a_hit(self) -> None:
+        self.seed()
+        path = self.write("2026-10-03--learning--fresh.md", "Fresh note", "A zebra crossing.")
+        self.assertEqual([hit["path"] for hit in search.search("zebra")], ["orgs/org--acme/records/2026-10-03--learning--fresh.md"])
+        path.rename(path.with_name("2026-10-03--learning--renamed.md"))
+        self.assertEqual([hit["path"] for hit in search.search("zebra")], ["orgs/org--acme/records/2026-10-03--learning--renamed.md"])
+
+    def test_unavailable_search_is_a_one_line_error(self) -> None:
+        self.seed()
+        failing = unittest.mock.patch.object(search, "search", side_effect=search.SearchUnavailableError("full-text search is unavailable: no fts5"))
+        with failing:
+            code, out, err = self.run_cli("search", "pool")
+        self.assertEqual((code, out), (2, ""))
+        self.assertEqual(err.strip(), "error: full-text search is unavailable: no fts5")
 
     def test_touching_a_record_marks_the_index_stale(self) -> None:
         self.seed()

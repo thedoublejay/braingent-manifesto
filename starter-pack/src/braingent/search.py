@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sqlite3
@@ -49,8 +50,15 @@ def write_fts(conn: sqlite3.Connection, records: list[core.Record]) -> bool:
         return False
     conn.executemany(f"INSERT INTO {FTS_TABLE} VALUES (?, ?, ?, ?, ?)", [fts_row(record) for record in records])
     conn.execute("CREATE TABLE index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO index_meta VALUES ('scanned_paths', ?)", (str(len(record_paths())),))
+    conn.execute("INSERT INTO index_meta VALUES ('paths_digest', ?)", (paths_digest(record_paths()),))
     return True
+
+
+def paths_digest(paths: list[Path]) -> str:
+    """Fingerprint of the record file set, so a rename or a delete-plus-add is noticed."""
+
+    names = sorted(path.relative_to(core.REPO_ROOT).as_posix() for path in paths)
+    return hashlib.sha256("\n".join(names).encode("utf-8")).hexdigest()
 
 
 def record_paths() -> list[Path]:
@@ -68,12 +76,12 @@ def index_is_stale() -> bool:
         return True
     conn = sqlite3.connect(db_path)
     try:
-        row = conn.execute("SELECT value FROM index_meta WHERE key = 'scanned_paths'").fetchone()
+        row = conn.execute("SELECT value FROM index_meta WHERE key = 'paths_digest'").fetchone()
     except sqlite3.DatabaseError:
         return True
     finally:
         conn.close()
-    return row is None or row[0] != str(len(paths))
+    return row is None or row[0] != paths_digest(paths)
 
 
 def ensure_index() -> None:

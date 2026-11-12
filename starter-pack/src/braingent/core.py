@@ -2925,7 +2925,11 @@ def cmd_find(args: argparse.Namespace) -> int:
 def cmd_search(args: argparse.Namespace) -> int:
     from braingent import search
 
-    return search.run_search(with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit)
+    try:
+        return search.run_search(with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit)
+    except search.SearchUnavailableError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
