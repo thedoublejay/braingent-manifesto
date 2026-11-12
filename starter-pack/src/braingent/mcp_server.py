@@ -28,6 +28,18 @@ def braingent_find(query: dict | None = None, limit: int = 10) -> list[dict]:
 
 
 @mcp.tool()
+def braingent_search(query: str, filters: dict | None = None, limit: int = 8) -> list[dict]:
+    """Ranked full-text search when you do not know the exact labels.
+
+    Any word may match; ticket keys and PR references rank first when they are
+    in a record's metadata. `filters` takes the same keys as braingent_find.
+    Check each hit's `class` before relying on it: `do_not_use` is superseded.
+    """
+
+    return mcp_tools.search(query=query, filters=filters, limit=limit)
+
+
+@mcp.tool()
 def braingent_get(path: str, depth: str = "summary") -> dict:
     """Hydrate one Braingent record.
 

@@ -124,6 +124,29 @@ braingent find q="pagination state" --json
 | `--limit <n>` | Limit result count. |
 | `--epic <slug>` | Only records tagged with one epic. Takes a slug or a full `epic--<org>--<slug>` id. |
 
+An unknown filter key is an error (exit 2) that suggests the nearest valid key. A short repository or project name that matches more than one entry is also an error, and lists the candidates. When nothing matches and a filter names an entity with no directory, `find` prints similar names to stderr.
+
+## `braingent search`
+
+Ranked full-text search over titles, identifiers, metadata and bodies. Use it when you do not know a record's exact labels.
+
+```bash
+braingent search "pagination state lost on refresh"
+braingent search EX-123 kind=decision
+braingent search "identity provider" status=accepted --json --limit 5
+```
+
+| Flag / Argument | Description |
+| --- | --- |
+| words | Any word may match; results are ranked. Ticket keys and PR references rank first when they are in a record's metadata. |
+| `key=value` | Narrow the results with the same filters as `find`. |
+| `--json` | Emit JSON with `path`, `title`, `kind`, `status`, `date`, `class`, `reason`, `score` and `snippet`. |
+| `--paths` | Emit only matching paths. |
+| `--limit <n>` | Limit result count (default 10). |
+| `--epic <slug>` | Only records tagged with one epic. |
+
+Each hit carries a `class`: `candidate`, `stale_or_verify`, or `do_not_use` for a superseded, draft, archived or rejected record. Superseded records still appear, ranked lower, so history stays reachable. The search index lives in `.braingent.db` and rebuilds itself when a record is added, edited or removed.
+
 ## `braingent recall`
 
 Build a focused context pack for an agent before planning or implementation.
@@ -305,6 +328,7 @@ Tools:
 
 - `braingent_guide()`
 - `braingent_find(query, limit)`
+- `braingent_search(query, filters, limit)`
 - `braingent_get(path, depth)`
 
 Point your agent's MCP config at `braingent mcp serve --path <memory-repo>`.

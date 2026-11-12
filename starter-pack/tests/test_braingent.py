@@ -110,15 +110,13 @@ Sample.
                 braingent.normalize_filter("repo", "sample"),
             )
 
-    def test_repo_shorthand_does_not_resolve_ambiguous_repository_suffix(self) -> None:
+    def test_repo_shorthand_rejects_an_ambiguous_repository_suffix(self) -> None:
         with tempfile.TemporaryDirectory() as tmp, patch.object(braingent, "REPO_ROOT", Path(tmp)):
             for owner in ("owner-a", "owner-b"):
                 (Path(tmp) / "repositories" / f"repo--github--{owner}--sample").mkdir(parents=True)
 
-            self.assertEqual(
-                ("repositories", "repo--sample"),
-                braingent.normalize_filter("repo", "sample"),
-            )
+            with self.assertRaisesRegex(braingent.FilterError, "owner-a--sample, repo--github--owner-b--sample"):
+                braingent.normalize_filter("repo", "sample")
 
     def test_recall_sort_keeps_priority_then_newer_records(self) -> None:
         old = self.record(

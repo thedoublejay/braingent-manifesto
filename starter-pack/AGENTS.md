@@ -5,7 +5,7 @@ This repository is durable engineering memory. Search before planning. Capture a
 ## Retrieve
 
 1. Call `braingent_guide()` once if MCP is available, or read this file and `CURRENT_STATE.md`.
-2. Search with `braingent find` (structured) or `rg` (free text). Do not open `indexes/records.md` or `indexes/followups.md`.
+2. Search with `braingent find` (structured) or `braingent search "<words>"` (ranked full text; check each hit's `class`). Do not open `indexes/records.md` or `indexes/followups.md`.
 3. Hydrate hits with `braingent_get(path, depth="summary")`. Use `depth="full"` only when exact evidence is required.
 4. `braingent recall` is bounded. If matches are omitted, narrow the filter.
 

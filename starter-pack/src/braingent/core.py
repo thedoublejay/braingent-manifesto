@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import difflib
 import fnmatch
 import hashlib
 import importlib.resources
@@ -1651,6 +1652,8 @@ def write_many_to_link_table(conn: sqlite3.Connection, table: str, path: str, va
 
 
 def write_sqlite_index(records: list[Record], db_path: Path = SQLITE_PATH) -> None:
+    final_path = db_path
+    db_path = final_path.with_name(f"{final_path.name}.tmp-{os.getpid()}")
     if db_path.exists():
         db_path.unlink()
 
@@ -1755,9 +1758,16 @@ def write_sqlite_index(records: list[Record], db_path: Path = SQLITE_PATH) -> No
             ],
         )
 
+        from braingent import search
+
+        search.write_fts(conn, records)
         conn.commit()
-    finally:
+    except BaseException:
         conn.close()
+        db_path.unlink(missing_ok=True)
+        raise
+    conn.close()
+    os.replace(db_path, final_path)
 
 
 def run_dashboard_e2e() -> int:
@@ -1832,6 +1842,48 @@ def print_issues(issues: list[ValidationIssue]) -> None:
         print(f"- {issue.format()}", file=sys.stderr)
 
 
+class FilterError(ValueError):
+    pass
+
+
+FILTER_ALIASES = {
+    "kind": "record_kind",
+    "org": "organization",
+    "repo": "repositories",
+    "repository": "repositories",
+    "person": "people",
+    "topic": "topics",
+    "tool": "tools",
+    "ai": "ai_tools",
+    "ai_tool": "ai_tools",
+    "pr": "prs",
+    "commit": "commits",
+    "q": "text",
+}
+ENTITY_FILTERS = {
+    "organization": ("orgs", "org--"),
+    "people": ("people", "person--"),
+    "topics": ("topics", "topic--"),
+    "tools": ("tools", "tool--"),
+    "repositories": ("repositories", "repo--"),
+}
+
+
+def known_filter_keys() -> set[str]:
+    try:
+        taxonomy = load_taxonomy()
+    except (OSError, ValueError, yaml.YAMLError):
+        return set()
+    fields = set(taxonomy.get("allowed_fields") or [])
+    for extra in (taxonomy.get("kind_allowed_fields") or {}).values():
+        fields.update(extra)
+    return fields | {"text"} if fields else set()
+
+
+def ambiguous_filter(label: str, value: str, candidates: list[str]) -> FilterError:
+    return FilterError(f"{label} `{value}` is ambiguous; use one of: {', '.join(candidates)}")
+
+
 def resolve_project_filter_value(value: str) -> str:
     if not value or value.startswith("project--"):
         return value
@@ -1842,9 +1894,11 @@ def resolve_project_filter_value(value: str) -> str:
         return direct_matches[0].name
 
     suffix = f"project--*--{value}"
-    suffix_matches = sorted((REPO_ROOT / "orgs").glob(f"*/projects/{suffix}"))
+    suffix_matches = sorted({path.name for path in (REPO_ROOT / "orgs").glob(f"*/projects/{suffix}")})
     if len(suffix_matches) == 1:
-        return suffix_matches[0].name
+        return suffix_matches[0]
+    if len(suffix_matches) > 1:
+        raise ambiguous_filter("project", value, suffix_matches)
 
     return direct
 
@@ -1859,29 +1913,23 @@ def resolve_repository_filter_value(value: str) -> str:
         return direct
 
     suffix = f"repo--*--{value}"
-    suffix_matches = sorted((REPO_ROOT / "repositories").glob(suffix))
+    suffix_matches = sorted(path.name for path in (REPO_ROOT / "repositories").glob(suffix))
     if len(suffix_matches) == 1:
-        return suffix_matches[0].name
+        return suffix_matches[0]
+    if len(suffix_matches) > 1:
+        raise ambiguous_filter("repository", value, suffix_matches)
 
     return direct
 
 
 def normalize_filter(key: str, value: str) -> tuple[str, str]:
-    aliases = {
-        "kind": "record_kind",
-        "org": "organization",
-        "repo": "repositories",
-        "repository": "repositories",
-        "person": "people",
-        "topic": "topics",
-        "tool": "tools",
-        "ai": "ai_tools",
-        "ai_tool": "ai_tools",
-        "pr": "prs",
-        "commit": "commits",
-        "q": "text",
-    }
-    key = aliases.get(key, key)
+    requested = key
+    key = FILTER_ALIASES.get(key, key)
+    known = known_filter_keys()
+    if known and key not in known:
+        close = difflib.get_close_matches(requested, sorted(known | set(FILTER_ALIASES)), n=1)
+        hint = f"; did you mean `{close[0]}`?" if close else ""
+        raise FilterError(f"unknown filter `{requested}`{hint} Run `braingent find --help` for examples.")
     if key in {"project", "projects"}:
         return key, resolve_project_filter_value(value)
     if key == "repositories":
@@ -1890,17 +1938,32 @@ def normalize_filter(key: str, value: str) -> tuple[str, str]:
         from braingent import epics
 
         return key, epics.resolve_epic_id(value)
-    prefix_by_key = {
-        "organization": "org--",
-        "people": "person--",
-        "topics": "topic--",
-        "tools": "tool--",
-    }
-    if key in prefix_by_key and value and not value.startswith(prefix_by_key[key]):
-        value = prefix_by_key[key] + value
+    prefix = ENTITY_FILTERS.get(key, ("", ""))[1]
+    if prefix and value and not value.startswith(prefix):
+        value = prefix + value
     if key == "ticket":
         value = value.upper()
     return key, value
+
+
+def unknown_entity_hints(filters: dict[str, list[str]]) -> list[str]:
+    hints: list[str] = []
+    for key, values in filters.items():
+        if key not in ENTITY_FILTERS:
+            continue
+        directory, prefix = ENTITY_FILTERS[key]
+        root = REPO_ROOT / directory
+        if not root.is_dir():
+            continue
+        names = sorted(path.name for path in root.iterdir() if path.is_dir())
+        for value in values:
+            if value in names:
+                continue
+            bare = value.removeprefix(prefix)
+            near = [name for name in names if bare and bare in name] or difflib.get_close_matches(value, names, n=3)
+            suffix = f"; similar: {', '.join(near[:5])}" if near else ""
+            hints.append(f"no {key} entry `{value}`{suffix}")
+    return hints
 
 
 def record_matches(record: Record, filters: dict[str, list[str]]) -> bool:
@@ -1955,6 +2018,9 @@ def run_find(
     matched = [record for record in records if record_matches(record, filters)]
     matched.sort(key=lambda record: (record.date_sort, record.relpath), reverse=True)
 
+    if not matched:
+        for hint in unknown_entity_hints(filters):
+            print(hint, file=sys.stderr)
     if count_only:
         print(len(matched))
         return 0
@@ -2856,6 +2922,16 @@ def cmd_find(args: argparse.Namespace) -> int:
     return run_find(with_epic_filter(args.filters, args.epic), output_json=args.json, paths_only=args.paths, count_only=args.count, limit=args.limit)
 
 
+def cmd_search(args: argparse.Namespace) -> int:
+    from braingent import search
+
+    try:
+        return search.run_search(with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit)
+    except search.SearchUnavailableError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
 def cmd_recall(args: argparse.Namespace) -> int:
     limit = args.limit if args.limit is not None else CONFIG.recall_limit
     stale_days = args.stale_days if args.stale_days is not None else CONFIG.recall_stale_days
@@ -3276,6 +3352,14 @@ def build_parser() -> argparse.ArgumentParser:
     find_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
     find_parser.set_defaults(func=cmd_find)
 
+    search_parser = subparsers.add_parser("search", help="ranked full-text search over records")
+    search_parser.add_argument("terms", nargs="+", help="words to search for, plus optional filters like kind=decision")
+    search_parser.add_argument("--json", action="store_true", help="emit JSON")
+    search_parser.add_argument("--paths", action="store_true", help="emit only paths")
+    search_parser.add_argument("--limit", type=int, default=10, help="maximum results to emit (default 10)")
+    search_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
+    search_parser.set_defaults(func=cmd_search)
+
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
     recall_parser.add_argument("filters", nargs="*", help="filters like repo=github--example--app ticket=EX-123")
     recall_parser.add_argument("--json", action="store_true", help="emit JSON")
@@ -3431,7 +3515,11 @@ def main(argv: list[str] | None = None) -> int:
     standalone_drift = args.command == "config-drift" and args.contracts and args.deployed
     if args.command not in {"init", "update", "qa"} and not standalone_drift and (args.command != "mcp" or args.root):
         set_repo_root(args.root)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except FilterError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":
