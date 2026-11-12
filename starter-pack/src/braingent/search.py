@@ -1,11 +1,14 @@
-"""Ranked full-text search over records, backed by the rebuildable SQLite index."""
+"""Ranked full-text search over records and configured read-only corpora, backed by the rebuildable SQLite index."""
 
 from __future__ import annotations
 
+import fnmatch
 import hashlib
 import json
+import os
 import re
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +20,22 @@ FTS_SCHEMA = (
     "path UNINDEXED, title, ids, meta, body, tokenize='porter unicode61')"
 )
 COLUMN_WEIGHTS = (0.0, 10.0, 8.0, 4.0, 1.0)
+CORPUS_TABLE = "corpus_fts"
+CORPUS_SCHEMA = (
+    f"CREATE VIRTUAL TABLE {CORPUS_TABLE} USING fts5("
+    "corpus UNINDEXED, path UNINDEXED, title, ids, meta, body, tokenize='porter unicode61')"
+)
+CORPUS_DOCS_SCHEMA = (
+    "CREATE TABLE corpus_docs (corpus TEXT NOT NULL, path TEXT NOT NULL, sha256 TEXT NOT NULL, size INTEGER NOT NULL, "
+    "title TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY (corpus, path))"
+)
+CORPUS_WEIGHTS = (0.0, 0.0, 10.0, 8.0, 4.0, 1.0)
+DEFAULT_CORPUS_EXCLUDES = ("**/raw/**", "**/*.bak*")
+PRUNED_DIR_NAMES = frozenset({"node_modules", "site-packages", "__pycache__"})
+CODE_TREE_MARKERS = frozenset({".git", "pyproject.toml", "package.json", "Cargo.toml", "go.mod"})
+RECORDS_CORPUS = "records"
+DATE_PREFIX = re.compile(r"^(\d{4}-\d{2}-\d{2})")
+HEADING = re.compile(r"^#\s+(.+?)\s*$", re.M)
 CANDIDATE_POOL = 200
 DEFAULT_LIMIT = 10
 SUPERSEDED_PENALTY = 0.5
@@ -36,6 +55,21 @@ class SearchUnavailableError(RuntimeError):
     pass
 
 
+@dataclass(frozen=True)
+class CorpusFile:
+    corpus: str
+    root: Path
+    path: Path
+
+    @property
+    def relpath(self) -> str:
+        return self.path.relative_to(self.root).as_posix()
+
+    @property
+    def key(self) -> str:
+        return f"{self.corpus}:{self.relpath}"
+
+
 def fts_row(record: core.Record) -> tuple[str, str, str, str, str]:
     fm = record.frontmatter
     ids = [core.as_scalar(item) for name in ID_FIELDS for item in core.as_list(fm.get(name))]
@@ -43,22 +77,93 @@ def fts_row(record: core.Record) -> tuple[str, str, str, str, str]:
     return (record.relpath, record.title, " ".join([*ids, record.path.stem]), " ".join(meta), record.body)
 
 
+def corpus_roots() -> dict[str, Path]:
+    return {corpus.name: (core.REPO_ROOT / Path(corpus.path).expanduser()).resolve() for corpus in core.CONFIG.search_corpora}
+
+
+def is_excluded(relpath: str, patterns: tuple[str, ...]) -> bool:
+    return any(fnmatch.fnmatch(relpath, pattern) or fnmatch.fnmatch(f"/{relpath}", pattern) for pattern in patterns)
+
+
+def corpus_files() -> list[CorpusFile]:
+    """Markdown files of each configured corpus, minus hidden folders, excludes and oversized files."""
+
+    roots = corpus_roots()
+    found: list[CorpusFile] = []
+    for corpus in core.CONFIG.search_corpora:
+        root = roots[corpus.name]
+        if not root.is_dir():
+            continue
+        patterns = DEFAULT_CORPUS_EXCLUDES + corpus.exclude
+        for directory, dirnames, filenames in os.walk(root):
+            base = Path(directory)
+            if base != root and CODE_TREE_MARKERS.intersection([*dirnames, *filenames]):
+                dirnames[:] = []
+                continue
+            prefix = base.relative_to(root).as_posix()
+            prefix = "" if prefix == "." else f"{prefix}/"
+            dirnames[:] = sorted(
+                name
+                for name in dirnames
+                if not name.startswith(".") and name not in PRUNED_DIR_NAMES
+                and not (base / name).is_symlink() and not is_excluded(f"{prefix}{name}/_", patterns)
+            )
+            for name in sorted(filenames):
+                if not name.endswith(".md") or name.startswith(".") or is_excluded(f"{prefix}{name}", patterns):
+                    continue
+                path = base / name
+                if not path.is_symlink() and path.is_file() and path.stat().st_size <= corpus.max_bytes:
+                    found.append(CorpusFile(corpus.name, root, path))
+    return found
+
+
+def corpus_row(item: CorpusFile) -> tuple[tuple[str, ...], tuple[object, ...]]:
+    raw = item.path.read_bytes()
+    text = raw.decode("utf-8", errors="replace")
+    frontmatter, body, error = core.parse_frontmatter_text(item.path, text)
+    fm = frontmatter if isinstance(frontmatter, dict) and not error else {}
+    body = body if fm else text
+    heading = HEADING.search(body)
+    title = str(fm.get("title") or (heading.group(1) if heading else item.path.stem))
+    found_ids = [match.lower() for match in IDENTIFIER_PATTERN.findall(f"{item.path.stem} {title}")]
+    kind = str(fm.get("type") or "document")
+    status = str(fm.get("status") or "-")
+    date_match = DATE_PREFIX.match(item.path.name)
+    date = str(fm.get("date") or (date_match.group(1) if date_match else "-"))
+    meta = " ".join([item.corpus, kind, status, *(str(fm[key]) for key in ("scope",) if fm.get(key))])
+    fts = (item.corpus, item.relpath, title, " ".join([*found_ids, item.path.stem]), meta, body)
+    doc = (item.corpus, item.relpath, hashlib.sha256(raw).hexdigest(), len(raw), title, kind, status, date)
+    return fts, doc
+
+
 def write_fts(conn: sqlite3.Connection, records: list[core.Record]) -> bool:
     try:
         conn.execute(FTS_SCHEMA)
+        conn.execute(CORPUS_SCHEMA)
     except sqlite3.OperationalError:
         return False
     conn.executemany(f"INSERT INTO {FTS_TABLE} VALUES (?, ?, ?, ?, ?)", [fts_row(record) for record in records])
+    files = corpus_files()
+    rows = [corpus_row(item) for item in files]
+    conn.execute(CORPUS_DOCS_SCHEMA)
+    conn.executemany(f"INSERT INTO {CORPUS_TABLE} VALUES (?, ?, ?, ?, ?, ?)", [fts for fts, _ in rows])
+    conn.executemany("INSERT INTO corpus_docs VALUES (?, ?, ?, ?, ?, ?, ?, ?)", [doc for _, doc in rows])
     conn.execute("CREATE TABLE index_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
-    conn.execute("INSERT INTO index_meta VALUES ('paths_digest', ?)", (paths_digest(record_paths()),))
+    conn.execute("INSERT INTO index_meta VALUES ('paths_digest', ?)", (paths_digest(record_paths(), files),))
     return True
 
 
-def paths_digest(paths: list[Path]) -> str:
-    """Fingerprint of the record file set, so a rename or a delete-plus-add is noticed."""
+def paths_digest(paths: list[Path], files: list[CorpusFile]) -> str:
+    """Fingerprint of the search schema, corpus configuration and indexed file set."""
 
-    names = sorted(path.relative_to(core.REPO_ROOT).as_posix() for path in paths)
-    return hashlib.sha256("\n".join(names).encode("utf-8")).hexdigest()
+    names = sorted([path.relative_to(core.REPO_ROOT).as_posix() for path in paths] + [item.key for item in files])
+    roots = corpus_roots()
+    corpora = [
+        (corpus.name, str(roots[corpus.name]), corpus.exclude, corpus.max_bytes)
+        for corpus in core.CONFIG.search_corpora
+    ]
+    fingerprint = json.dumps({"schema": 2, "corpora": corpora, "paths": names}, sort_keys=True)
+    return hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
 
 
 def record_paths() -> list[Path]:
@@ -72,7 +177,8 @@ def index_is_stale() -> bool:
         return True
     built = db_path.stat().st_mtime
     paths = record_paths()
-    if max((path.stat().st_mtime for path in paths), default=0.0) > built:
+    files = corpus_files()
+    if max((path.stat().st_mtime for path in [*paths, *(item.path for item in files)]), default=0.0) > built:
         return True
     conn = sqlite3.connect(db_path)
     try:
@@ -81,14 +187,17 @@ def index_is_stale() -> bool:
         return True
     finally:
         conn.close()
-    return row is None or row[0] != paths_digest(paths)
+    return row is None or row[0] != paths_digest(paths, files)
 
 
 def ensure_index() -> None:
-    if not index_is_stale():
-        return
-    records, _ = core.load_records(include_parse_errors=False)
-    core.write_sqlite_index(records, core.SQLITE_PATH)
+    try:
+        if not index_is_stale():
+            return
+        records, _ = core.load_records(include_parse_errors=False)
+        core.write_sqlite_index(records, core.SQLITE_PATH)
+    except OSError as exc:
+        raise SearchUnavailableError(f"could not refresh search index: {exc}") from exc
 
 
 def query_terms(query: str) -> list[str]:
@@ -156,10 +265,64 @@ def search(
             "reason": reason,
             "score": round(-score, 3),
             "snippet": " ".join(str(row["snippet"]).split()),
+            "corpus": RECORDS_CORPUS,
         }
         ranked.append((0 if exact else 1, score, record.relpath, hit))
+    if not structured:
+        ranked.extend(corpus_hits(terms, identifiers, limit))
     ranked.sort(key=lambda item: item[:3])
     return [hit for *_, hit in ranked[:limit]]
+
+
+def corpus_hits(terms: list[str], identifiers: list[str], limit: int) -> list[tuple[int, float, str, dict[str, Any]]]:
+    roots = corpus_roots()
+    if not roots:
+        return []
+    conn = sqlite3.connect(core.SQLITE_PATH)
+    try:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute(
+            f"""
+            SELECT {CORPUS_TABLE}.corpus AS corpus, {CORPUS_TABLE}.path AS path, {CORPUS_TABLE}.ids AS ids,
+                   corpus_docs.title AS title, corpus_docs.kind AS kind, corpus_docs.status AS status, corpus_docs.date AS date,
+                   bm25({CORPUS_TABLE}, {", ".join(str(weight) for weight in CORPUS_WEIGHTS)}) AS score,
+                   snippet({CORPUS_TABLE}, 5, '', '', ' … ', 24) AS snippet
+            FROM {CORPUS_TABLE} JOIN corpus_docs
+              ON corpus_docs.corpus = {CORPUS_TABLE}.corpus AND corpus_docs.path = {CORPUS_TABLE}.path
+            WHERE {CORPUS_TABLE} MATCH ?
+            ORDER BY score
+            LIMIT ?
+            """,
+            (match_expression(terms), CANDIDATE_POOL if identifiers else max(limit * 4, 40)),
+        ).fetchall()
+    except sqlite3.OperationalError as exc:
+        raise SearchUnavailableError(f"full-text search is unavailable: {exc}") from exc
+    finally:
+        conn.close()
+    hits: list[tuple[int, float, str, dict[str, Any]]] = []
+    for row in rows:
+        root = roots.get(str(row["corpus"]))
+        file = root / str(row["path"]) if root else None
+        if file is None or file.is_symlink() or not file.is_file():
+            continue
+        ids = f" {str(row['ids']).lower()} "
+        exact = any(f" {identifier} " in ids for identifier in identifiers)
+        path = f"{row['corpus']}/{row['path']}"
+        hit = {
+            "path": path,
+            "title": str(row["title"]),
+            "kind": str(row["kind"]),
+            "status": str(row["status"]),
+            "date": str(row["date"]),
+            "class": "reference",
+            "reason": f"read-only `{row['corpus']}` corpus, not a braingent record",
+            "score": round(-float(row["score"]), 3),
+            "snippet": " ".join(str(row["snippet"]).split()),
+            "corpus": str(row["corpus"]),
+            "file": str(file),
+        }
+        hits.append((0 if exact else 1, float(row["score"]), path, hit))
+    return hits
 
 
 def split_arguments(arguments: list[str]) -> tuple[str, list[str]]:

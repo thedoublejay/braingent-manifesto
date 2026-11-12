@@ -59,6 +59,20 @@ DEFAULT_FACTCHECK_TIER12_DOMAINS: tuple[str, ...] = (
 CONFIG_RELATIVE_PATH = Path(".braingent") / "config.toml"
 
 
+DEFAULT_CORPUS_MAX_BYTES = 262_144
+CORPUS_NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+@dataclass(frozen=True)
+class SearchCorpus:
+    """A read-only Markdown folder searched beside the records, such as a plans repository."""
+
+    name: str
+    path: str
+    exclude: tuple[str, ...] = ()
+    max_bytes: int = DEFAULT_CORPUS_MAX_BYTES
+
+
 @dataclass(frozen=True)
 class BraingentConfig:
     forbid_patterns: tuple[str, ...] = BUILTIN_FORBID_PATTERNS
@@ -78,6 +92,7 @@ class BraingentConfig:
     config_ledger_owners: tuple[str, ...] = ()
     config_drift_contracts: str | None = None
     config_drift_deployed: str | None = None
+    search_corpora: tuple[SearchCorpus, ...] = ()
     issues: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -153,6 +168,35 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
     def domains(key: str) -> list[str]:
         return [domain.strip().lower().removeprefix("www.") for domain in string_list("factcheck", key) if domain.strip()]
 
+    def search_corpora() -> tuple[SearchCorpus, ...]:
+        table = repo.get("search")
+        entries = table.get("corpus", []) if isinstance(table, dict) else []
+        if not isinstance(entries, list):
+            issues.append("[[search.corpus]] must be an array of tables")
+            return ()
+        corpora: dict[str, SearchCorpus] = {}
+        for position, entry in enumerate(entries, start=1):
+            label = f"[[search.corpus]] entry {position}"
+            if not isinstance(entry, dict):
+                issues.append(f"{label} must be a table")
+                continue
+            name, path = entry.get("name"), entry.get("path")
+            exclude = entry.get("exclude", [])
+            max_bytes = entry.get("max_bytes", DEFAULT_CORPUS_MAX_BYTES)
+            if not isinstance(name, str) or not CORPUS_NAME_PATTERN.match(name) or name == "records":
+                issues.append(f"{label}: name must be lowercase kebab-case and not `records`")
+            elif not isinstance(path, str) or not path.strip():
+                issues.append(f"{label}: path must be a non-empty string")
+            elif not isinstance(exclude, list) or not all(isinstance(item, str) for item in exclude):
+                issues.append(f"{label}: exclude must be a list of glob strings")
+            elif not isinstance(max_bytes, int) or isinstance(max_bytes, bool) or max_bytes <= 0:
+                issues.append(f"{label}: max_bytes must be a positive integer")
+            elif name in corpora:
+                issues.append(f"{label}: duplicate corpus name `{name}`")
+            else:
+                corpora[name] = SearchCorpus(name, path.strip(), tuple(exclude), max_bytes)
+        return tuple(corpora.values())
+
     return BraingentConfig(
         forbid_patterns=BUILTIN_FORBID_PATTERNS + tuple(extra_patterns),
         forbid_paths=tuple(string_list("safety", "forbid_paths")),
@@ -171,5 +215,6 @@ def load_config(repo_root: Path, home: Path | None = None) -> BraingentConfig:
         config_ledger_owners=tuple(item.strip() for item in string_list("config_ledger", "owners") if item.strip()),
         config_drift_contracts=nonempty_str("config_drift", "contracts", "") or None,
         config_drift_deployed=nonempty_str("config_drift", "deployed", "") or None,
+        search_corpora=search_corpora(),
         issues=tuple(issues),
     )

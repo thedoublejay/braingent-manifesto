@@ -33,7 +33,9 @@ def braingent_search(query: str, filters: dict | None = None, limit: int = 8) ->
 
     Any word may match; ticket keys and PR references rank first when they are
     in a record's metadata. `filters` takes the same keys as braingent_find.
-    Check each hit's `class` before relying on it: `do_not_use` is superseded.
+    Check each hit's `class` before relying on it: `do_not_use` is superseded,
+    and `reference` is a read-only document from a configured corpus such as
+    plans (open it with its `file` path; braingent_get does not read it).
     """
 
     return mcp_tools.search(query=query, filters=filters, limit=limit)

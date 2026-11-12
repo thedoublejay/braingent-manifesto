@@ -80,6 +80,14 @@ tier12_domains = ["mytrustedjournal.example"]
 timezone = "Asia/Singapore"
 # Spawned tickets or PRs per day before the status block shows a sprawl warning.
 sprawl_threshold = 10
+
+# A read-only Markdown folder searched beside the records. Repeat the table for more.
+# Repo-level config only; the path is relative to the memory root.
+[[search.corpus]]
+name = "plans"
+path = "../plans"
+exclude = ["**/archive/**"]  # optional, added to the defaults
+max_bytes = 262144           # optional; larger files are skipped
 ```
 
 ## What each section does
@@ -96,6 +104,7 @@ sprawl_threshold = 10
 | `[factcheck] slop_domains` / `prwire_domains` / `tier12_domains` | Source-credibility tiers used by `factcheck`. Additive to the built-in defaults. |
 | `[daily] timezone` | IANA timezone for daily log dates and event times. Defaults to the machine's local zone. |
 | `[daily] sprawl_threshold` | Spawned items per day before `daily-status` raises the sprawl warning. Default 10. |
+| `[[search.corpus]]` | A read-only Markdown folder that `search` and `braingent_search` include, labelled with its `name`. Hidden folders, `raw/`, backup copies, `node_modules`, `site-packages`, folders holding a code project (`.git`, `pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`) and files over `max_bytes` are skipped. Repo-level config only. |
 
 The built-in `[safety]` patterns are always active even with no config file, so
 `doctor` flags common secret formats out of the box.
