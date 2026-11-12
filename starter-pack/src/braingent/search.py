@@ -30,7 +30,7 @@ CORPUS_DOCS_SCHEMA = (
     "title TEXT NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL, date TEXT NOT NULL, PRIMARY KEY (corpus, path))"
 )
 CORPUS_WEIGHTS = (0.0, 0.0, 10.0, 8.0, 4.0, 1.0)
-DEFAULT_CORPUS_EXCLUDES = ("**/raw/**", "**/*backup*", "**/*.bak*")
+DEFAULT_CORPUS_EXCLUDES = ("**/raw/**", "**/*.bak*")
 PRUNED_DIR_NAMES = frozenset({"node_modules", "site-packages", "__pycache__"})
 CODE_TREE_MARKERS = frozenset({".git", "pyproject.toml", "package.json", "Cargo.toml", "go.mod"})
 RECORDS_CORPUS = "records"
@@ -105,13 +105,14 @@ def corpus_files() -> list[CorpusFile]:
             dirnames[:] = sorted(
                 name
                 for name in dirnames
-                if not name.startswith(".") and name not in PRUNED_DIR_NAMES and not is_excluded(f"{prefix}{name}/_", patterns)
+                if not name.startswith(".") and name not in PRUNED_DIR_NAMES
+                and not (base / name).is_symlink() and not is_excluded(f"{prefix}{name}/_", patterns)
             )
             for name in sorted(filenames):
                 if not name.endswith(".md") or name.startswith(".") or is_excluded(f"{prefix}{name}", patterns):
                     continue
                 path = base / name
-                if path.is_file() and path.stat().st_size <= corpus.max_bytes:
+                if not path.is_symlink() and path.is_file() and path.stat().st_size <= corpus.max_bytes:
                     found.append(CorpusFile(corpus.name, root, path))
     return found
 
@@ -153,10 +154,16 @@ def write_fts(conn: sqlite3.Connection, records: list[core.Record]) -> bool:
 
 
 def paths_digest(paths: list[Path], files: list[CorpusFile]) -> str:
-    """Fingerprint of the indexed file set, so a rename or a delete-plus-add is noticed."""
+    """Fingerprint of the search schema, corpus configuration and indexed file set."""
 
     names = sorted([path.relative_to(core.REPO_ROOT).as_posix() for path in paths] + [item.key for item in files])
-    return hashlib.sha256("\n".join(names).encode("utf-8")).hexdigest()
+    roots = corpus_roots()
+    corpora = [
+        (corpus.name, str(roots[corpus.name]), corpus.exclude, corpus.max_bytes)
+        for corpus in core.CONFIG.search_corpora
+    ]
+    fingerprint = json.dumps({"schema": 2, "corpora": corpora, "paths": names}, sort_keys=True)
+    return hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
 
 
 def record_paths() -> list[Path]:
@@ -184,10 +191,13 @@ def index_is_stale() -> bool:
 
 
 def ensure_index() -> None:
-    if not index_is_stale():
-        return
-    records, _ = core.load_records(include_parse_errors=False)
-    core.write_sqlite_index(records, core.SQLITE_PATH)
+    try:
+        if not index_is_stale():
+            return
+        records, _ = core.load_records(include_parse_errors=False)
+        core.write_sqlite_index(records, core.SQLITE_PATH)
+    except OSError as exc:
+        raise SearchUnavailableError(f"could not refresh search index: {exc}") from exc
 
 
 def query_terms(query: str) -> list[str]:
@@ -293,7 +303,7 @@ def corpus_hits(terms: list[str], identifiers: list[str], limit: int) -> list[tu
     for row in rows:
         root = roots.get(str(row["corpus"]))
         file = root / str(row["path"]) if root else None
-        if file is None or not file.is_file():
+        if file is None or file.is_symlink() or not file.is_file():
             continue
         ids = f" {str(row['ids']).lower()} "
         exact = any(f" {identifier} " in ids for identifier in identifiers)

@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+import contextlib
+import hashlib
+import io
+import os
 import shutil
+import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from braingent import config, core, mcp_tools, search
 
@@ -60,7 +66,7 @@ class CorpusTestCase(unittest.TestCase):
         self.doc("acme/raw/2026-11-02--walrus-dump.md", "# Raw walrus dump\n\nwalrus walrus walrus\n")
         self.doc("acme/archive/2026-01-01--old-walrus.md", "# Old walrus\n\nwalrus\n")
         self.doc("acme/2026-11-03--walrus.md.bak-1", "# Backup walrus\n\nwalrus\n")
-        self.doc("acme/2026-11-04--walrus-backup.md", "# Backup copy\n\nwalrus\n")
+        self.doc("acme/2026-11-04--walrus.bak-copy.md", "# Backup copy\n\nwalrus\n")
         self.doc("acme/2026-11-05--huge-walrus.md", "# Huge\n\n" + "walrus " * 500)
         self.doc(".hidden/2026-11-06--walrus.md", "# Hidden\n\nwalrus\n")
         self.doc("acme/review/1490-source/docs/walrus-checkout.md", "# Checkout\n\nwalrus\n")
@@ -146,6 +152,60 @@ class CorpusSearchTests(CorpusTestCase):
         self.seed()
         shutil.rmtree(self.plans)
         self.assertEqual({hit["corpus"] for hit in search.search("walrus")}, {"records"})
+
+    def test_symlinked_files_and_directories_are_not_indexed(self) -> None:
+        self.seed()
+        outside = self.root.parent / "outside.md"
+        outside.write_text("# Private\n\nuniqueprivatewalrus\n", encoding="utf-8")
+        (self.plans / "linked.md").symlink_to(outside)
+        (self.plans / "linked-directory").symlink_to(self.records, target_is_directory=True)
+        self.assertEqual(search.search("uniqueprivatewalrus"), [])
+        self.assertFalse(any("linked" in item.relpath for item in search.corpus_files()))
+
+    def test_changing_corpus_root_invalidates_cached_content(self) -> None:
+        self.seed()
+        other = self.root.parent / "otherplans"
+        shutil.copytree(self.plans, other)
+        document = other / "acme/plan/2026-11-01--walrus-rollout.md"
+        document.write_text("# Replacement\n\nnewcorpuscontent\n", encoding="utf-8")
+        os.utime(document, (1, 1))
+        search.search("rollout")
+        config_path = self.root / ".braingent" / "config.toml"
+        config_path.write_text(CORPUS_CONFIG.replace("../plans", "../otherplans"), encoding="utf-8")
+        core.set_repo_root(self.root)
+        self.assertEqual(search.search("rollout")[0]["title"], "Replacement")
+        hits = search.search("newcorpuscontent")
+        self.assertEqual(len(hits), 1)
+        self.assertEqual(Path(hits[0]["file"]), document)
+
+    def test_version_1_6_index_is_rebuilt_for_an_empty_corpus(self) -> None:
+        self.seed()
+        shutil.rmtree(self.plans)
+        search.search("walrus")
+        legacy_names = sorted(path.relative_to(self.root).as_posix() for path in search.record_paths())
+        legacy_digest = hashlib.sha256("\n".join(legacy_names).encode("utf-8")).hexdigest()
+        with contextlib.closing(sqlite3.connect(core.SQLITE_PATH)) as conn, conn:
+            conn.execute("DROP TABLE corpus_fts")
+            conn.execute("DROP TABLE corpus_docs")
+            conn.execute("UPDATE index_meta SET value = ? WHERE key = 'paths_digest'", (legacy_digest,))
+        self.assertEqual({hit["corpus"] for hit in search.search("walrus")}, {"records"})
+
+    def test_unreadable_corpus_file_raises_a_search_error(self) -> None:
+        self.seed()
+        out, err = io.StringIO(), io.StringIO()
+        with (
+            patch.object(Path, "read_bytes", side_effect=PermissionError("corpus file is unreadable")),
+            contextlib.redirect_stdout(out),
+            contextlib.redirect_stderr(err),
+        ):
+            code = core.main(["--root", str(self.root), "search", "walrus"])
+        self.assertEqual((code, out.getvalue()), (2, ""))
+        self.assertEqual(err.getvalue().strip(), "error: could not refresh search index: corpus file is unreadable")
+
+    def test_documents_about_backups_are_searchable(self) -> None:
+        self.seed()
+        self.doc("acme/2026-11-12--database-backup-plan.md", "# Database backup plan\n\nnightlysnapshotrecovery\n")
+        self.assertEqual(len(search.search("nightlysnapshotrecovery")), 1)
 
     def test_document_hashes_are_stored(self) -> None:
         self.seed()
