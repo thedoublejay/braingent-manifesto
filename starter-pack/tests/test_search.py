@@ -185,5 +185,61 @@ class SearchTests(SearchTestCase):
             mcp_tools.search("   ")
 
 
+class KeywordAndRewordingTests(SearchTestCase):
+    def seed(self) -> None:
+        self.write(
+            "2026-09-16--decision--identity-moves-to-vendor-b.md", "Identity adapter moves to Vendor B",
+            "We replace Vendor A. Residency reasoning was wrong.", kind="decision", status="accepted",
+            extra="keywords: [login provider, single sign-on]\n",
+        )
+        self.write("2026-10-01--learning--pool-timeouts.md", "Connection pool timeouts under burst", "The pool was exhausted by a login storm.")
+        self.write("2026-10-02--task--unrelated.md", "Rotate the widget", "Nothing relevant here.", kind="task", status="completed")
+
+    def test_keywords_field_is_valid_and_must_be_a_list(self) -> None:
+        self.seed()
+        self.assertEqual([issue.message for issue in core.validate() if "keywords" in issue.message], [])
+        self.write("2026-10-03--learning--bad.md", "Bad", "Body.", extra="keywords: one string\n")
+        self.assertTrue(any("keywords" in issue.message and "list" in issue.message for issue in core.validate()))
+
+    def test_a_keyword_finds_a_record_whose_text_never_uses_the_word(self) -> None:
+        self.seed()
+        names = [Path(hit["path"]).name for hit in search.search("single sign-on")]
+        self.assertEqual(names, ["2026-09-16--decision--identity-moves-to-vendor-b.md"])
+
+    def test_a_keyword_outranks_a_body_mention(self) -> None:
+        self.seed()
+        names = [Path(hit["path"]).name for hit in search.search("login")]
+        self.assertEqual(names[0], "2026-09-16--decision--identity-moves-to-vendor-b.md")
+        self.assertIn("2026-10-01--learning--pool-timeouts.md", names)
+
+    def test_rewordings_merge_into_one_ranked_list(self) -> None:
+        self.seed()
+        self.assertEqual(search.search("who do users authenticate with"), [])
+        merged = search.search_fused(["who do users authenticate with", "identity adapter", "widget rotation"], limit=5)
+        names = [Path(hit["path"]).name for hit in merged]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(set(names), {"2026-09-16--decision--identity-moves-to-vendor-b.md", "2026-10-02--task--unrelated.md"})
+        self.assertEqual(search.search_fused(["identity adapter"]), search.search("identity adapter"))
+
+    def test_also_reaches_the_cli_and_mcp(self) -> None:
+        self.seed()
+        code, out, _ = self.run_cli("search", "who do users authenticate with", "--also", "identity adapter", "--paths")
+        self.assertEqual((code, out.strip()), (0, "orgs/org--acme/records/2026-09-16--decision--identity-moves-to-vendor-b.md"))
+        hits = mcp_tools.search("who do users authenticate with", also=["identity adapter"])
+        self.assertEqual(len(hits), 1)
+
+    def test_an_index_built_before_the_keywords_column_is_rebuilt(self) -> None:
+        self.seed()
+        search.search("pool")
+        import sqlite3
+
+        conn = sqlite3.connect(core.SQLITE_PATH)
+        conn.execute("UPDATE index_meta SET value = 'old-schema' WHERE key = 'paths_digest'")
+        conn.commit()
+        conn.close()
+        self.assertTrue(search.index_is_stale())
+        self.assertTrue(search.search("single sign-on"))
+
+
 if __name__ == "__main__":
     unittest.main()

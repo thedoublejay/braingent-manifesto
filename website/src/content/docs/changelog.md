@@ -12,6 +12,11 @@ migrations.
 
 ## Latest
 
+### `12 November 2026`: `1.8.0`
+
+- **`keywords` field.** A record may carry `keywords: [...]`: other words someone would search by, such as the everyday name for an internal term. Search indexes them above body text. Do not repeat words already in the title. The decision and learning templates include the field; add it to `allowed_fields` and `list_fields` in your own `preferences/taxonomy.yml` when you upgrade.
+- **Merged rewordings.** `braingent search "<question>" --also "<another wording>"` (repeatable), and `also` on `braingent_search`, run each wording and merge the results into one ranked list by reciprocal rank. Use it when a question may share no words with its record.
+- The search index gains a column, so `.braingent.db` rebuilds itself on the first search after the upgrade.
 ### `12 November 2026`: `1.7.1`
 
 - **Equal-status config entries preserve page edits.** When a page and PR have the same status, the page's conflicting field values win, including `dormant` and `not-needed`. Missing fields are still filled from the PR. Distinct statuses retain their existing precedence.

@@ -12,6 +12,7 @@ supersedes: null
 superseded_by: null
 topics: []
 tools: []
+keywords: []           # other words someone would search by; not words already in the title
 ---
 
 # Decision Record: <title>

@@ -144,10 +144,13 @@ braingent search "identity provider" status=accepted --json --limit 5
 | `--paths` | Emit only matching paths. |
 | `--limit <n>` | Limit result count (default 10). |
 | `--epic <slug>` | Only records tagged with one epic. |
+| `--also "<wording>"` | Another wording of the same question. Repeatable; results are merged into one ranked list. |
 
 Each hit carries a `class`: `candidate`, `stale_or_verify`, or `do_not_use` for a superseded, draft, archived or rejected record. Superseded records still appear, ranked lower, so history stays reachable. The search index lives in `.braingent.db` and rebuilds itself when a record is added, edited, renamed or removed.
 
 Folders configured as `[[search.corpus]]` (see Configuration), such as a plans repository, are searched too when no `key=value` filter is given. Their hits carry `corpus: <name>`, `class: reference` and the file's absolute path in `file`. They are read-only reference material, never records: `find`, `recall` and `braingent_get` do not see them, and a deleted file never appears as a hit.
+
+A record can carry `keywords: [...]` in its frontmatter: other words someone would search by. They rank above body text.
 
 ## `braingent recall`
 

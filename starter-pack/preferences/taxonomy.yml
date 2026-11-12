@@ -65,6 +65,7 @@ allowed_fields:
   - epic
   - id
   - import_scope
+  - keywords
   - last_checked
   - last_revalidated
   - last_reviewed
@@ -133,6 +134,7 @@ list_fields:
   - commits
   - depends_on
   - epic
+  - keywords
   - observers
   - people
   - primary_languages

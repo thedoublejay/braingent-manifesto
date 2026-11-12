@@ -10,6 +10,7 @@ project: <project-key-or-null>
 repositories: []
 last_revalidated: <yyyy-mm-dd>
 tools: []
+keywords: []           # other words someone would search by; not words already in the title
 ---
 
 # Learning Record: <title>

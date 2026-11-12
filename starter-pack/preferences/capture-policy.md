@@ -63,6 +63,10 @@ epic: []
 Live `agent-task` files use a different frontmatter shape. See
 `preferences/agent-task-protocol.md` and `templates/agent-task.md`.
 
+## Keywords
+
+On decisions and learnings, add `keywords: [...]` when a reader would likely look for the record with words it does not use: the everyday name for an internal term, the symptom rather than the cause, or the question it settles. Leave out words already in the title. Three to six is enough.
+
 ## Capture Triggers
 
 Always capture when:

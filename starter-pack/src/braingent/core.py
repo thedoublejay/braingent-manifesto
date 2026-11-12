@@ -2926,7 +2926,9 @@ def cmd_search(args: argparse.Namespace) -> int:
     from braingent import search
 
     try:
-        return search.run_search(with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit)
+        return search.run_search(
+            with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit, also=args.also
+        )
     except search.SearchUnavailableError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -3358,6 +3360,7 @@ def build_parser() -> argparse.ArgumentParser:
     search_parser.add_argument("--paths", action="store_true", help="emit only paths")
     search_parser.add_argument("--limit", type=int, default=10, help="maximum results to emit (default 10)")
     search_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
+    search_parser.add_argument("--also", action="append", help="another wording of the same question; repeatable, results are merged")
     search_parser.set_defaults(func=cmd_search)
 
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
