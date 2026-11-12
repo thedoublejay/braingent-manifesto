@@ -172,7 +172,9 @@ def merge_pair(existing: ConfigItem, incoming: ConfigItem) -> ConfigItem:
 
     existing_terminal = existing.status in TERMINAL_STATUSES
     incoming_terminal = incoming.status in TERMINAL_STATUSES
-    if existing_terminal and incoming_terminal:
+    if incoming.status == existing.status:
+        winner, other = existing, incoming
+    elif existing_terminal and incoming_terminal:
         winner, other = incoming, existing
     elif incoming_terminal:
         winner, other = (incoming, existing) if existing.status == "pending" else (existing, incoming)
