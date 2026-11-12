@@ -2919,26 +2919,42 @@ def warning_counts(warnings: list[ValidationIssue]) -> dict[str, dict[str, int]]
     return counts
 
 
-def load_validation_baseline() -> dict[str, dict[str, int]] | None:
+def warning_identity(issue: ValidationIssue) -> str:
+    value = json.dumps([issue_relpath(issue), issue.code, issue.message], ensure_ascii=False)
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def warning_identities(warnings: list[ValidationIssue]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for issue in warnings:
+        key = warning_identity(issue)
+        counts[key] = counts.get(key, 0) + 1
+    return counts
+
+
+def load_validation_baseline() -> dict[str, int] | None:
     path = REPO_ROOT / VALIDATION_BASELINE_PATH
     if not path.is_file():
         return None
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        return {str(code): {str(rel): int(count) for rel, count in paths.items()} for code, paths in payload["warnings"].items()}
-    except (ValueError, KeyError, AttributeError, TypeError) as exc:
+        if payload.get("version") != 1:
+            raise ValueError("unsupported version; regenerate with --update-baseline")
+        return {str(identity): int(count) for identity, count in payload.get("identities", {}).items()}
+    except (OSError, ValueError, KeyError, AttributeError, TypeError) as exc:
         raise SystemExit(f"{VALIDATION_BASELINE_PATH} is not a valid baseline: {exc}") from exc
 
 
-def new_warnings(warnings: list[ValidationIssue], baseline: dict[str, dict[str, int]]) -> list[ValidationIssue]:
-    """Warnings beyond the baselined count for their class and file."""
+def new_warnings(warnings: list[ValidationIssue], baseline: dict[str, int]) -> list[ValidationIssue]:
+    """Warnings whose identity or multiplicity was not baselined."""
 
-    allowance = {code: dict(paths) for code, paths in baseline.items()}
+    allowance = dict(baseline)
     fresh: list[ValidationIssue] = []
     for issue in warnings:
-        remaining = allowance.get(issue.code, {}).get(issue_relpath(issue), 0)
+        key = warning_identity(issue)
+        remaining = allowance.get(key, 0)
         if remaining > 0:
-            allowance[issue.code][issue_relpath(issue)] = remaining - 1
+            allowance[key] = remaining - 1
         else:
             fresh.append(issue)
     return fresh
@@ -2969,7 +2985,12 @@ def cmd_validate(args: argparse.Namespace) -> int:
             raise SystemExit("--update-baseline covers the whole repo; run it without paths")
         path = REPO_ROOT / VALIDATION_BASELINE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"version": 1, "warnings": warning_counts(warnings)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        from braingent import capture
+
+        payload = {"version": 1, "warnings": warning_counts(warnings), "identities": warning_identities(warnings)}
+        if path.exists():
+            capture.backup_file(path)
+        capture.replace_bytes(path, (json.dumps(payload, indent=2, sort_keys=True) + "\n").encode("utf-8"))
         print(f"Wrote {VALIDATION_BASELINE_PATH} with {len(warnings)} warnings.")
     baseline = None if args.verbose else load_validation_baseline()
     if warnings and baseline is not None:
@@ -3407,6 +3428,13 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def positive_limit(value: str) -> int:
+    result = int(value)
+    if result < 1:
+        raise argparse.ArgumentTypeError("limit must be greater than zero")
+    return result
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Braingent metadata helper")
     parser.add_argument("--version", action="version", version=f"braingent {__version__}")
@@ -3577,13 +3605,13 @@ def build_parser() -> argparse.ArgumentParser:
     reconcile_parser = subparsers.add_parser("daily-reconcile", help="check open daily items against their pull requests")
     reconcile_parser.add_argument("--apply", action="store_true", help="log `merged` for items whose pull request has merged; they stay open")
     reconcile_parser.add_argument("--owner", action="append", help="GitHub owner for refs written as repo#n; repeatable (config [config_ledger] owners)")
-    reconcile_parser.add_argument("--limit", type=int, default=50, help="most pull requests to look up (default 50)")
+    reconcile_parser.add_argument("--limit", type=positive_limit, default=50, help="most pull requests to look up (default 50)")
     reconcile_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today in [daily] timezone")
     reconcile_parser.add_argument("--json", action="store_true", help="emit JSON")
     reconcile_parser.set_defaults(func=cmd_daily_reconcile)
 
     dream_parser = subparsers.add_parser("dream", help="list consolidation proposals without changing any record")
-    dream_parser.add_argument("--limit", type=int, default=20, help="most proposals to show (default 20)")
+    dream_parser.add_argument("--limit", type=positive_limit, default=20, help="most proposals to show (default 20)")
     dream_parser.add_argument("--json", action="store_true", help="emit JSON")
     dream_parser.add_argument("--apply", nargs="+", metavar="ID", help="apply the frontmatter change of these proposals")
     dream_parser.add_argument("--reject", nargs="+", metavar="ID", help="never propose these again")

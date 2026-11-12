@@ -102,9 +102,11 @@ def priority_epics(root: Path, day: date) -> set[str]:
     """Epics tagged on this week's unticked priorities, read without creating the week file."""
 
     path = week_path(root, day)
-    if not path.is_file():
-        return set()
-    items = parse_items(path.read_text(encoding="utf-8"), "priorities")
+    if path.is_file():
+        with daily.locked(path) as handle:
+            items = parse_items(handle.read(), "priorities")
+    else:
+        items = carried_items(root, day).get("priorities", [])
     return {epic for item in items if item.done is not True for epic in epics_of(item.text)}
 
 
@@ -261,11 +263,12 @@ def add_to_section(text: str, section: str, item: Item) -> str:
 
 def update_week(root: Path, day: date, tz: tzinfo, section: str | None = None, entry: str | None = None) -> Path:
     path = week_path(root, day)
+    summary = progress(root, day)
     with daily.locked(path) as handle:
         text = handle.read() or new_week(root, day, tz)
         if section is not None and entry is not None:
             text = add_to_section(text, section, Item(entry, None if section == "not-this-week" else False))
-        daily.rewrite(handle, with_progress(text, render_progress(progress(root, day), parse_items(text, "priorities"))))
+        daily.rewrite(handle, with_progress(text, render_progress(summary, parse_items(text, "priorities"))))
     return path
 
 

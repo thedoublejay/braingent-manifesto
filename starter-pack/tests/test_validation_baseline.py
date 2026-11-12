@@ -94,6 +94,14 @@ class ValidationBaselineTests(unittest.TestCase):
         code, _, _ = self.run_cli("validate")
         self.assertEqual(code, 1)
 
+    def test_replacing_a_warning_in_the_same_file_is_reported_as_new(self) -> None:
+        self.write("2026-10-07--note--a.md", "mystery: 1\n")
+        self.run_cli("validate", "--update-baseline")
+        self.write("2026-10-07--note--a.md", "another: 2\n")
+        _, _, err = self.run_cli("validate")
+        self.assertIn("1 new since the baseline", err)
+        self.assertIn("unknown frontmatter field `another`", err)
+
 
 if __name__ == "__main__":
     unittest.main()

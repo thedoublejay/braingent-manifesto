@@ -37,12 +37,19 @@ def pr_state(ref: str, owners: list[str], runner: Callable[[list[str]], str]) ->
         return "unknown", "not a pull request reference"
     owner, repo, number = match.groups()
     last_error = "no owner configured; set [config_ledger] owners or use owner/repo#n"
-    for candidate in [owner] if owner else owners:
+    matches: list[tuple[str, str]] = []
+    for candidate in [owner] if owner else dict.fromkeys(owners):
         try:
             payload = json.loads(runner(["pr", "view", number, "--repo", f"{candidate}/{repo}", "--json", "state,url"]))
-            return str(payload["state"]).lower(), str(payload.get("url") or "")
-        except (RuntimeError, ValueError, KeyError) as exc:
+            if not isinstance(payload, dict) or payload.get("state") not in {"OPEN", "CLOSED", "MERGED"}:
+                raise ValueError("invalid pull request state response")
+            matches.append((str(payload["state"]).lower(), str(payload.get("url") or "")))
+        except (RuntimeError, ValueError, KeyError, OSError) as exc:
             last_error = str(exc).splitlines()[0] if str(exc) else type(exc).__name__
+    if len(matches) > 1:
+        return "unknown", "ambiguous owner; use owner/repo#n"
+    if matches:
+        return matches[0]
     return "unknown", last_error
 
 
@@ -60,20 +67,28 @@ def run(
     runner: Callable[[list[str]], str] | None = None,
     now: datetime | None = None,
 ) -> int:
+    if limit < 1:
+        raise ValueError("limit must be greater than zero")
     runner = runner or default_runner
-    path = daily.refresh(root, day, sprawl_threshold, tz, stale_after_days)
-    status = daily.derive_status(daily.parse_events(path.read_text(encoding="utf-8")))
+    path = daily.day_path(root, day)
+    if apply:
+        daily.refresh(root, day, sprawl_threshold, tz, stale_after_days)
+    events = daily.parse_events(path.read_text(encoding="utf-8")) if path.is_file() else daily.carried_events(
+        root, day, stale_after_days, persist_stale=False
+    )
+    status = daily.derive_status(events)
+    snapshot = {event.key: event for event in events}
     candidates = [event for name in OPEN_BUCKETS for event in status.buckets[name] if event.ref and PR_REF.match(event.ref)]
     results: list[dict[str, Any]] = []
     for event in candidates[:limit]:
         state, detail = pr_state(event.ref or "", owners, runner)
         logged = False
         if state == "merged" and apply:
-            daily.log_event(
-                root, "merged", event.text, actor=ACTOR, ref=event.ref, epic=event.epic, now=now, tz=tz,
-                sprawl_threshold=sprawl_threshold, stale_after_days=stale_after_days,
+            moment = (now or datetime.now(tz)).astimezone(tz)
+            replacement = daily.Event(moment.strftime("%H:%M"), ACTOR, "merged", event.ref, event.text, event.epic)
+            logged = daily.log_if_current(
+                root, day, snapshot[event.key], replacement, tz, sprawl_threshold=sprawl_threshold, stale_after_days=stale_after_days,
             )
-            logged = True
         results.append({"ref": event.ref, "was": event.kind, "state": state, "detail": detail, "logged": logged})
     summary = {
         "checked": len(results),

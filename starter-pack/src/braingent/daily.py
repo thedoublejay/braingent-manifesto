@@ -272,28 +272,37 @@ def stale_path(root: Path) -> Path:
     return root / DAILY_DIR / STALE_FILE
 
 
-def read_stale(root: Path) -> list[tuple[str, Event]]:
-    path = stale_path(root)
-    if not path.is_file():
-        return []
+def parse_stale(text: str) -> list[tuple[str, Event]]:
     entries: list[tuple[str, Event]] = []
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         if match := STALE_PATTERN.match(line):
             since, kind, ref, epic, body = match.groups()
             entries.append((since, Event("00:00", CARRY_ACTOR, kind, None if ref == "-" else ref, body, epic)))
     return entries
 
 
-def write_stale(root: Path, entries: list[tuple[str, Event]]) -> None:
+def read_stale(root: Path) -> list[tuple[str, Event]]:
     path = stale_path(root)
-    if not entries and not path.exists():
-        return
+    if not path.is_file():
+        return []
+    with locked(path) as handle:
+        return parse_stale(handle.read())
+
+
+def stale_text(entries: list[tuple[str, Event]]) -> str:
     lines = [
         f"- {since} · {event.kind} · {event.ref or '-'}{' · epic:' + event.epic if event.epic else ''} · {event.text}"
         for since, event in sorted(entries, key=lambda pair: (pair[0], pair[1].key))
     ]
+    return STALE_HEADER + "\n".join(lines) + ("\n" if lines else "")
+
+
+def write_stale(root: Path, entries: list[tuple[str, Event]]) -> None:
+    path = stale_path(root)
+    if not entries and not path.exists():
+        return
     with locked(path) as handle:
-        rewrite(handle, STALE_HEADER + "\n".join(lines) + ("\n" if lines else ""))
+        rewrite(handle, stale_text(entries))
 
 
 def recently_touched(root: Path, day: date, window_days: int) -> set[str]:
@@ -306,35 +315,50 @@ def recently_touched(root: Path, day: date, window_days: int) -> set[str]:
     earliest = (day - timedelta(days=window_days)).isoformat()
     for path in directory.iterdir():
         if DAY_FILE_PATTERN.match(path.name) and earliest <= path.stem < day.isoformat():
-            touched.update(event.key for event in parse_events(path.read_text(encoding="utf-8")) if event.actor != CARRY_ACTOR)
+            with locked(path) as handle:
+                touched.update(event.key for event in parse_events(handle.read()) if event.actor != CARRY_ACTOR)
     return touched
 
 
-def carried_events(root: Path, day: date, stale_after_days: int = 0) -> list[Event]:
+def carry_event(event: Event) -> Event:
+    return Event("00:00", CARRY_ACTOR, "todo" if event.kind == "spawned" else event.kind, event.ref, event.text, event.epic)
+
+
+def carried_events(root: Path, day: date, stale_after_days: int = 0, *, persist_stale: bool = True) -> list[Event]:
     source = previous_day_file(root, day)
-    if source is None:
-        return []
-    with locked(source) as handle:
-        status = derive_status(parse_events(handle.read()))
-    unfinished = [event for name in UNFINISHED for event in status.buckets[name]]
+    unfinished: list[Event] = []
+    if source is not None:
+        with locked(source) as handle:
+            status = derive_status(parse_events(handle.read()))
+        unfinished = [event for name in UNFINISHED for event in status.buckets[name]]
     if stale_after_days > 0:
         touched = recently_touched(root, day, stale_after_days)
         pinned = pinned_epics(root, day)
-        stale = {key: (since, event) for since, event in read_stale(root) for key in [event.key] if key not in touched}
-        keep: list[Event] = []
-        for event in unfinished:
-            fresh = event.key in touched or BUCKET_OF[event.kind] in NEVER_STALE or (event.epic in pinned if event.epic else False)
-            if fresh:
-                stale.pop(event.key, None)
-                keep.append(event)
-            else:
-                stale.setdefault(event.key, (day.isoformat(), event))
-        write_stale(root, list(stale.values()))
-        unfinished = keep
-    return [
-        Event("00:00", CARRY_ACTOR, "todo" if event.kind == "spawned" else event.kind, event.ref, event.text, event.epic)
-        for event in unfinished
-    ]
+
+        def partition(entries: list[tuple[str, Event]]) -> tuple[list[Event], list[tuple[str, Event]]]:
+            stale = {event.key: (since, event) for since, event in entries}
+            keep: list[Event] = []
+            known = {event.key for event in unfinished}
+            for event in unfinished:
+                fresh = event.key in touched or BUCKET_OF[event.kind] in NEVER_STALE or event.epic in pinned
+                if fresh:
+                    stale.pop(event.key, None)
+                    keep.append(event)
+                else:
+                    stale.setdefault(event.key, (day.isoformat(), event))
+            for key, (_, event) in list(stale.items()):
+                if key not in known and event.epic in pinned:
+                    keep.append(event)
+                    del stale[key]
+            return keep, list(stale.values())
+
+        if persist_stale:
+            with locked(stale_path(root)) as handle:
+                unfinished, entries = partition(parse_stale(handle.read()))
+                rewrite(handle, stale_text(entries))
+        else:
+            unfinished, _ = partition(read_stale(root))
+    return [carry_event(event) for event in unfinished]
 
 
 def new_day(root: Path, day: date, tz: tzinfo, stale_after_days: int = 0) -> str:
@@ -353,7 +377,8 @@ def new_day(root: Path, day: date, tz: tzinfo, stale_after_days: int = 0) -> str
 @contextlib.contextmanager
 def locked(path: Path) -> Iterator[IO[str]]:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch(exist_ok=True)
+    if not path.exists():
+        path.touch(exist_ok=True)
     with path.open("r+", encoding="utf-8", newline="") as handle:
         if fcntl is not None:
             fcntl.flock(handle, fcntl.LOCK_EX)
@@ -384,17 +409,57 @@ def update_day(
     path = day_path(root, day)
     with locked(path) as handle:
         text = handle.read() or new_day(root, day, tz, stale_after_days)
-        if event is not None:
-            section = LOG_PATTERN.search(text)
-            if section is None:
-                text += f"\n\n{LOG_HEADING}\n\n"
-                section = LOG_PATTERN.search(text)
-            assert section is not None
-            end = section.end()
-            separator = "" if text[:end].endswith("\n") else "\n"
-            text = f"{text[:end]}{separator}{event.line()}\n{text[end:]}"
-        rewrite(handle, with_status(text, sprawl_threshold, len(read_stale(root)), pinned_epics(root, day)))
+        rewrite_day(root, day, handle, text, sprawl_threshold, event)
     return path
+
+
+def append_event(text: str, event: Event) -> str:
+    section = LOG_PATTERN.search(text)
+    if section is None:
+        text += f"\n\n{LOG_HEADING}\n\n"
+        section = LOG_PATTERN.search(text)
+    assert section is not None
+    end = section.end()
+    separator = "" if text[:end].endswith("\n") else "\n"
+    return f"{text[:end]}{separator}{event.line()}\n{text[end:]}"
+
+
+def rewrite_day(root: Path, day: date, handle: IO[str], text: str, sprawl_threshold: int, event: Event | None) -> None:
+    pinned = pinned_epics(root, day)
+    if not stale_path(root).exists():
+        text = append_event(text, event) if event else text
+        rewrite(handle, with_status(text, sprawl_threshold, 0, pinned))
+        return
+    with locked(stale_path(root)) as stale_handle:
+        entries = parse_stale(stale_handle.read())
+        if event is not None:
+            prior = next((stale_event for _, stale_event in entries if stale_event.key == event.key), None)
+            if prior and event.kind == "note":
+                text = append_event(text, carry_event(prior))
+            text = append_event(text, event)
+            entries = [(since, stale_event) for since, stale_event in entries if stale_event.key != event.key]
+        rewrite(handle, with_status(text, sprawl_threshold, len(entries), pinned))
+        rewrite(stale_handle, stale_text(entries))
+
+
+def log_if_current(
+    root: Path,
+    day: date,
+    expected: Event,
+    replacement: Event,
+    tz: tzinfo,
+    sprawl_threshold: int = DEFAULT_SPRAWL_THRESHOLD,
+    stale_after_days: int = 0,
+) -> bool:
+    if expected.key != replacement.key:
+        raise ValueError("replacement must identify the same daily item")
+    with locked(day_path(root, day)) as handle:
+        text = handle.read() or new_day(root, day, tz, stale_after_days)
+        latest = next((event for event in reversed(parse_events(text)) if event.key == expected.key), None)
+        if latest != expected:
+            return False
+        rewrite_day(root, day, handle, text, sprawl_threshold, replacement)
+        return True
 
 
 def log_event(

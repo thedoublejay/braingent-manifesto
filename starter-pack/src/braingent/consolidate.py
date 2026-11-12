@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import deque
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -31,7 +32,8 @@ class Proposal:
 
 
 def proposal(kind: str, record: core.Record, why: str, change: dict[str, Any] | None = None) -> Proposal:
-    digest = hashlib.sha256(json.dumps([kind, record.relpath, why, change], sort_keys=True).encode("utf-8")).hexdigest()[:10]
+    snapshot = hashlib.sha256(record.path.read_bytes()).hexdigest()
+    digest = hashlib.sha256(json.dumps([kind, record.relpath, why, change, snapshot], sort_keys=True).encode("utf-8")).hexdigest()[:10]
     return Proposal(digest, kind, record.relpath, why, change, record.date_sort)
 
 
@@ -47,6 +49,29 @@ def build(records: list[core.Record], taxonomy: dict[str, Any]) -> list[Proposal
         resolved = core.resolve_record_ref(value, source=record.path)
         return by_path.get(resolved.resolve()) if resolved else None
 
+    successors: dict[str, list[core.Record]] = {}
+    graph: dict[str, set[str]] = {record.relpath: set() for record in records}
+    for record in records:
+        older = target(record, record.frontmatter.get("supersedes"))
+        if older:
+            successors.setdefault(older.relpath, []).append(record)
+            graph[older.relpath].add(record.relpath)
+        newer = target(record, record.frontmatter.get("superseded_by"))
+        if newer:
+            graph[record.relpath].add(newer.relpath)
+    predecessors: dict[str, set[str]] = {path: set() for path in graph}
+    for path, replacements in graph.items():
+        for replacement in replacements:
+            predecessors[replacement].add(path)
+    remaining = {path: len(replacements) for path, replacements in graph.items()}
+    terminal = deque(path for path, count in remaining.items() if not count)
+    while terminal:
+        for predecessor in predecessors[terminal.popleft()]:
+            remaining[predecessor] -= 1
+            if not remaining[predecessor]:
+                terminal.append(predecessor)
+    cyclic = {path for path, count in remaining.items() if count}
+
     for record in records:
         fm = record.frontmatter
         for field in LINK_FIELDS:
@@ -54,6 +79,9 @@ def build(records: list[core.Record], taxonomy: dict[str, Any]) -> list[Proposal
                 if not core.is_nullish(value) and target(record, value) is None:
                     found.append(proposal("broken-link", record, f"`{field}` points at `{core.as_scalar(value)}`, which is not a record"))
 
+        if record.relpath in cyclic:
+            found.append(proposal("state-relation", record, "supersession relationships reach a cycle; resolve the cycle before changing records"))
+            continue
         newer = target(record, fm.get("superseded_by")) if not core.is_nullish(fm.get("superseded_by")) else None
         if newer and record.status != "superseded" and allows_superseded(record, taxonomy):
             found.append(
@@ -65,6 +93,14 @@ def build(records: list[core.Record], taxonomy: dict[str, Any]) -> list[Proposal
 
         older = target(record, fm.get("supersedes")) if not core.is_nullish(fm.get("supersedes")) else None
         if older and core.is_nullish(older.frontmatter.get("superseded_by")):
+            if older.relpath in cyclic:
+                continue
+            claims = successors[older.relpath]
+            if len(claims) > 1:
+                if record is claims[0]:
+                    names = ", ".join(f"`{claim.relpath}`" for claim in claims)
+                    found.append(proposal("state-relation", older, f"several records claim to supersede this record: {names}; choose the successor"))
+                continue
             change: dict[str, Any] = {"superseded_by": record.relpath}
             if allows_superseded(older, taxonomy):
                 change["status"] = "superseded"
@@ -82,7 +118,7 @@ def build(records: list[core.Record], taxonomy: dict[str, Any]) -> list[Proposal
             label = f"`{source}` at `{revision}`" if revision else f"`{source}`"
             found.append(proposal("duplicate-source", extra, f"records the same source as `{first.relpath}`: {label}"))
 
-    already_linked = {item.path for item in found if item.kind == "link-superseded-by"}
+    already_linked = {item.path for item in found if item.kind in {"link-superseded-by", "state-relation"}}
     for issue in core.validate_decision_conflicts(records):
         record = by_path.get(issue.path.resolve())
         if record and record.relpath not in already_linked:
@@ -92,11 +128,14 @@ def build(records: list[core.Record], taxonomy: dict[str, Any]) -> list[Proposal
 
 
 def load_rejected() -> set[str]:
-    path = core.REPO_ROOT / REJECTED_PATH
+    path = capture.inside_root(REJECTED_PATH)
     if not path.is_file():
         return set()
     try:
-        return {str(item) for item in json.loads(path.read_text(encoding="utf-8"))}
+        values = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(values, list) or not all(isinstance(item, str) for item in values):
+            raise ValueError("expected a list of proposal ids")
+        return set(values)
     except ValueError as exc:
         raise SystemExit(f"{REJECTED_PATH} is not valid JSON: {exc}") from exc
 
@@ -108,6 +147,11 @@ def proposals() -> list[Proposal]:
 
 
 def apply(ids: list[str]) -> int:
+    with capture.record_lock():
+        return apply_locked(ids)
+
+
+def apply_locked(ids: list[str]) -> int:
     current = {item.id: item for item in proposals()}
     failed = 0
     for wanted in ids:
@@ -118,17 +162,41 @@ def apply(ids: list[str]) -> int:
         elif item.change is None:
             print(f"{wanted}: needs a person or agent to decide; nothing to apply automatically")
             failed += 1
-        else:
-            path = core.REPO_ROOT / item.path
-            path.write_text(capture.set_frontmatter(path.read_text(encoding="utf-8"), item.change), encoding="utf-8")
-            print(f"{wanted}: applied to {item.path}")
-    return 1 if failed else 0
+    if failed:
+        return 1
+    originals: dict[Path, bytes] = {}
+    updates: dict[Path, bytes] = {}
+    for wanted in dict.fromkeys(ids):
+        item = current[wanted]
+        path = capture.inside_root(item.path)
+        originals[path] = path.read_bytes()
+        updates[path] = capture.set_frontmatter(originals[path].decode("utf-8"), item.change or {}).encode("utf-8")
+    for path in originals:
+        capture.backup_file(path)
+    written: list[Path] = []
+    try:
+        for path, content in updates.items():
+            if path.read_bytes() != originals[path]:
+                raise OSError(f"{path.relative_to(core.REPO_ROOT)} changed during apply")
+            capture.replace_bytes(path, content)
+            written.append(path)
+    except OSError as exc:
+        for path in reversed(written):
+            capture.replace_bytes(path, originals[path])
+        raise SystemExit(f"dream apply failed; previous changes restored from backups: {exc}") from exc
+    for wanted in dict.fromkeys(ids):
+        print(f"{wanted}: applied to {current[wanted].path}")
+    return 0
 
 
 def reject(ids: list[str]) -> int:
-    path = core.REPO_ROOT / REJECTED_PATH
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(sorted(load_rejected() | set(ids)), indent=2) + "\n", encoding="utf-8")
+    with capture.record_lock():
+        path = capture.inside_root(REJECTED_PATH)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        content = json.dumps(sorted(load_rejected() | set(ids)), indent=2) + "\n"
+        if path.exists():
+            capture.backup_file(path)
+        capture.replace_bytes(path, content.encode("utf-8"))
     print(f"rejected {len(ids)}; they will not be proposed again")
     return 0
 

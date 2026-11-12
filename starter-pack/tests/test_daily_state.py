@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import contextlib
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from threading import Barrier
+from unittest import mock
 from zoneinfo import ZoneInfo
 
 from braingent import daily, weekly
@@ -66,6 +70,93 @@ class MergedDeployedVerifiedTests(DailyStateTestCase):
 
 
 class StaleQueueTests(DailyStateTestCase):
+    def test_reactivating_a_stale_spawn_does_not_count_it_as_spawned_today(self) -> None:
+        self.log("spawned", "Old ticket", "EX-1")
+        day = self.day + timedelta(days=5)
+        daily.refresh(self.root, day, tz=ZONE, stale_after_days=3)
+        self.log("note", "Progress update", "EX-1", day=day, stale=3)
+        summary = daily.summarise(self.root, day, tz=ZONE, stale_after_days=3)
+        self.assertEqual((summary["spawned"], summary["counts"]["todo"]), (0, 1))
+
+    def test_carried_priority_is_pinned_before_the_week_file_is_created(self) -> None:
+        weekly.add_item(self.root, "priorities", "Ship pilot", day=self.day, tz=ZONE, epic="pilot")
+        self.log("started", "Priority work", "EX-1", epic="pilot")
+        monday = self.day + timedelta(days=7)
+        self.log("note", "tick", None, day=monday, stale=3)
+        self.assertEqual(self.carried_refs(monday), {"EX-1"})
+        self.assertEqual(daily.read_stale(self.root), [])
+        self.assertFalse(weekly.week_path(self.root, monday).exists())
+
+    def test_previewing_carry_does_not_change_files_or_the_stale_queue(self) -> None:
+        self.log("started", "Old work", "EX-1")
+        day = self.day + timedelta(days=5)
+
+        def snapshot():
+            return {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in self.root.rglob("*") if path.is_file()}
+
+        before = snapshot()
+        self.assertEqual(daily.carried_events(self.root, day, 3, persist_stale=False), [])
+        self.assertEqual(snapshot(), before)
+        daily.refresh(self.root, day, tz=ZONE, stale_after_days=3)
+        before = snapshot()
+        self.assertEqual(daily.carried_events(self.root, day + timedelta(days=1), 3, persist_stale=False), [])
+        self.assertEqual(snapshot(), before)
+
+    def test_reactivating_stale_items_updates_both_queues_immediately(self) -> None:
+        for kind, bucket in (("note", "ongoing"), ("review", "review"), ("done", "done")):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory(dir=self.root) as directory:
+                root = Path(directory)
+                daily.log_event(root, "started", "Old work", actor="agent--one", ref="EX-1", now=at(self.day), tz=ZONE)
+                day = self.day + timedelta(days=5)
+                daily.refresh(root, day, tz=ZONE, stale_after_days=3)
+                self.assertEqual(len(daily.read_stale(root)), 1)
+                path = daily.day_path(root, day)
+                original = path.read_text(encoding="utf-8").replace("## Goals\n", "## Goals\n\n- Keep this goal\n", 1)
+                path.write_text(original, encoding="utf-8")
+                old_log = original.split("## Log", 1)[1]
+                daily.log_event(root, kind, "Progress update", actor="agent--one", ref="EX-1", now=at(day), tz=ZONE, stale_after_days=3)
+                self.assertIn("## Goals\n\n- Keep this goal\n", path.read_text(encoding="utf-8"))
+                self.assertIn(old_log, path.read_text(encoding="utf-8"))
+                summary = daily.summarise(root, day, tz=ZONE, stale_after_days=3)
+                self.assertEqual((summary["stale"], summary["counts"][bucket]), (0, 1))
+                tomorrow = day + timedelta(days=1)
+                next_summary = daily.summarise(root, tomorrow, tz=ZONE, stale_after_days=3)
+                self.assertEqual(next_summary["stale"], 0)
+                self.assertEqual(next_summary["counts"][bucket], 0 if kind == "done" else 1)
+
+    def test_pinning_a_stale_item_restores_it_to_daily_carry(self) -> None:
+        self.log("started", "Old priority", "EX-1", epic="pilot")
+        day = self.advance(5, stale=3)
+        self.assertEqual(len(daily.read_stale(self.root)), 1)
+        tomorrow = day + timedelta(days=1)
+        weekly.add_item(self.root, "priorities", "Ship pilot", day=tomorrow, tz=ZONE, epic="pilot")
+        self.log("note", "tick", None, day=tomorrow, stale=3)
+        self.assertEqual(self.carried_refs(tomorrow), {"EX-1"})
+        self.assertEqual(daily.read_stale(self.root), [])
+
+    def test_concurrent_different_dates_preserve_all_stale_items(self) -> None:
+        directory = self.root / "daily"
+        directory.mkdir()
+        for day, ref in ((date(2026, 10, 1), "EX-1"), (date(2026, 10, 4), "EX-2")):
+            daily.day_path(self.root, day).write_text(
+                f"# Day\n\n## Log\n\n- 09:00 · agent--one · started · {ref} · Old work\n", encoding="utf-8"
+            )
+        barrier = Barrier(2)
+        original_lock = daily.locked
+
+        @contextlib.contextmanager
+        def overlapping_lock(path: Path):
+            if path == daily.stale_path(self.root):
+                barrier.wait(timeout=5)
+            with original_lock(path) as handle:
+                yield handle
+
+        with mock.patch.object(daily, "locked", overlapping_lock), ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(daily.carried_events, self.root, day, 1) for day in (date(2026, 10, 3), date(2026, 10, 6))]
+            for future in futures:
+                future.result(timeout=10)
+        self.assertEqual({event.ref for _, event in daily.read_stale(self.root)}, {"EX-1", "EX-2"})
+
     def advance(self, days: int, stale: int) -> date:
         current = self.day
         for _ in range(days):

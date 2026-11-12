@@ -8,9 +8,10 @@ import tempfile
 import unittest
 from datetime import date, datetime
 from pathlib import Path
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
-from braingent import consolidate, core, daily, reconcile
+from braingent import capture, consolidate, core, daily, reconcile
 
 PACK_ROOT = Path(__file__).resolve().parents[1]
 ZONE = ZoneInfo("UTC")
@@ -26,6 +27,73 @@ def record_text(title: str, kind: str, status: str, extra: str = "") -> str:
 
 
 class DreamTests(unittest.TestCase):
+    def test_cyclic_and_self_supersession_need_a_decision(self) -> None:
+        for field in ("supersedes", "superseded_by"):
+            with self.subTest(field=field):
+                prefix = f"orgs/org--acme/records/{field}"
+                first = self.write(f"{field}-a.md", "Cache policy alpha", "decision", "accepted", f"{field}: {prefix}-b.md\n")
+                second = self.write(f"{field}-b.md", "Cache policy beta", "decision", "accepted", f"{field}: {first}\n")
+                own = self.write(f"{field}-self.md", "Cache policy self", "decision", "accepted", f"{field}: {prefix}-self.md\n")
+                before = {path: (self.root / path).read_bytes() for path in (first, second, own)}
+                pending = [item for item in consolidate.proposals() if item.path in before]
+                self.assertEqual({item.path for item in pending}, set(before))
+                self.assertTrue(all(item.kind == "state-relation" and item.change is None for item in pending))
+                self.assertEqual(self.run_cli("--apply", *[item.id for item in pending])[0], 1)
+                self.assertEqual({path: (self.root / path).read_bytes() for path in before}, before)
+
+    def test_mixed_supersession_cycle_is_not_applied(self) -> None:
+        first = "orgs/org--acme/records/a.md"
+        second = self.write("b.md", "Cache policy beta", "decision", "accepted")
+        self.write("a.md", "Cache policy alpha", "decision", "accepted", f"supersedes: {second}\nsuperseded_by: {second}\n")
+        pending = consolidate.proposals()
+        self.assertEqual({item.path for item in pending}, {first, second})
+        self.assertTrue(all(item.change is None for item in pending))
+
+    def test_a_failed_batch_restores_already_written_records(self) -> None:
+        half, old, _ = self.seed()
+        pending = [item.id for item in consolidate.proposals() if item.change is not None]
+        originals = {self.root / name: (self.root / name).read_bytes() for name in (half, old)}
+        replace = capture.replace_bytes
+        calls = 0
+
+        def fail_second(path: Path, content: bytes) -> None:
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                raise OSError("write failed")
+            replace(path, content)
+
+        with patch.object(capture, "replace_bytes", side_effect=fail_second), self.assertRaises(SystemExit):
+            self.run_cli("--apply", *pending)
+        for path, content in originals.items():
+            self.assertEqual(path.read_bytes(), content)
+            self.assertEqual(Path(f"{path}.bak").read_bytes(), content)
+
+    def test_link_proposal_expires_when_its_target_changes(self) -> None:
+        _, old, _ = self.seed()
+        wanted = next(item.id for item in consolidate.proposals() if item.kind == "link-superseded-by")
+        path = self.root / old
+        path.write_text(path.read_text(encoding="utf-8").replace("status: accepted", "status: rejected"), encoding="utf-8")
+        code, out = self.run_cli("--apply", wanted)
+        self.assertEqual(code, 1, out)
+        self.assertEqual(self.status_of(old), ("rejected", None))
+
+    def test_competing_successors_need_a_decision(self) -> None:
+        _, old, _ = self.seed()
+        self.write("2026-10-01--decision--vendor-c.md", "Cache layer moves to Vendor C", "decision", "accepted", f"supersedes: {old}\n")
+        pending = [item for item in consolidate.proposals() if item.path == old]
+        self.assertTrue(pending)
+        self.assertTrue(all(item.change is None for item in pending))
+        self.assertEqual(self.run_cli("--apply", *[item.id for item in pending])[0], 1)
+        self.assertEqual(self.status_of(old), ("accepted", None))
+
+    def test_apply_keeps_a_backup_of_the_original_record(self) -> None:
+        half, _, _ = self.seed()
+        before = (self.root / half).read_bytes()
+        wanted = next(item.id for item in consolidate.proposals() if item.kind == "mark-superseded")
+        self.assertEqual(self.run_cli("--apply", wanted)[0], 0)
+        self.assertEqual((self.root / f"{half}.bak").read_bytes(), before)
+
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name).resolve()
@@ -183,6 +251,60 @@ class ReconcileTests(unittest.TestCase):
             reconcile.run(self.root, DAY, ZONE, ["acme"], limit=1, output_json=True, runner=self.runner, now=NOW)
         summary = json.loads(out.getvalue())
         self.assertEqual((summary["checked"], summary["skipped"]), (1, 3))
+
+    def test_dry_run_on_a_new_day_creates_no_files(self) -> None:
+        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        with contextlib.redirect_stdout(io.StringIO()):
+            reconcile.run(self.root, date(2026, 10, 20), ZONE, ["acme"], runner=self.runner, stale_after_days=3)
+        after = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        self.assertEqual(after, before)
+
+    def test_ambiguous_owner_does_not_select_an_arbitrary_pr(self) -> None:
+        def lookup(arguments: list[str]) -> str:
+            return json.dumps({"state": "MERGED", "url": f"https://example.test/{arguments[4]}/pull/{arguments[2]}"})
+
+        state, detail = reconcile.pr_state("api#12", ["first", "second"], lookup)
+        self.assertEqual(state, "unknown")
+        self.assertIn("ambiguous", detail)
+
+    def test_historical_apply_logs_to_the_requested_day(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            reconcile.run(self.root, DAY, ZONE, ["acme"], apply=True, runner=self.runner)
+        events = daily.parse_events(daily.day_path(self.root, DAY).read_text(encoding="utf-8"))
+        self.assertTrue(any(event.kind == "merged" and event.ref == "api#12" for event in events))
+        self.assertEqual(list((self.root / "daily").glob("????-??-??.md")), [daily.day_path(self.root, DAY)])
+
+    def test_apply_preserves_a_newer_verified_event(self) -> None:
+        def lookup(arguments: list[str]) -> str:
+            if arguments[2] == "12":
+                daily.log_event(self.root, "verified", "Verified during lookup", actor="agent--two", ref="api#12", now=NOW, tz=ZONE)
+            return self.runner(arguments)
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            reconcile.run(self.root, DAY, ZONE, ["acme"], apply=True, runner=lookup, now=NOW)
+        status = daily.derive_status(daily.parse_events(daily.day_path(self.root, DAY).read_text(encoding="utf-8")))
+        self.assertIn("api#12", {event.ref for event in status.buckets["done"]})
+
+    def test_an_existing_note_does_not_block_reconciliation(self) -> None:
+        daily.log_event(self.root, "note", "Existing context", actor="agent--two", ref="api#12", now=NOW, tz=ZONE)
+        summary = self.reconcile(apply=True)
+        self.assertTrue(next(row["logged"] for row in summary["items"] if row["ref"] == "api#12"))
+
+    def test_non_positive_limit_writes_and_queries_nothing(self) -> None:
+        before = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}
+        for limit in (0, -1):
+            with self.subTest(limit=limit), self.assertRaisesRegex(ValueError, "limit must be greater than zero"):
+                reconcile.run(self.root, DAY, ZONE, ["acme"], apply=True, limit=limit, runner=self.runner, now=NOW)
+        self.assertEqual(self.calls, [])
+        self.assertEqual({p.relative_to(self.root): p.read_bytes() for p in self.root.rglob("*") if p.is_file()}, before)
+
+    def test_cli_rejects_non_positive_limits(self) -> None:
+        for command in ("daily-reconcile", "dream"):
+            for limit in ("0", "-1"):
+                with self.subTest(command=command, limit=limit), contextlib.redirect_stderr(io.StringIO()):
+                    with self.assertRaises(SystemExit) as result:
+                        core.build_parser().parse_args([command, "--limit", limit])
+                    self.assertEqual(result.exception.code, 2)
 
 
 if __name__ == "__main__":
