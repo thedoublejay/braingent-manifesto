@@ -175,6 +175,43 @@ braingent capture decision project--example--memory "Sessions move to the new is
 
 Exit 3 means a decision needs one of `--supersedes`, `--coexists-with` or `--unrelated`.
 
+## `braingent dream`
+
+List consolidation proposals. Reads only, unless `--apply` is given.
+
+```bash
+braingent dream
+braingent dream --apply 0de7733aca
+braingent dream --reject 7b42b503a6
+```
+
+| Flag | Description |
+| --- | --- |
+| `--limit <n>` | Most proposals to show (default 20). The total is always printed. |
+| `--json` | Emit `total` and `proposals`, each with `id`, `kind`, `path`, `why` and `change`. |
+| `--apply <id>...` | Make the frontmatter change of these proposals. Only `mark-superseded` and `link-superseded-by` carry one; the rest need a decision. |
+| `--reject <id>...` | Record the ids in `.braingent/proposals-rejected.json` so they are not proposed again. |
+
+Proposal kinds: `mark-superseded`, `link-superseded-by`, `broken-link`, `duplicate-source`, `state-relation`.
+
+## `braingent daily-reconcile`
+
+Check open daily-log items against their pull requests. It never closes an item.
+
+```bash
+braingent daily-reconcile
+braingent daily-reconcile --apply --limit 100
+```
+
+| Flag | Description |
+| --- | --- |
+| `--apply` | Log `merged` for items whose pull request has merged. They move to "Merged, not yet verified" and stay open. |
+| `--owner <name>` | GitHub owner for refs written as `repo#n`. Repeatable; defaults to `[config_ledger] owners`. Refs written as `owner/repo#n` need none. |
+| `--limit <n>` | Most pull requests to look up (default 50). |
+| `--date`, `--json` | As for `daily-status`. |
+
+A lookup that fails is reported as `unknown` and the item is left alone. Needs the `gh` CLI, signed in.
+
 ## `braingent recall`
 
 Build a focused context pack for an agent before planning or implementation.

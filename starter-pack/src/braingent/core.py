@@ -3100,6 +3100,23 @@ def cmd_daily_log(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_dream(args: argparse.Namespace) -> int:
+    from braingent import consolidate
+
+    return consolidate.run(limit=args.limit, output_json=args.json, apply_ids=args.apply, reject_ids=args.reject)
+
+
+def cmd_daily_reconcile(args: argparse.Namespace) -> int:
+    from braingent import reconcile
+
+    tz = daily_tz()
+    return reconcile.run(
+        REPO_ROOT, daily_day(tz, args.date), tz, args.owner or list(CONFIG.config_ledger_owners),
+        apply=args.apply, limit=args.limit, output_json=args.json,
+        sprawl_threshold=CONFIG.daily_sprawl_threshold, stale_after_days=CONFIG.daily_stale_after_days,
+    )
+
+
 def cmd_daily_status(args: argparse.Namespace) -> int:
     from braingent import daily
 
@@ -3556,6 +3573,21 @@ def build_parser() -> argparse.ArgumentParser:
     daily_status_output.add_argument("--json", action="store_true", help="emit JSON")
     daily_status_output.add_argument("--path", action="store_true", help="emit only the day file path")
     daily_status_parser.set_defaults(func=cmd_daily_status)
+
+    reconcile_parser = subparsers.add_parser("daily-reconcile", help="check open daily items against their pull requests")
+    reconcile_parser.add_argument("--apply", action="store_true", help="log `merged` for items whose pull request has merged; they stay open")
+    reconcile_parser.add_argument("--owner", action="append", help="GitHub owner for refs written as repo#n; repeatable (config [config_ledger] owners)")
+    reconcile_parser.add_argument("--limit", type=int, default=50, help="most pull requests to look up (default 50)")
+    reconcile_parser.add_argument("--date", help="YYYY-MM-DD; defaults to today in [daily] timezone")
+    reconcile_parser.add_argument("--json", action="store_true", help="emit JSON")
+    reconcile_parser.set_defaults(func=cmd_daily_reconcile)
+
+    dream_parser = subparsers.add_parser("dream", help="list consolidation proposals without changing any record")
+    dream_parser.add_argument("--limit", type=int, default=20, help="most proposals to show (default 20)")
+    dream_parser.add_argument("--json", action="store_true", help="emit JSON")
+    dream_parser.add_argument("--apply", nargs="+", metavar="ID", help="apply the frontmatter change of these proposals")
+    dream_parser.add_argument("--reject", nargs="+", metavar="ID", help="never propose these again")
+    dream_parser.set_defaults(func=cmd_dream)
 
     weekly_parser = subparsers.add_parser("weekly", help="show this week's plan and regenerate its progress")
     weekly_parser.add_argument("--date", help="any YYYY-MM-DD in the week; defaults to today in [daily] timezone")
