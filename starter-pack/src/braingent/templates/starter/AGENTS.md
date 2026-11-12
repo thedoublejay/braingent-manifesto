@@ -33,7 +33,7 @@ When the user invokes a workflow trigger phrase, follow the matching procedure i
 ## Operating Rules
 
 - Search this repo before planning, reviewing code, or starting implementation.
-- Use `scripts/find.sh` for structured frontmatter searches; use `rg` for free-text body searches.
+- Use `scripts/find.sh` for structured frontmatter searches; use `braingent search "<words>"` for ranked full-text search and check each hit's `class`.
 - If live tasks are enabled, check `tasks/INDEX.md` before starting overlapping work.
 - Prefer durable summaries over chat transcripts.
 - Record decisions, versions, evidence, and follow-up work explicitly.

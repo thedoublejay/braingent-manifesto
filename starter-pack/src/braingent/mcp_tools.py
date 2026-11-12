@@ -187,6 +187,18 @@ def find_many(queries: list[dict[str, Any]], limit: int = 10) -> list[dict[str, 
     return output
 
 
+def search(query: str, filters: dict[str, Any] | None = None, limit: int = 8) -> list[dict[str, Any]]:
+    """Ranked full-text search over titles, identifiers, metadata and bodies.
+
+    Any word may match. Each hit carries `class`: `candidate`, `stale_or_verify`
+    or `do_not_use` (superseded or draft), so a stale answer is visible as such.
+    """
+
+    from braingent import search as search_module
+
+    return search_module.search(query, _query_filters(filters), limit=_limit(limit))
+
+
 def get(path: str, depth: str = "summary") -> dict[str, Any]:
     """Read one Braingent file with a compactness depth.
 

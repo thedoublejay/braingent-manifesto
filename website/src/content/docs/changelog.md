@@ -12,6 +12,14 @@ migrations.
 
 ## Latest
 
+### `12 November 2026`: `1.6.0`
+
+- **`braingent search`.** Ranked full-text search over titles, identifiers, metadata and bodies, with the same `key=value` filters as `find`. Any word may match. A ticket key or PR reference in a record's metadata outranks a mention in a body. Each hit says whether it is a `candidate`, `stale_or_verify` or `do_not_use`, and superseded records rank lower without being hidden. Also available over MCP as `braingent_search`.
+- **Unknown filters fail.** `find`, `recall`, `search` and `braingent_find` now reject a filter key that is not a known field, with the nearest valid key, and exit 2. Before, a typo such as `tickets=EX-1` returned zero results. Scripts that passed a field outside `allowed_fields` must add it to `preferences/taxonomy.yml`.
+- **Ambiguous short names fail.** `repo=<name>` or `project=<name>` matching more than one entry is an error that lists the candidates. Before, it searched for a name that did not exist and returned nothing.
+- **Hints on empty results.** When nothing matches and a filter names an organisation, person, topic, tool or repository with no directory, similar names are printed to stderr.
+- **The SQLite index is replaced atomically** and gains a full-text table. `.braingent.db` stays a disposable cache: delete it and the next `search` or `reindex` rebuilds it.
+
 ### `12 November 2026`: `1.5.0`
 
 - **Epic pages are `record_kind: epic`.** New pages carry `record_kind: epic` and an `epic:` list holding their own id. Pages written by 1.2.0 to 1.4.0 (`record_kind: profile`, scalar `epic`) still validate, with a deprecation warning; change those two lines to clear it.
