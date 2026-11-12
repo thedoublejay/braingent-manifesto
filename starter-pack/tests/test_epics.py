@@ -407,6 +407,18 @@ class ConfigLedgerCommandTests(EpicTestCase):
         self.assertEqual(page.read_text(encoding="utf-8"), before)
         self.assertFalse(page.with_name("README.md.bak").exists())
 
+    def test_search_asks_for_the_api_ceiling_and_refuses_a_full_page(self) -> None:
+        self.scaffold()
+        calls: list[list[str]] = []
+        with contextlib.redirect_stdout(io.StringIO()):
+            epics.run_config_ledger("checkout-latency", [], runner=self.runner(calls))
+        self.assertEqual(calls[0][calls[0].index("--limit") + 1], "1000")
+        full = json.dumps([{"number": n, "repository": {"name": "r"}, "url": "u", "state": "OPEN", "body": ""} for n in range(1000)])
+        stderr = io.StringIO()
+        with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(stderr):
+            self.assertEqual(epics.run_config_ledger("checkout-latency", [], runner=lambda _: full), 1)
+        self.assertIn("reached its limit of 1000", stderr.getvalue())
+
     def test_authors_are_passed_to_gh(self) -> None:
         self.scaffold()
         calls: list[list[str]] = []
