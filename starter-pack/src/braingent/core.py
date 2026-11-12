@@ -1425,7 +1425,7 @@ def render_current_state(records: list[Record], epics: list[Epic] | None = None)
     lines.extend(
         [
             f"Latest record date: {latest_record_date}",
-            "Timezone: Asia/Singapore",
+            f"Timezone: {CONFIG.daily_timezone or 'UTC'}",
             "",
             "This file is generated. Do not hand-edit. Durable evidence stays in records.",
             "",
@@ -2758,7 +2758,7 @@ def cmd_task_new(args: argparse.Namespace) -> int:
         "created": today,
         "updated": today,
         "date": today,
-        "timezone": "Asia/Singapore",
+        "timezone": CONFIG.daily_timezone or "UTC",
         "organization": args.organization,
         "project": args.project,
         "repositories": repositories,

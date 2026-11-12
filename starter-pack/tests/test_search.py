@@ -221,6 +221,22 @@ class KeywordAndRewordingTests(SearchTestCase):
         self.assertEqual(set(names), {"2026-09-16--decision--identity-moves-to-vendor-b.md", "2026-10-02--task--unrelated.md"})
         self.assertEqual(search.search_fused(["identity adapter"]), search.search("identity adapter"))
 
+    def test_decisions_and_learnings_outrank_work_logs_of_similar_relevance(self) -> None:
+        body = "The retention window for audit exports is ninety days."
+        self.write("2026-10-01--task--retention-job.md", "Retention window job", body, kind="task", status="completed")
+        self.write("2026-10-01--review--retention-pr.md", "Retention window review", body, kind="review", status="completed")
+        self.write("2026-09-01--decision--retention.md", "Retention window ruling", body, kind="decision", status="accepted")
+        names = [Path(hit["path"]).name for hit in search.search("retention window")]
+        self.assertEqual(names[0], "2026-09-01--decision--retention.md")
+        self.assertEqual(len(names), 3)
+
+    def test_a_record_far_down_the_raw_ranking_can_still_be_returned(self) -> None:
+        for index in range(60):
+            self.write(f"2026-10-01--task--noise-{index:02d}.md", f"Deploy window note {index}", "deploy window deploy window", kind="task", status="completed")
+        self.write("2026-09-01--decision--freeze.md", "Change freeze ruling", "No deploy during the quarter-end window.", kind="decision", status="accepted")
+        names = [Path(hit["path"]).name for hit in search.search("quarter-end deploy window", limit=3)]
+        self.assertIn("2026-09-01--decision--freeze.md", names)
+
     def test_also_reaches_the_cli_and_mcp(self) -> None:
         self.seed()
         code, out, _ = self.run_cli("search", "who do users authenticate with", "--also", "identity adapter", "--paths")

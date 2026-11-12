@@ -16,6 +16,9 @@ migrations.
 
 - **`keywords` field.** A record may carry `keywords: [...]`: other words someone would search by, such as the everyday name for an internal term. Search indexes them above body text. Do not repeat words already in the title. The decision and learning templates include the field; add it to `allowed_fields` and `list_fields` in your own `preferences/taxonomy.yml` when you upgrade.
 - **Merged rewordings.** `braingent search "<question>" --also "<another wording>"` (repeatable), and `also` on `braingent_search`, run each wording and merge the results into one ranked list by reciprocal rank. Use it when a question may share no words with its record.
+- **Decisions and learnings rank above work logs.** Search weights `decision` and `learning` records 1.5 times, so a ruling is not buried under the tasks and reviews that mention the same words. Every match is now ranked before the list is cut, where 1.6.0 ranked only the first few dozen. Exact ticket and PR matches still come first.
+- **Default timezone is no longer hardcoded.** `new-record.sh` falls back to `TZ` and then `UTC`. `CURRENT_STATE.md` and `task-new` use `[daily] timezone` from the config, then `UTC`. Set `BRAINGENT_TIMEZONE` or `[daily] timezone` to keep your own zone.
+- **`daily-status` counts work with no epic.** The JSON output gains `no_epic: {spawned, untouched}`, and the By epic list ends with a `no epic` line when there is any.
 - The search index gains a column, so `.braingent.db` rebuilds itself on the first search after the upgrade.
 ### `12 November 2026`: `1.7.1`
 

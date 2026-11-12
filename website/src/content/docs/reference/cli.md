@@ -152,6 +152,8 @@ Folders configured as `[[search.corpus]]` (see Configuration), such as a plans r
 
 A record can carry `keywords: [...]` in its frontmatter: other words someone would search by. They rank above body text.
 
+Ranking: exact ticket and PR matches first, then relevance, with `decision` and `learning` records weighted 1.5 times and superseded records halved. For a two-part question, pass each part with `--also`.
+
 ## `braingent recall`
 
 Build a focused context pack for an agent before planning or implementation.

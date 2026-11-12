@@ -94,6 +94,7 @@ class Status:
     spawned_untouched: int = 0
     carried: int = 0
     epics: dict[str, EpicRollup] = field(default_factory=dict)
+    no_epic: EpicRollup = field(default_factory=EpicRollup)
 
 
 def resolve_tz(name: str | None) -> tzinfo:
@@ -156,13 +157,12 @@ def derive_status(events: list[Event]) -> Status:
     status.spawned_untouched = sum(1 for _, event in latest.values() if event.kind == "spawned")
     status.carried = sum(1 for event in events if event.actor == CARRY_ACTOR)
     for event in status.spawned:
-        if event.epic:
-            status.epics.setdefault(event.epic, EpicRollup()).spawned += 1
+        rollup = status.epics.setdefault(event.epic, EpicRollup()) if event.epic else status.no_epic
+        rollup.spawned += 1
     for _, event in latest.values():
-        if event.epic:
-            rollup = status.epics.setdefault(event.epic, EpicRollup())
-            if event.kind == "spawned":
-                rollup.untouched += 1
+        rollup = status.epics.setdefault(event.epic, EpicRollup()) if event.epic else status.no_epic
+        if event.kind == "spawned":
+            rollup.untouched += 1
     return status
 
 
@@ -205,6 +205,8 @@ def render_status(status: Status, sprawl_threshold: int) -> str:
             f"- epic:{epic}: {rollup.spawned} spawned ({rollup.untouched} untouched)"
             for epic, rollup in sorted(status.epics.items())
         ]
+        if status.no_epic.spawned:
+            lines.append(f"- no epic: {status.no_epic.spawned} spawned ({status.no_epic.untouched} untouched)")
     lines.append(STATUS_END)
     return "\n".join(lines)
 
@@ -371,6 +373,7 @@ def summarise(
         "spawned_untouched": status.spawned_untouched,
         "carried": status.carried,
         "epics": {epic: {"spawned": rollup.spawned, "untouched": rollup.untouched} for epic, rollup in sorted(status.epics.items())},
+        "no_epic": {"spawned": status.no_epic.spawned, "untouched": status.no_epic.untouched},
         "sprawl_threshold": sprawl_threshold,
         "sprawl": len(status.spawned) >= sprawl_threshold,
     }

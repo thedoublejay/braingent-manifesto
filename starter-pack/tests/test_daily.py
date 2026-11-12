@@ -56,14 +56,14 @@ class DailyLogTests(unittest.TestCase):
         return daily.log_event(self.root, kind, text, actor=actor, ref=ref, now=at(day or self.day, hhmm), tz=SGT)
 
     def test_first_event_creates_day_file_with_goals_and_log(self) -> None:
-        path = self.log("started", "Verdict lock fix", ref="GET-1234", hhmm="09:42")
+        path = self.log("started", "Verdict lock fix", ref="EX-1234", hhmm="09:42")
         self.assertEqual(path, self.root / "daily" / "2026-10-06.md")
         text = path.read_text(encoding="utf-8")
         self.assertIn("# Daily log: 6 October 2026", text)
         self.assertIn("## Goals", text)
         self.assertIn("Timezone: Asia/Singapore", text)
         self.assertFalse(text.startswith("---"))
-        self.assertIn("- 09:42 · agent--claude-code · started · GET-1234 · Verdict lock fix", text)
+        self.assertIn("- 09:42 · agent--claude-code · started · EX-1234 · Verdict lock fix", text)
 
     def test_event_text_is_flattened_to_one_line(self) -> None:
         path = self.log("note", "line one\nline two", ref="has space")
@@ -76,25 +76,25 @@ class DailyLogTests(unittest.TestCase):
             self.log("finished", "nope")
 
     def test_latest_event_per_ref_decides_bucket(self) -> None:
-        self.log("spawned", "Ticket for flaky test", ref="GET-1", hhmm="09:00")
-        self.log("started", "Verdict lock", ref="GET-2", hhmm="09:10")
-        self.log("review", "Verdict lock PR", ref="GET-2", actor="agent--codex-cli", hhmm="10:00")
-        self.log("done", "Verdict lock merged", ref="GET-2", hhmm="11:00")
-        self.log("blocked", "Waiting on infra", ref="GET-3", hhmm="11:30")
+        self.log("spawned", "Ticket for flaky test", ref="EX-1", hhmm="09:00")
+        self.log("started", "Verdict lock", ref="EX-2", hhmm="09:10")
+        self.log("review", "Verdict lock PR", ref="EX-2", actor="agent--codex-cli", hhmm="10:00")
+        self.log("done", "Verdict lock merged", ref="EX-2", hhmm="11:00")
+        self.log("blocked", "Waiting on infra", ref="EX-3", hhmm="11:30")
         self.log("note", "General note", hhmm="11:40")
         path = self.log("todo", "Write migration", hhmm="12:00")
         status = daily.derive_status(daily.parse_events(path.read_text(encoding="utf-8")))
-        self.assertEqual([item.ref for item in status.buckets["done"]], ["GET-2"])
-        self.assertEqual([item.ref for item in status.buckets["blocked"]], ["GET-3"])
+        self.assertEqual([item.ref for item in status.buckets["done"]], ["EX-2"])
+        self.assertEqual([item.ref for item in status.buckets["blocked"]], ["EX-3"])
         self.assertEqual([item.text for item in status.buckets["todo"]], ["Ticket for flaky test", "Write migration"])
         self.assertEqual(status.buckets["ongoing"], [])
         self.assertEqual(len(status.spawned), 1)
 
     def test_status_block_is_regenerated_and_goals_preserved(self) -> None:
-        path = self.log("started", "First task", ref="GET-1")
+        path = self.log("started", "First task", ref="EX-1")
         text = path.read_text(encoding="utf-8").replace("## Goals\n", "## Goals\n\n- Ship the verdict fix\n", 1)
         path.write_text(text, encoding="utf-8")
-        self.log("done", "First task", ref="GET-1", hhmm="10:00")
+        self.log("done", "First task", ref="EX-1", hhmm="10:00")
         text = path.read_text(encoding="utf-8")
         self.assertIn("- Ship the verdict fix", text)
         self.assertEqual(text.count(daily.STATUS_START), 1)
@@ -103,10 +103,10 @@ class DailyLogTests(unittest.TestCase):
         self.assertIn("### Ongoing (0)", status_block)
 
     def test_goals_and_other_sections_are_not_events(self) -> None:
-        path = self.log("started", "Actual work", ref="GET-1")
+        path = self.log("started", "Actual work", ref="EX-1")
         text = path.read_text(encoding="utf-8")
-        text = text.replace("## Goals\n", "## Goals\n\n- 09:00 · human · done · GET-1 · Goal example\n", 1)
-        text += "\n## Notes\n\n- 10:00 · human · done · GET-1 · Another example\n"
+        text = text.replace("## Goals\n", "## Goals\n\n- 09:00 · human · done · EX-1 · Goal example\n", 1)
+        text += "\n## Notes\n\n- 10:00 · human · done · EX-1 · Another example\n"
         path.write_text(text, encoding="utf-8")
         self.log("note", "Still working")
         summary = daily.summarise(self.root, self.day, tz=SGT)
@@ -118,9 +118,9 @@ class DailyLogTests(unittest.TestCase):
 
     def test_markers_in_event_text_do_not_corrupt_status(self) -> None:
         body = f"Explain {daily.STATUS_START} and {daily.STATUS_END}"
-        path = self.log("started", body, ref="GET-1")
+        path = self.log("started", body, ref="EX-1")
         original_line = daily.parse_events(path.read_text(encoding="utf-8"))[0].line()
-        self.log("done", "Explained markers", ref="GET-1")
+        self.log("done", "Explained markers", ref="EX-1")
         text = path.read_text(encoding="utf-8")
         self.assertEqual(text.splitlines().count(daily.STATUS_START), 1)
         self.assertEqual(text.splitlines().count(daily.STATUS_END), 1)
@@ -130,11 +130,11 @@ class DailyLogTests(unittest.TestCase):
     def test_empty_actor_is_rejected_before_creating_file(self) -> None:
         for actor in ("", " ", "\n\t"):
             with self.subTest(actor=actor), self.assertRaises(ValueError):
-                self.log("started", "Invalid metadata", actor=actor, ref="GET-1")
+                self.log("started", "Invalid metadata", actor=actor, ref="EX-1")
         self.assertFalse((self.root / "daily").exists())
 
     def test_summary_and_carry_over_read_under_lock(self) -> None:
-        path = self.log("started", "Long running", ref="GET-1")
+        path = self.log("started", "Long running", ref="EX-1")
         with mock.patch.object(daily, "locked", wraps=daily.locked) as acquire:
             daily.summarise(self.root, self.day, tz=SGT)
             self.assertEqual([call.args[0] for call in acquire.call_args_list], [path, path])
@@ -160,11 +160,11 @@ class DailyLogTests(unittest.TestCase):
         self.assertEqual(path.read_text(encoding="utf-8"), "Logged event\n")
 
     def test_crlf_goals_are_preserved_byte_for_byte(self) -> None:
-        path = self.log("started", "First task", ref="GET-1")
+        path = self.log("started", "First task", ref="EX-1")
         text = path.read_text(encoding="utf-8").replace("\n", "\r\n")
         path.write_bytes(text.encode("utf-8"))
         original_goals = path.read_bytes().split(daily.STATUS_START.encode())[0]
-        self.log("done", "First task", ref="GET-1")
+        self.log("done", "First task", ref="EX-1")
         self.assertEqual(path.read_bytes().split(daily.STATUS_START.encode())[0], original_goals)
         self.assertEqual(daily.summarise(self.root, self.day, tz=SGT)["counts"]["done"], 1)
 
@@ -198,7 +198,7 @@ class DailyLogTests(unittest.TestCase):
 
     def test_sprawl_flag_trips_at_threshold(self) -> None:
         for index in range(3):
-            self.log("spawned", f"Ticket {index}", ref=f"GET-{index}", hhmm=f"09:0{index}")
+            self.log("spawned", f"Ticket {index}", ref=f"EX-{index}", hhmm=f"09:0{index}")
         path = daily.refresh(self.root, self.day, sprawl_threshold=3)
         text = path.read_text(encoding="utf-8")
         self.assertIn("Sprawl: 3 tickets or PRs spawned today", text)
@@ -208,24 +208,24 @@ class DailyLogTests(unittest.TestCase):
         self.assertEqual(summary["spawned_untouched"], 3)
 
     def test_next_day_carries_over_unfinished_items_only(self) -> None:
-        self.log("started", "Long running", ref="GET-1")
-        self.log("done", "Finished", ref="GET-2")
-        self.log("spawned", "New ticket", ref="GET-3")
+        self.log("started", "Long running", ref="EX-1")
+        self.log("done", "Finished", ref="EX-2")
+        self.log("spawned", "New ticket", ref="EX-3")
         self.log("note", "Just a note")
         tomorrow = date(2026, 10, 7)
-        path = self.log("started", "Fresh work", ref="GET-9", day=tomorrow)
+        path = self.log("started", "Fresh work", ref="EX-9", day=tomorrow)
         events = daily.parse_events(path.read_text(encoding="utf-8"))
         carried = [event for event in events if event.actor == daily.CARRY_ACTOR]
-        self.assertEqual({(event.ref, event.kind) for event in carried}, {("GET-1", "started"), ("GET-3", "todo")})
+        self.assertEqual({(event.ref, event.kind) for event in carried}, {("EX-1", "started"), ("EX-3", "todo")})
         status = daily.derive_status(events)
         self.assertEqual(status.spawned, [])
         self.assertEqual(status.carried, 2)
 
     def test_carry_over_skips_gap_days(self) -> None:
-        self.log("blocked", "Waiting", ref="GET-1")
+        self.log("blocked", "Waiting", ref="EX-1")
         path = self.log("note", "Back after weekend", day=date(2026, 10, 9))
         events = daily.parse_events(path.read_text(encoding="utf-8"))
-        self.assertIn(("GET-1", "blocked"), {(event.ref, event.kind) for event in events})
+        self.assertIn(("EX-1", "blocked"), {(event.ref, event.kind) for event in events})
 
 
 class DailyCliTests(unittest.TestCase):
@@ -246,7 +246,7 @@ class DailyCliTests(unittest.TestCase):
             for marker in ("preferences", "templates", "workflows"):
                 (root / marker).mkdir()
             (root / "preferences" / "taxonomy.yml").write_text("record_scan_roots: []\n", encoding="utf-8")
-            logged = self.run_cli(root, "daily-log", "started", "CLI task", "--ref", "GET-7", "--as", "agent--codex-cli", "--date", "2026-10-06")
+            logged = self.run_cli(root, "daily-log", "started", "CLI task", "--ref", "EX-7", "--as", "agent--codex-cli", "--date", "2026-10-06")
             self.assertEqual(logged.stdout.strip(), "daily/2026-10-06.md")
             status = self.run_cli(root, "daily-status", "--date", "2026-10-06", "--json")
             payload = json.loads(status.stdout)
@@ -320,11 +320,22 @@ class DailyEpicTests(unittest.TestCase):
         (event,) = daily.parse_events(path.read_text(encoding="utf-8"))
         self.assertEqual((event.text, event.epic), ("mentions epic:x in passing and more", "db-audit"))
 
+    def test_work_with_no_epic_is_counted_beside_the_epics(self) -> None:
+        self.log("spawned", "Ticket A", ref="EX-1", epic="db-audit")
+        self.log("spawned", "Loose ticket", ref="EX-8")
+        self.log("spawned", "Loose ticket two", ref="EX-9")
+        self.log("started", "Loose ticket two", ref="EX-9")
+        summary = daily.summarise(self.root, self.day, tz=SGT)
+        self.assertEqual(summary["no_epic"], {"spawned": 2, "untouched": 1})
+        self.assertEqual(summary["epics"], {"db-audit": {"spawned": 1, "untouched": 1}})
+        text = daily.day_path(self.root, self.day).read_text(encoding="utf-8")
+        self.assertIn("- no epic: 2 spawned (1 untouched)", text)
+
     def test_per_epic_rollup_counts_spawned_and_untouched(self) -> None:
-        self.log("spawned", "Ticket A", ref="GET-1", epic="db-audit")
-        self.log("spawned", "Ticket B", ref="GET-2", epic="db-audit")
-        self.log("started", "Ticket B", ref="GET-2", epic="db-audit")
-        self.log("spawned", "Ticket C", ref="GET-3", epic="performance")
+        self.log("spawned", "Ticket A", ref="EX-1", epic="db-audit")
+        self.log("spawned", "Ticket B", ref="EX-2", epic="db-audit")
+        self.log("started", "Ticket B", ref="EX-2", epic="db-audit")
+        self.log("spawned", "Ticket C", ref="EX-3", epic="performance")
         summary = daily.summarise(self.root, self.day, tz=SGT)
         self.assertEqual(summary["epics"], {"db-audit": {"spawned": 2, "untouched": 1}, "performance": {"spawned": 1, "untouched": 1}})
         text = daily.day_path(self.root, self.day).read_text(encoding="utf-8")
@@ -332,13 +343,13 @@ class DailyEpicTests(unittest.TestCase):
 
     def test_sprawl_warning_names_driving_epics(self) -> None:
         for index in range(3):
-            self.log("spawned", f"Ticket {index}", ref=f"GET-{index}", epic="db-audit")
-        self.log("spawned", "Other", ref="GET-9", epic="performance")
+            self.log("spawned", f"Ticket {index}", ref=f"EX-{index}", epic="db-audit")
+        self.log("spawned", "Other", ref="EX-9", epic="performance")
         path = daily.update_day(self.root, self.day, SGT, sprawl_threshold=4)
         self.assertIn("> Spawned by epic: db-audit (3), performance (1).", path.read_text(encoding="utf-8"))
 
     def test_carry_over_keeps_the_epic(self) -> None:
-        self.log("started", "Long running", ref="GET-1", epic="db-audit")
+        self.log("started", "Long running", ref="EX-1", epic="db-audit")
         next_day = date(2026, 10, 7)
         path = daily.log_event(self.root, "note", "Next day", actor="agent--claude-code", now=at(next_day, "09:00"), tz=SGT)
         carried = [event for event in daily.parse_events(path.read_text(encoding="utf-8")) if event.actor == daily.CARRY_ACTOR]

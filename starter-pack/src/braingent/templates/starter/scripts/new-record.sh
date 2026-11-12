@@ -4,7 +4,7 @@ set -eu
 usage() {
   printf '%s\n' 'Usage: scripts/new-record.sh <record-kind> <entity-key> <subject> <output-dir> [suffix]'
   printf '%s\n' 'Example: scripts/new-record.sh task project--example--memory "import baseline notes" orgs/org--example/projects/project--example--memory/records'
-  printf '%s\n' 'Set BRAINGENT_TIMEZONE to override the default timezone (Asia/Singapore).'
+  printf '%s\n' 'Set BRAINGENT_TIMEZONE to override the default timezone (TZ, then UTC).'
 }
 
 if [ "$#" -lt 4 ] || [ "$#" -gt 5 ]; then
@@ -55,7 +55,7 @@ if [ -z "$subject_slug" ]; then
 fi
 
 date_today="$(date +%Y-%m-%d)"
-tz="${BRAINGENT_TIMEZONE:-${TZ:-Asia/Singapore}}"
+tz="${BRAINGENT_TIMEZONE:-${TZ:-UTC}}"
 if [ -n "$suffix" ]; then
   suffix_slug="$(slugify "$suffix")"
   if [ -z "$suffix_slug" ]; then

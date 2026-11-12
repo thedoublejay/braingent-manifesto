@@ -40,6 +40,7 @@ HEADING = re.compile(r"^#\s+(.+?)\s*$", re.M)
 CANDIDATE_POOL = 200
 DEFAULT_LIMIT = 10
 SUPERSEDED_PENALTY = 0.5
+KIND_WEIGHTS = {"decision": 1.5, "learning": 1.5}
 FUSION_K = 60
 TERM_PATTERN = re.compile(r"\w[\w#./-]*\w|\w")
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*-\d+|[\w.-]+#\d+")
@@ -229,33 +230,31 @@ def search(
     identifiers = [found.lower() for found in IDENTIFIER_PATTERN.findall(query)]
 
     ensure_index()
+    expression = match_expression(terms)
+    weights = ", ".join(str(weight) for weight in COLUMN_WEIGHTS)
     conn = sqlite3.connect(core.SQLITE_PATH)
     try:
         conn.row_factory = sqlite3.Row
-        rows = conn.execute(
+        matched = conn.execute(
             f"""
-            SELECT records.path, records.frontmatter_json, {FTS_TABLE}.ids AS ids,
-                   bm25({FTS_TABLE}, {", ".join(str(weight) for weight in COLUMN_WEIGHTS)}) AS score,
-                   snippet({FTS_TABLE}, {BODY_COLUMN}, '', '', ' … ', 24) AS snippet
+            SELECT records.path, records.record_kind AS kind, records.frontmatter_json, {FTS_TABLE}.ids AS ids,
+                   bm25({FTS_TABLE}, {weights}) AS score
             FROM {FTS_TABLE} JOIN records ON records.path = {FTS_TABLE}.path
             WHERE {FTS_TABLE} MATCH ?
-            ORDER BY score
-            LIMIT ?
             """,
-            (match_expression(terms), CANDIDATE_POOL if structured or identifiers else max(limit * 4, 40)),
+            (expression,),
         ).fetchall()
     except sqlite3.OperationalError as exc:
-        raise SearchUnavailableError(f"full-text search is unavailable: {exc}") from exc
-    finally:
         conn.close()
+        raise SearchUnavailableError(f"full-text search is unavailable: {exc}") from exc
 
     ranked: list[tuple[int, float, str, dict[str, Any]]] = []
-    for row in rows:
+    for row in matched:
         record = core.Record(path=core.REPO_ROOT / str(row["path"]), frontmatter=json.loads(row["frontmatter_json"]), body="")
         if structured and not core.record_matches(record, structured):
             continue
         label, reason = core.recall_classification(record, stale_days)
-        score = float(row["score"]) * (SUPERSEDED_PENALTY if label == "do_not_use" else 1.0)
+        score = float(row["score"]) * KIND_WEIGHTS.get(str(row["kind"]), 1.0) * (SUPERSEDED_PENALTY if label == "do_not_use" else 1.0)
         ids = f" {str(row['ids']).lower()} "
         exact = any(f" {identifier} " in ids for identifier in identifiers)
         hit = {
@@ -267,10 +266,21 @@ def search(
             "class": label,
             "reason": reason,
             "score": round(-score, 3),
-            "snippet": " ".join(str(row["snippet"]).split()),
+            "snippet": "",
             "corpus": RECORDS_CORPUS,
         }
         ranked.append((0 if exact else 1, score, record.relpath, hit))
+    ranked.sort(key=lambda item: item[:3])
+    del ranked[limit:]
+    try:
+        for *_, hit in ranked:
+            row = conn.execute(
+                f"SELECT snippet({FTS_TABLE}, {BODY_COLUMN}, '', '', ' … ', 24) FROM {FTS_TABLE} WHERE {FTS_TABLE} MATCH ? AND path = ?",
+                (expression, hit["path"]),
+            ).fetchone()
+            hit["snippet"] = " ".join(str(row[0]).split()) if row else ""
+    finally:
+        conn.close()
     if not structured:
         ranked.extend(corpus_hits(terms, identifiers, limit))
     ranked.sort(key=lambda item: item[:3])
