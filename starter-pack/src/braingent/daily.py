@@ -56,7 +56,8 @@ BUCKETS = (
     ("done", "Done"),
 )
 UNFINISHED = ("ongoing", "review", "blocked", "todo")
-EVENT_PATTERN = re.compile(r"^- (\d{2}:\d{2}) · (\S+) · (\S+) · (\S+) · (.*?)(?: · epic:(\S+))?$")
+EVENT_PATTERN = re.compile(r"^- (\d{2}:\d{2}) · (\S+) · (\S+) · (\S+)(?: · epic:([a-z0-9][a-z0-9-]*))? · (.*)$")
+TRAILING_EPIC_PATTERN = re.compile(r"^(.*?) · epic:(\S+)$")
 EPIC_ID_PATTERN = re.compile(r"^epic--[a-z0-9][a-z0-9-]*?--([a-z0-9]+(?:-[a-z0-9]+)*)$")
 EPIC_SLUG_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 DAY_FILE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}\.md$")
@@ -76,8 +77,8 @@ class Event:
         return self.ref or self.text.strip().lower()
 
     def line(self) -> str:
-        suffix = f" · epic:{self.epic}" if self.epic else ""
-        return f"- {self.time} · {self.actor} · {self.kind} · {self.ref or '-'} · {self.text}{suffix}"
+        epic = f" · epic:{self.epic}" if self.epic else ""
+        return f"- {self.time} · {self.actor} · {self.kind} · {self.ref or '-'}{epic} · {self.text}"
 
 
 @dataclass
@@ -136,7 +137,9 @@ def parse_events(text: str) -> list[Event]:
     for line in section.group(1).splitlines():
         match = EVENT_PATTERN.match(line)
         if match and match.group(3) in KINDS:
-            time, actor, kind, ref, body, epic = match.groups()
+            time, actor, kind, ref, epic, body = match.groups()
+            if epic is None and (trailing := TRAILING_EPIC_PATTERN.match(body)):
+                body, epic = trailing.groups()
             events.append(Event(time, actor, kind, None if ref == "-" else ref, body, epic))
     return events
 
@@ -248,7 +251,7 @@ def new_day(root: Path, day: date, tz: tzinfo) -> str:
         "## Goals\n\n"
         "<!-- Human-owned. Up to three outcomes for today. Agents never edit this section. -->\n\n"
         f"{LOG_HEADING}\n\n"
-        "<!-- Append-only. One event per line: - HH:MM · agent · kind · ref · text -->\n"
+        "<!-- Append-only. One event per line: - HH:MM · agent · kind · ref [· epic:slug] · text -->\n"
         + (f"\n{carried}\n" if carried else "")
     )
 

@@ -1,8 +1,8 @@
 ---
 title: <epic-title>
-record_kind: profile
+record_kind: epic
 status: active
-epic: <epic-id>
+epic: [<epic-id>]
 organization: <org-key>
 parent_epic: <parent-epic-id-or-null>
 labels: [epic:<slug>]

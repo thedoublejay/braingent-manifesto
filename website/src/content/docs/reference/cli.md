@@ -238,7 +238,9 @@ page layout and the `config-to-enable/v1` block format.
 
 `config-ledger` trusts PRs by the active GitHub account (`@me`) by default.
 Use repeatable `--author` options or `[config_ledger] authors` to select trusted
-authors. Closed, unmerged PRs are excluded. Prose fields (`default`, `target`,
+authors. Repeatable `--owner` options or `[config_ledger] owners` limit the
+search to those GitHub owners; with neither, it searches every owner. Closed,
+unmerged PRs are excluded. Prose fields (`default`, `target`,
 `verify`) may be up to 2,000 characters, and every other field up to 300. A PR
 whose block breaks a rule is skipped with a warning naming the PR and field,
 the rest still sync, and the command exits 1.

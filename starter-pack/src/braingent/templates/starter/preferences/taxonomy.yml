@@ -12,6 +12,7 @@ record_kinds:
   - profile
   - ticket-stub
   - agent-task
+  - epic
 
 statuses:
   task: [planned, active, blocked, completed, superseded]
@@ -67,13 +68,11 @@ allowed_fields:
   - last_checked
   - last_revalidated
   - last_reviewed
-  - labels
   - local_path
   - observers
   - opened
   - organization
   - parent
-  - parent_epic
   - people
   - person
   - priority
@@ -121,6 +120,9 @@ allowed_fields:
   - version
   - visibility
   - provenance
+
+kind_allowed_fields:
+  epic: [labels, parent_epic]
 
 list_fields:
   - ai_tools

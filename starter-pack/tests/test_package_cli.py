@@ -128,7 +128,7 @@ class PackageCliTests(unittest.TestCase):
             self.assertIn("Dry run only", result.stdout)
 
     def assert_installed_weekly_wrappers_run(self, target: Path) -> None:
-        for name in ("weekly.sh", "weekly-add.sh"):
+        for name in ("weekly.sh", "weekly-add.sh", "daily-log.sh", "daily-status.sh"):
             script = target / "scripts" / name
             with self.subTest(script=name):
                 self.assertTrue(os.access(script, os.X_OK), f"{name} must be executable after copying")

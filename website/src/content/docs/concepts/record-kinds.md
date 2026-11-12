@@ -24,6 +24,7 @@ learnings — not in a separate top-level `decisions/` directory.
 | Task (durable) | `task` | `tasks/archive/` or context dir | A piece of work is finished. |
 | Live agent-task | `agent-task` | `tasks/active/BGT-NNNN.md` | Multi-agent coordination is in flight. |
 | Decision | `decision` | The relevant context dir (repo / project / topic) | A non-obvious choice is made. |
+| Epic page | `epic` | `orgs/<org>/epics/epic--<org>--<slug>/README.md` | Work on one idea starts to span tickets and repositories. |
 | Review | `review` | The relevant context dir | A PR or code review surfaces something durable. |
 | Learning | `learning` | The relevant context dir | A reusable lesson is identified. |
 | Profile | `profile` | `repositories/<repo-slug>/README.md` or another entity README | A repo, org, project, or topic needs current local context. |

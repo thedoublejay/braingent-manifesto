@@ -180,11 +180,17 @@ if ! sed \
   -e "s|^title: <repo name>$|title: \"$title_yaml\"|" \
   -e "s|^title: <ticket id and short subject>$|title: \"$title_yaml\"|" \
   -e "s|^title: <tool or framework>$|title: \"$title_yaml\"|" \
+  -e "s|^title: <person or group interaction>$|title: \"$title_yaml\"|" \
+  -e "s|^title: <tool> <version>$|title: \"$title_yaml\"|" \
+  -e "s|^title: <ticket id and title>$|title: \"$title_yaml\"|" \
   -e "s|<title>|$title_sed|g" \
   -e "s|<source and scope>|$title_sed|g" \
   -e "s|<repo name>|$title_sed|g" \
   -e "s|<ticket id and short subject>|$title_sed|g" \
   -e "s|<tool or framework>|$title_sed|g" \
+  -e "s|<person or group interaction>|$title_sed|g" \
+  -e "s|<tool> <version>|$title_sed|g" \
+  -e "s|<ticket id and title>|$title_sed|g" \
   -e "s|<yyyy-mm-dd>|$date_sed|g" \
   -e "s|<yyyy-mm-dd-or-null>|null|g" \
   -e "s|<timezone>|$tz_sed|g" \
@@ -198,10 +204,12 @@ if ! sed \
   -e "s|<tool-key>|$tool_sed|g" \
   -e "s|<person-key-or-tool>|Codex|g" \
   -e "s|<person-or-tool>|Codex|g" \
+  -e "s|<person-key-or-null>|$person_sed|g" \
   -e "s|<person-key>|$person_sed|g" \
   -e "s|<ticket-id-or-null>|$ticket_sed|g" \
   -e "s|<ticket-id>|$ticket_sed|g" \
   -e "s#<jira | github | linear | other>#$ticket_system_sed#g" \
+  -e "s#<github | jira | linear | other>#$ticket_system_sed#g" \
   -e "s|<url-or-null>|null|g" \
   -e "s#<PR | branch | commit | diff | design-doc>#diff#g" \
   -e "s#<Slack | meeting | PR | Jira | email | chat>#chat#g" \

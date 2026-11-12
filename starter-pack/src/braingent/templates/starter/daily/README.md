@@ -35,7 +35,7 @@ Each call appends a line such as `- 09:42 · agent--claude-code · started · EX
 | `spawned` | Todo, plus Spawned today | An agent creates a new ticket, PR, or task. |
 | `note` | Log only | Context worth keeping that changes no status. |
 
-`--epic` is optional and takes a slug or a full `epic--<org>--<slug>` id. It is stored as the slug and appended as ` · epic:<slug>`, so lines without it are unchanged. The status block adds a per-epic spawned and untouched roll-up, and the sprawl warning names the epics driving it.
+`--epic` is optional and takes a slug or a full `epic--<org>--<slug>` id. It is stored as the slug and written after the ref, as `- HH:MM · agent · kind · ref · epic:<slug> · text`, so lines without it are unchanged. Lines written by 1.4.0 and earlier, with ` · epic:<slug>` at the end, still parse. The status block adds a per-epic spawned and untouched roll-up, and the sprawl warning names the epics driving it.
 
 Events with the same `--ref` are one item, and the latest event decides its bucket. Without `--ref`, the event text is the key. Only events within `## Log` count towards status. Examples in Goals or other sections do not change it. `--as` must identify a non-empty actor.
 
