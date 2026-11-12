@@ -12,6 +12,13 @@ migrations.
 
 ## Latest
 
+### `12 November 2026`: `1.7.0`
+
+- **Search a second corpus.** `[[search.corpus]]` in `.braingent/config.toml` names a read-only Markdown folder, such as a plans repository, that `search` and `braingent_search` include beside the records. Hits say which corpus they came from, have class `reference`, and give the file's absolute path. A ticket key in a document's file name or title gets the same exact-identifier boost as one in a record's metadata.
+- **Noise stays out.** Hidden folders, `raw/`, backup copies, `node_modules`, `site-packages`, folders holding a code project and files over `max_bytes` are not indexed. Add your own globs with `exclude`.
+- **Deleted and renamed files.** The index stores a hash of each document and rebuilds when the set of files changes, and every hit is checked on disk, so a deleted document is never returned.
+- **Search hits carry `corpus`.** Record hits say `records`.
+
 ### `12 November 2026`: `1.6.0`
 
 - **`braingent search`.** Ranked full-text search over titles, identifiers, metadata and bodies, with the same `key=value` filters as `find`. Any word may match. A ticket key or PR reference in a record's metadata outranks a mention in a body. Each hit says whether it is a `candidate`, `stale_or_verify` or `do_not_use`, and superseded records rank lower without being hidden. Also available over MCP as `braingent_search`.

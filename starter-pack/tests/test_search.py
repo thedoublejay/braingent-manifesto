@@ -175,7 +175,7 @@ class SearchTests(SearchTestCase):
         self.assertEqual(code, 0)
         payload = json.loads(out)
         self.assertEqual({hit["kind"] for hit in payload}, {"decision"})
-        self.assertEqual(set(payload[0]), {"path", "title", "kind", "status", "date", "class", "reason", "score", "snippet"})
+        self.assertEqual(set(payload[0]), {"path", "title", "kind", "status", "date", "class", "reason", "score", "snippet", "corpus"})
         code, out, _ = self.run_cli("search", "identity adapter", "--paths", "--limit", "1")
         self.assertEqual(out.strip().splitlines(), ["orgs/org--acme/records/2026-09-16--decision--identity-moves-to-vendor-b.md"])
         code, out, _ = self.run_cli("search", "nothingmatchesthis")
