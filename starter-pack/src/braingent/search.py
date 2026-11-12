@@ -17,9 +17,10 @@ from braingent import core
 FTS_TABLE = "records_fts"
 FTS_SCHEMA = (
     f"CREATE VIRTUAL TABLE {FTS_TABLE} USING fts5("
-    "path UNINDEXED, title, ids, meta, body, tokenize='porter unicode61')"
+    "path UNINDEXED, title, ids, keywords, meta, body, tokenize='porter unicode61')"
 )
-COLUMN_WEIGHTS = (0.0, 10.0, 8.0, 4.0, 1.0)
+COLUMN_WEIGHTS = (0.0, 10.0, 8.0, 8.0, 4.0, 1.0)
+BODY_COLUMN = 5
 CORPUS_TABLE = "corpus_fts"
 CORPUS_SCHEMA = (
     f"CREATE VIRTUAL TABLE {CORPUS_TABLE} USING fts5("
@@ -39,6 +40,8 @@ HEADING = re.compile(r"^#\s+(.+?)\s*$", re.M)
 CANDIDATE_POOL = 200
 DEFAULT_LIMIT = 10
 SUPERSEDED_PENALTY = 0.5
+KIND_WEIGHTS = {"decision": 1.5, "learning": 1.5}
+FUSION_K = 60
 TERM_PATTERN = re.compile(r"\w[\w#./-]*\w|\w")
 IDENTIFIER_PATTERN = re.compile(r"[A-Za-z][A-Za-z0-9]*-\d+|[\w.-]+#\d+")
 ID_FIELDS = ("ticket", "prs", "related_prs", "commits", "branches")
@@ -70,11 +73,12 @@ class CorpusFile:
         return f"{self.corpus}:{self.relpath}"
 
 
-def fts_row(record: core.Record) -> tuple[str, str, str, str, str]:
+def fts_row(record: core.Record) -> tuple[str, str, str, str, str, str]:
     fm = record.frontmatter
     ids = [core.as_scalar(item) for name in ID_FIELDS for item in core.as_list(fm.get(name))]
     meta = [core.as_scalar(item) for name in META_FIELDS for item in core.as_list(fm.get(name))]
-    return (record.relpath, record.title, " ".join([*ids, record.path.stem]), " ".join(meta), record.body)
+    keywords = [core.as_scalar(item) for item in core.as_list(fm.get("keywords"))]
+    return (record.relpath, record.title, " ".join([*ids, record.path.stem]), " ".join(keywords), " ".join(meta), record.body)
 
 
 def corpus_roots() -> dict[str, Path]:
@@ -142,7 +146,7 @@ def write_fts(conn: sqlite3.Connection, records: list[core.Record]) -> bool:
         conn.execute(CORPUS_SCHEMA)
     except sqlite3.OperationalError:
         return False
-    conn.executemany(f"INSERT INTO {FTS_TABLE} VALUES (?, ?, ?, ?, ?)", [fts_row(record) for record in records])
+    conn.executemany(f"INSERT INTO {FTS_TABLE} VALUES (?, ?, ?, ?, ?, ?)", [fts_row(record) for record in records])
     files = corpus_files()
     rows = [corpus_row(item) for item in files]
     conn.execute(CORPUS_DOCS_SCHEMA)
@@ -162,7 +166,7 @@ def paths_digest(paths: list[Path], files: list[CorpusFile]) -> str:
         (corpus.name, str(roots[corpus.name]), corpus.exclude, corpus.max_bytes)
         for corpus in core.CONFIG.search_corpora
     ]
-    fingerprint = json.dumps({"schema": 2, "corpora": corpora, "paths": names}, sort_keys=True)
+    fingerprint = json.dumps({"schema": 3, "corpora": corpora, "paths": names}, sort_keys=True)
     return hashlib.sha256(fingerprint.encode("utf-8")).hexdigest()
 
 
@@ -216,6 +220,15 @@ def search(
     limit: int = DEFAULT_LIMIT,
     stale_days: int | None = None,
 ) -> list[dict[str, Any]]:
+    return [hit for *_, hit in _search_ranked(query, filters, limit, stale_days)]
+
+
+def _search_ranked(
+    query: str,
+    filters: dict[str, list[str]] | None = None,
+    limit: int = DEFAULT_LIMIT,
+    stale_days: int | None = None,
+) -> list[tuple[int, float, str, dict[str, Any]]]:
     terms = query_terms(query)
     if not terms:
         raise ValueError("search needs at least one word")
@@ -226,33 +239,31 @@ def search(
     identifiers = [found.lower() for found in IDENTIFIER_PATTERN.findall(query)]
 
     ensure_index()
+    expression = match_expression(terms)
+    weights = ", ".join(str(weight) for weight in COLUMN_WEIGHTS)
     conn = sqlite3.connect(core.SQLITE_PATH)
     try:
         conn.row_factory = sqlite3.Row
-        rows = conn.execute(
+        matched = conn.execute(
             f"""
-            SELECT records.path, records.frontmatter_json, {FTS_TABLE}.ids AS ids,
-                   bm25({FTS_TABLE}, {", ".join(str(weight) for weight in COLUMN_WEIGHTS)}) AS score,
-                   snippet({FTS_TABLE}, 4, '', '', ' … ', 24) AS snippet
+            SELECT records.path, records.record_kind AS kind, records.frontmatter_json, {FTS_TABLE}.ids AS ids,
+                   bm25({FTS_TABLE}, {weights}) AS score
             FROM {FTS_TABLE} JOIN records ON records.path = {FTS_TABLE}.path
             WHERE {FTS_TABLE} MATCH ?
-            ORDER BY score
-            LIMIT ?
             """,
-            (match_expression(terms), CANDIDATE_POOL if structured or identifiers else max(limit * 4, 40)),
+            (expression,),
         ).fetchall()
     except sqlite3.OperationalError as exc:
-        raise SearchUnavailableError(f"full-text search is unavailable: {exc}") from exc
-    finally:
         conn.close()
+        raise SearchUnavailableError(f"full-text search is unavailable: {exc}") from exc
 
     ranked: list[tuple[int, float, str, dict[str, Any]]] = []
-    for row in rows:
+    for row in matched:
         record = core.Record(path=core.REPO_ROOT / str(row["path"]), frontmatter=json.loads(row["frontmatter_json"]), body="")
         if structured and not core.record_matches(record, structured):
             continue
         label, reason = core.recall_classification(record, stale_days)
-        score = float(row["score"]) * (SUPERSEDED_PENALTY if label == "do_not_use" else 1.0)
+        score = float(row["score"]) * KIND_WEIGHTS.get(str(row["kind"]), 1.0) * (SUPERSEDED_PENALTY if label == "do_not_use" else 1.0)
         ids = f" {str(row['ids']).lower()} "
         exact = any(f" {identifier} " in ids for identifier in identifiers)
         hit = {
@@ -264,14 +275,25 @@ def search(
             "class": label,
             "reason": reason,
             "score": round(-score, 3),
-            "snippet": " ".join(str(row["snippet"]).split()),
+            "snippet": "",
             "corpus": RECORDS_CORPUS,
         }
         ranked.append((0 if exact else 1, score, record.relpath, hit))
+    ranked.sort(key=lambda item: item[:3])
+    del ranked[limit:]
+    try:
+        for *_, hit in ranked:
+            row = conn.execute(
+                f"SELECT snippet({FTS_TABLE}, {BODY_COLUMN}, '', '', ' … ', 24) FROM {FTS_TABLE} WHERE {FTS_TABLE} MATCH ? AND path = ?",
+                (expression, hit["path"]),
+            ).fetchone()
+            hit["snippet"] = " ".join(str(row[0]).split()) if row else ""
+    finally:
+        conn.close()
     if not structured:
         ranked.extend(corpus_hits(terms, identifiers, limit))
     ranked.sort(key=lambda item: item[:3])
-    return [hit for *_, hit in ranked[:limit]]
+    return ranked[:limit]
 
 
 def corpus_hits(terms: list[str], identifiers: list[str], limit: int) -> list[tuple[int, float, str, dict[str, Any]]]:
@@ -330,9 +352,37 @@ def split_arguments(arguments: list[str]) -> tuple[str, list[str]]:
     return " ".join(words), [argument for argument in arguments if argument not in words]
 
 
-def run_search(arguments: list[str], output_json: bool = False, paths_only: bool = False, limit: int = DEFAULT_LIMIT) -> int:
+def search_fused(
+    queries: list[str],
+    filters: dict[str, list[str]] | None = None,
+    limit: int = DEFAULT_LIMIT,
+) -> list[dict[str, Any]]:
+    """Merge several wordings of one question by reciprocal rank, so a record any wording finds can surface."""
+
+    if limit < 1:
+        raise ValueError("limit must be greater than zero")
+    queries = list(dict.fromkeys(query for query in queries if query.strip()))
+    if len(queries) < 2:
+        return search(queries[0] if queries else "", filters, limit=limit)
+    fused: dict[tuple[str, str], tuple[int, float, dict[str, Any]]] = {}
+    for query in queries:
+        for rank, (priority, _, _, hit) in enumerate(_search_ranked(query, filters, limit=max(limit * 2, DEFAULT_LIMIT))):
+            key = (str(hit["corpus"]), str(hit["path"]))
+            kept_priority, score, kept = fused.get(key, (priority, 0.0, hit))
+            fused[key] = (min(priority, kept_priority), score + 1.0 / (FUSION_K + rank), kept)
+    ordered = sorted(fused.items(), key=lambda item: (item[1][0], -item[1][1], item[0]))
+    return [hit for _, (_, _, hit) in ordered[:limit]]
+
+
+def run_search(
+    arguments: list[str],
+    output_json: bool = False,
+    paths_only: bool = False,
+    limit: int = DEFAULT_LIMIT,
+    also: list[str] | None = None,
+) -> int:
     query, raw_filters = split_arguments(arguments)
-    hits = search(query, core.parse_find_filters(raw_filters), limit=limit)
+    hits = search_fused([query, *(also or [])], core.parse_find_filters(raw_filters), limit=limit)
     if output_json:
         print(json.dumps(hits, indent=2))
         return 0 if hits else 1

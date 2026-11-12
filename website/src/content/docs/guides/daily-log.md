@@ -90,6 +90,9 @@ braingent daily-log done "Verdict lock merged" --ref EX-1234 --as agent--claude-
 | `blocked` | Blocked | Work waits on a person, access, or another change. |
 | `done` | Done | Work is finished. |
 | `dropped` | Done (dropped) | Work is intentionally abandoned. |
+| `merged` | Merged, not yet verified | The change is merged, but rollout or checks are still owed. Stays open and is carried over. |
+| `deployed` | Merged, not yet verified | The change is live but not yet confirmed. Stays open. |
+| `verified` | Done | The change is confirmed working. Closes the item. |
 | `spawned` | Todo, plus Spawned today | An agent creates a new ticket, PR, or task. |
 | `note` | Log only | Context that changes no status. |
 
@@ -151,6 +154,7 @@ braingent daily-status --path     # today's file, to open in your editor
 [daily]
 timezone = "Asia/Singapore"   # IANA name; defaults to the machine's local zone
 sprawl_threshold = 10         # spawned items per day before the warning
+stale_after_days = 14         # optional; unfinished items untouched this long leave the daily log for daily/stale.md
 ```
 
 ## Where to go next

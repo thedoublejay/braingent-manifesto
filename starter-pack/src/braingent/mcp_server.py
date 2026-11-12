@@ -28,7 +28,7 @@ def braingent_find(query: dict | None = None, limit: int = 10) -> list[dict]:
 
 
 @mcp.tool()
-def braingent_search(query: str, filters: dict | None = None, limit: int = 8) -> list[dict]:
+def braingent_search(query: str, filters: dict | None = None, limit: int = 8, also: list[str] | None = None) -> list[dict]:
     """Ranked full-text search when you do not know the exact labels.
 
     Any word may match; ticket keys and PR references rank first when they are
@@ -36,9 +36,11 @@ def braingent_search(query: str, filters: dict | None = None, limit: int = 8) ->
     Check each hit's `class` before relying on it: `do_not_use` is superseded,
     and `reference` is a read-only document from a configured corpus such as
     plans (open it with its `file` path; braingent_get does not read it).
+    When the first wording may not match the record's own words, pass one or
+    two rewordings in `also`; the results are merged into one ranked list.
     """
 
-    return mcp_tools.search(query=query, filters=filters, limit=limit)
+    return mcp_tools.search(query=query, filters=filters, limit=limit, also=also)
 
 
 @mcp.tool()

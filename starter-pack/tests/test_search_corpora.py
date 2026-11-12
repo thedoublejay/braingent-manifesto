@@ -97,6 +97,19 @@ class CorpusConfigTests(CorpusTestCase):
 
 
 class CorpusSearchTests(CorpusTestCase):
+    def test_rewordings_keep_distinct_corpora_with_matching_display_paths(self) -> None:
+        self.seed()
+        config_path = self.root / ".braingent" / "config.toml"
+        config_path.write_text(CORPUS_CONFIG.replace('name = "plans"', 'name = "orgs"'), encoding="utf-8")
+        name = "2026-10-01--learning--collision.md"
+        self.record(name, "Memory document", "collisionwalrus collisionotter")
+        self.doc(f"org--acme/records/{name}", "# External document\n\ncollisionwalrus collisionotter\n")
+        core.set_repo_root(self.root)
+        hits = search.search_fused(["collisionwalrus", "collisionotter"])
+        self.assertEqual(len(hits), 2)
+        self.assertEqual({hit["corpus"] for hit in hits}, {"records", "orgs"})
+        self.assertEqual(len({hit["path"] for hit in hits}), 1)
+
     def test_identifier_in_a_corpus_filename_finds_the_document_first(self) -> None:
         self.seed()
         hits = search.search("EX-6931")

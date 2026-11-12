@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
 import unittest
-from datetime import date
+from dataclasses import replace
+from datetime import UTC, date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,6 +27,46 @@ eval_spec.loader.exec_module(eval_tokens)
 
 
 class BraingentToolTests(unittest.TestCase):
+    def test_task_clock_uses_the_configured_timezone_and_utc_default(self) -> None:
+        instant = datetime(2026, 11, 12, 16, 30, tzinfo=UTC)
+        for timezone, expected_date, expected_time in (
+            ("Asia/Singapore", "2026-11-13", "2026-11-13T00:30:00+08:00"),
+            (None, "2026-11-12", "2026-11-12T16:30:00+00:00"),
+        ):
+            with (
+                self.subTest(timezone=timezone),
+                patch.object(braingent, "CONFIG", replace(braingent.CONFIG, daily_timezone=timezone)),
+                patch.object(braingent, "datetime") as clock,
+                patch.object(braingent, "date") as host_date,
+            ):
+                clock.now.side_effect = lambda tz=None: instant.astimezone(tz) if tz else instant
+                host_date.today.return_value = date(2026, 11, 12)
+                self.assertEqual(braingent.today_iso(), expected_date)
+                self.assertEqual(braingent.now_iso(), expected_time)
+
+    def test_new_record_date_uses_its_declared_timezone(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            executable = root / "bin" / "date"
+            executable.parent.mkdir()
+            executable.write_text(
+                f"#!{sys.executable}\n"
+                "import os, sys\nfrom datetime import UTC, datetime\nfrom zoneinfo import ZoneInfo\n"
+                "instant = datetime(2026, 11, 12, 16, 30, tzinfo=UTC)\n"
+                "print(instant.astimezone(ZoneInfo(os.environ.get('TZ', 'UTC'))).strftime(sys.argv[1][1:]))\n",
+                encoding="utf-8",
+            )
+            executable.chmod(0o755)
+            result = subprocess.run(
+                [str(REPO_ROOT / "scripts" / "new-record.sh"), "note", "project--example--memory", "Clock sample", str(root / "records")],
+                env={**os.environ, "PATH": f"{executable.parent}{os.pathsep}{os.environ['PATH']}", "TZ": "UTC", "BRAINGENT_TIMEZONE": "Asia/Singapore"},
+                check=True, capture_output=True, text=True,
+            )
+            path = Path(result.stdout.strip())
+            self.assertTrue(path.name.startswith("2026-11-13--"))
+            self.assertIn("date: 2026-11-13", path.read_text(encoding="utf-8"))
+            self.assertIn("timezone: Asia/Singapore", path.read_text(encoding="utf-8"))
+
     def record(self, name: str, frontmatter: dict[str, object]) -> braingent.Record:
         return braingent.Record(path=REPO_ROOT / "tests" / "fixtures" / name, frontmatter=frontmatter, body="")
 

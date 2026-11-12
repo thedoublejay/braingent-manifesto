@@ -144,10 +144,73 @@ braingent search "identity provider" status=accepted --json --limit 5
 | `--paths` | Emit only matching paths. |
 | `--limit <n>` | Limit result count (default 10). |
 | `--epic <slug>` | Only records tagged with one epic. |
+| `--also "<wording>"` | Another wording of the same question. Repeatable; results are merged into one ranked list. |
 
 Each hit carries a `class`: `candidate`, `stale_or_verify`, or `do_not_use` for a superseded, draft, archived or rejected record. Superseded records still appear, ranked lower, so history stays reachable. The search index lives in `.braingent.db` and rebuilds itself when a record is added, edited, renamed or removed.
 
 Folders configured as `[[search.corpus]]` (see Configuration), such as a plans repository, are searched too when no `key=value` filter is given. Their hits carry `corpus: <name>`, `class: reference` and the file's absolute path in `file`. They are read-only reference material, never records: `find`, `recall` and `braingent_get` do not see them, and a deleted file never appears as a hit.
+
+A record can carry `keywords: [...]` in its frontmatter: other words someone would search by. They rank above body text.
+
+Ranking: exact ticket and PR matches first, then relevance, with `decision` and `learning` records weighted 1.5 times and superseded records halved. For a two-part question, pass each part with `--also`.
+## `braingent capture`
+
+Create a record after checking that it is not a repeat and, for a decision, that it does not silently contradict a live one.
+
+```bash
+braingent capture review project--example--memory "Review of the retry change" orgs/org--example/projects/project--example--memory/records \
+  --source owner/repo#12 --revision abc1234
+braingent capture decision project--example--memory "Sessions move to the new issuer" <dir> --supersedes <path-to-old-decision>
+```
+
+| Flag / Argument | Description |
+| --- | --- |
+| `kind entity title output_dir` | The same four arguments as `scripts/new-record.sh`. |
+| `--source`, `--revision` | What is being recorded and at which revision. The same pair again reports the existing record and writes nothing. A new revision is a new record. |
+| `--supersedes <path>` | The decision this one replaces. That record is marked `superseded` and both are linked. |
+| `--coexists-with <path>` | A decision that stays valid beside this one. Repeatable. |
+| `--unrelated` | The similar decisions listed are about something else. |
+| `--check` | Report duplicates and conflicts without writing. |
+| `--json` | Emit `status` (`created`, `exists`, `conflict`, `clear`), `path`, `similar` and `conflicts`. |
+
+Exit 3 means a decision needs one of `--supersedes`, `--coexists-with` or `--unrelated`.
+
+## `braingent dream`
+
+List consolidation proposals. Reads only, unless `--apply` is given.
+
+```bash
+braingent dream
+braingent dream --apply 0de7733aca
+braingent dream --reject 7b42b503a6
+```
+
+| Flag | Description |
+| --- | --- |
+| `--limit <n>` | Most proposals to show (default 20). The total is always printed. |
+| `--json` | Emit `total` and `proposals`, each with `id`, `kind`, `path`, `why` and `change`. |
+| `--apply <id>...` | Make the frontmatter change of these proposals. Only `mark-superseded` and `link-superseded-by` carry one; the rest need a decision. |
+| `--reject <id>...` | Record the ids in `.braingent/proposals-rejected.json` so they are not proposed again. |
+
+Proposal kinds: `mark-superseded`, `link-superseded-by`, `broken-link`, `duplicate-source`, `state-relation`.
+
+## `braingent daily-reconcile`
+
+Check open daily-log items against their pull requests. It never closes an item.
+
+```bash
+braingent daily-reconcile
+braingent daily-reconcile --apply --limit 100
+```
+
+| Flag | Description |
+| --- | --- |
+| `--apply` | Log `merged` for items whose pull request has merged. They move to "Merged, not yet verified" and stay open. |
+| `--owner <name>` | GitHub owner for refs written as `repo#n`. Repeatable; defaults to `[config_ledger] owners`. Refs written as `owner/repo#n` need none. |
+| `--limit <n>` | Most pull requests to look up (default 50). |
+| `--date`, `--json` | As for `daily-status`. |
+
+A lookup that fails is reported as `unknown` and the item is left alone. Needs the `gh` CLI, signed in.
 
 ## `braingent recall`
 

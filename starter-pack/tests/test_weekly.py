@@ -72,7 +72,7 @@ class WeeklyPlanTests(unittest.TestCase):
         path = self.add("priorities", "Compliance M1")
         text = path.read_text(encoding="utf-8").replace("- [ ] Compliance M1", "- [x] Compliance M1\n- Free text bullet")
         path.write_text(text, encoding="utf-8")
-        self.log("done", "Lock fix merged", "GET-1", self.day)
+        self.log("done", "Lock fix merged", "EX-1", self.day)
         weekly.summarise(self.root, self.day, SGT)
         after = path.read_text(encoding="utf-8")
         self.assertIn("- [x] Compliance M1\n- Free text bullet", after)
@@ -80,17 +80,17 @@ class WeeklyPlanTests(unittest.TestCase):
 
     def test_progress_rolls_up_the_weeks_daily_logs(self) -> None:
         monday, tuesday = date(2026, 10, 12), date(2026, 10, 13)
-        self.log("started", "Lock fix", "GET-1", monday)
-        self.log("spawned", "Follow-up", "GET-2", monday, "10:00")
-        self.log("done", "Lock fix", "GET-1", tuesday)
-        self.log("blocked", "Waiting on IAM", "GET-3", tuesday, "11:00")
-        self.log("done", "Last week work", "GET-9", date(2026, 10, 9))
+        self.log("started", "Lock fix", "EX-1", monday)
+        self.log("spawned", "Follow-up", "EX-2", monday, "10:00")
+        self.log("done", "Lock fix", "EX-1", tuesday)
+        self.log("blocked", "Waiting on IAM", "EX-3", tuesday, "11:00")
+        self.log("done", "Last week work", "EX-9", date(2026, 10, 9))
         progress = weekly.summarise(self.root, self.day, SGT)["progress"]
-        self.assertEqual([entry["ref"] for entry in progress["done"]], ["GET-1"])
+        self.assertEqual([entry["ref"] for entry in progress["done"]], ["EX-1"])
         self.assertEqual(progress["spawned"], 1)
         self.assertEqual(progress["open"]["blocked"], 1)
         self.assertEqual([entry["date"] for entry in progress["days"]], ["2026-10-12", "2026-10-13"])
-        self.assertIn("- [GET-1] Lock fix", (self.root / "weekly" / "2026-W42.md").read_text(encoding="utf-8"))
+        self.assertIn("- [EX-1] Lock fix", (self.root / "weekly" / "2026-W42.md").read_text(encoding="utf-8"))
 
     def test_new_week_carries_unticked_priorities_and_notes_once(self) -> None:
         last_week = date(2026, 10, 7)

@@ -104,6 +104,7 @@ max_bytes = 262144           # optional; larger files are skipped
 | `[factcheck] slop_domains` / `prwire_domains` / `tier12_domains` | Source-credibility tiers used by `factcheck`. Additive to the built-in defaults. |
 | `[daily] timezone` | IANA timezone for daily log dates and event times. Defaults to the machine's local zone. |
 | `[daily] sprawl_threshold` | Spawned items per day before `daily-status` raises the sprawl warning. Default 10. |
+| `[daily] stale_after_days` | Unfinished items nobody has touched for this many days stop being carried into each new day and are listed in `daily/stale.md`. They are not closed, and logging any event for one brings it back. Blocked items and items under an epic named by an unticked weekly priority never go stale. Off unless set. |
 | `[[search.corpus]]` | A read-only Markdown folder that `search` and `braingent_search` include, labelled with its `name`. Hidden folders, `raw/`, backup copies, `node_modules`, `site-packages`, folders holding a code project (`.git`, `pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`) and files over `max_bytes` are skipped. Repo-level config only. |
 
 The built-in `[safety]` patterns are always active even with no config file, so
