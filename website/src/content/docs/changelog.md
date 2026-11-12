@@ -12,6 +12,10 @@ migrations.
 
 ## Latest
 
+### `12 November 2026`: `1.7.1`
+
+- **Equal-status config entries preserve page edits.** When a page and PR have the same status, the page's conflicting field values win, including `dormant` and `not-needed`. Missing fields are still filled from the PR. Distinct statuses retain their existing precedence.
+
 ### `12 November 2026`: `1.7.0`
 
 - **Search a second corpus.** `[[search.corpus]]` in `.braingent/config.toml` names a read-only Markdown folder, such as a plans repository, that `search` and `braingent_search` include beside the records. Hits say which corpus they came from, have class `reference`, and give the file's absolute path. A ticket key in a document's file name or title gets the same exact-identifier boost as one in a record's metadata.

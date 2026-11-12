@@ -76,6 +76,15 @@ class ParserTests(unittest.TestCase):
 
 
 class MergeTests(unittest.TestCase):
+    def test_page_fields_win_when_statuses_are_equal(self) -> None:
+        for status in config_ledger.STATUSES:
+            with self.subTest(status=status):
+                page = item("K", status, target="page target")
+                pr = item("K", status, target="pr target", verify="from PR")
+                (merged,) = config_ledger.merge_items([[page], [pr]])
+                self.assertEqual(merged.target, "page target")
+                self.assertEqual(merged.verify, "from PR")
+
     def test_most_advanced_status_wins_in_either_order(self) -> None:
         for first, second in (("pending", "applied"), ("applied", "pending")):
             with self.subTest(order=(first, second)):
