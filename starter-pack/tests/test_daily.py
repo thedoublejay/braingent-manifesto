@@ -331,6 +331,11 @@ class DailyEpicTests(unittest.TestCase):
         text = daily.day_path(self.root, self.day).read_text(encoding="utf-8")
         self.assertIn("- no epic: 2 spawned (1 untouched)", text)
 
+    def test_work_with_no_epic_is_visible_without_any_tagged_epics(self) -> None:
+        self.log("spawned", "Loose ticket", ref="EX-8")
+        text = daily.day_path(self.root, self.day).read_text(encoding="utf-8")
+        self.assertIn("- no epic: 1 spawned (1 untouched)", text)
+
     def test_per_epic_rollup_counts_spawned_and_untouched(self) -> None:
         self.log("spawned", "Ticket A", ref="EX-1", epic="db-audit")
         self.log("spawned", "Ticket B", ref="EX-2", epic="db-audit")

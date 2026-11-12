@@ -199,7 +199,7 @@ def render_status(status: Status, sprawl_threshold: int) -> str:
     for title, events in sections:
         lines += ["", f"### {title} ({len(events)})", ""]
         lines += [render_item(event) for event in events] or ["- None"]
-    if status.epics:
+    if status.epics or status.no_epic.spawned:
         lines += ["", f"### By epic ({len(status.epics)})", ""]
         lines += [
             f"- epic:{epic}: {rollup.spawned} spawned ({rollup.untouched} untouched)"

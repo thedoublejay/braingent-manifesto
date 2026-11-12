@@ -34,6 +34,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+from zoneinfo import ZoneInfo
 
 try:
     import yaml
@@ -2674,11 +2675,11 @@ def load_task_record(task_id: str) -> Record:
 
 
 def now_iso() -> str:
-    return datetime.now().astimezone().replace(microsecond=0).isoformat()
+    return datetime.now(ZoneInfo(CONFIG.daily_timezone or "UTC")).replace(microsecond=0).isoformat()
 
 
 def today_iso() -> str:
-    return date.today().isoformat()
+    return datetime.now(ZoneInfo(CONFIG.daily_timezone or "UTC")).date().isoformat()
 
 
 def append_task_activity(body: str, actor: str, role: str, event: str, note: str) -> str:
@@ -2929,7 +2930,7 @@ def cmd_search(args: argparse.Namespace) -> int:
         return search.run_search(
             with_epic_filter(args.terms, args.epic), output_json=args.json, paths_only=args.paths, limit=args.limit, also=args.also
         )
-    except search.SearchUnavailableError as exc:
+    except (search.SearchUnavailableError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

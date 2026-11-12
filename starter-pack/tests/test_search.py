@@ -186,6 +186,24 @@ class SearchTests(SearchTestCase):
 
 
 class KeywordAndRewordingTests(SearchTestCase):
+    def test_rewordings_preserve_exact_identifier_priority(self) -> None:
+        for query, metadata in (("EX-77", "ticket: EX-77\n"), ("widget#77", "prs: [widget#77]\n")):
+            self.write("2026-10-01--decision--ticket.md", "Ticket outcome", "Canonical resolution.", kind="decision", status="accepted", extra=metadata)
+            self.write("2026-10-02--task--mention.md", "Login provider note", f"Discuss {query} in passing.", kind="task", status="completed")
+            with self.subTest(query=query):
+                code, out, _ = self.run_cli("search", query, "--also", "login provider", "--json")
+                self.assertEqual(code, 0)
+                self.assertTrue(json.loads(out)[0]["path"].endswith("--ticket.md"))
+                self.assertTrue(mcp_tools.search(query, also=["login provider"])[0]["path"].endswith("--ticket.md"))
+
+    def test_multiple_wordings_reject_non_positive_limits(self) -> None:
+        self.seed()
+        for limit, also in ((0, []), (-1, []), (0, ["--also", "pool"]), (-1, ["--also", "pool"])):
+            with self.subTest(limit=limit, also=also):
+                code, _, err = self.run_cli("search", "identity", *also, "--limit", str(limit))
+                self.assertEqual(code, 2)
+                self.assertIn("limit must be greater than zero", err)
+
     def seed(self) -> None:
         self.write(
             "2026-09-16--decision--identity-moves-to-vendor-b.md", "Identity adapter moves to Vendor B",

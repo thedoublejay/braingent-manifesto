@@ -54,8 +54,8 @@ if [ -z "$subject_slug" ]; then
   exit 2
 fi
 
-date_today="$(date +%Y-%m-%d)"
 tz="${BRAINGENT_TIMEZONE:-${TZ:-UTC}}"
+date_today="$(TZ="$tz" date +%Y-%m-%d)"
 if [ -n "$suffix" ]; then
   suffix_slug="$(slugify "$suffix")"
   if [ -z "$suffix_slug" ]; then

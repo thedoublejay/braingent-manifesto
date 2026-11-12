@@ -220,6 +220,15 @@ def search(
     limit: int = DEFAULT_LIMIT,
     stale_days: int | None = None,
 ) -> list[dict[str, Any]]:
+    return [hit for *_, hit in _search_ranked(query, filters, limit, stale_days)]
+
+
+def _search_ranked(
+    query: str,
+    filters: dict[str, list[str]] | None = None,
+    limit: int = DEFAULT_LIMIT,
+    stale_days: int | None = None,
+) -> list[tuple[int, float, str, dict[str, Any]]]:
     terms = query_terms(query)
     if not terms:
         raise ValueError("search needs at least one word")
@@ -284,7 +293,7 @@ def search(
     if not structured:
         ranked.extend(corpus_hits(terms, identifiers, limit))
     ranked.sort(key=lambda item: item[:3])
-    return [hit for *_, hit in ranked[:limit]]
+    return ranked[:limit]
 
 
 def corpus_hits(terms: list[str], identifiers: list[str], limit: int) -> list[tuple[int, float, str, dict[str, Any]]]:
@@ -350,16 +359,19 @@ def search_fused(
 ) -> list[dict[str, Any]]:
     """Merge several wordings of one question by reciprocal rank, so a record any wording finds can surface."""
 
+    if limit < 1:
+        raise ValueError("limit must be greater than zero")
     queries = list(dict.fromkeys(query for query in queries if query.strip()))
     if len(queries) < 2:
         return search(queries[0] if queries else "", filters, limit=limit)
-    fused: dict[str, tuple[float, dict[str, Any]]] = {}
+    fused: dict[tuple[str, str], tuple[int, float, dict[str, Any]]] = {}
     for query in queries:
-        for rank, hit in enumerate(search(query, filters, limit=max(limit * 2, DEFAULT_LIMIT))):
-            score, kept = fused.get(hit["path"], (0.0, hit))
-            fused[hit["path"]] = (score + 1.0 / (FUSION_K + rank), kept)
-    ordered = sorted(fused.items(), key=lambda item: (-item[1][0], item[0]))
-    return [hit for _, (_, hit) in ordered[:limit]]
+        for rank, (priority, _, _, hit) in enumerate(_search_ranked(query, filters, limit=max(limit * 2, DEFAULT_LIMIT))):
+            key = (str(hit["corpus"]), str(hit["path"]))
+            kept_priority, score, kept = fused.get(key, (priority, 0.0, hit))
+            fused[key] = (min(priority, kept_priority), score + 1.0 / (FUSION_K + rank), kept)
+    ordered = sorted(fused.items(), key=lambda item: (item[1][0], -item[1][1], item[0]))
+    return [hit for _, (_, _, hit) in ordered[:limit]]
 
 
 def run_search(
