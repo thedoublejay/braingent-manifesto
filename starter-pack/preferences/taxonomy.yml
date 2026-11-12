@@ -51,6 +51,7 @@ allowed_fields:
   - claimed_at
   - claimed_by
   - closed
+  - coexists_with
   - commits
   - confidence
   - created
@@ -97,6 +98,7 @@ allowed_fields:
   - source_imports
   - source_location
   - source_of_truth
+  - source_revision
   - status
   - status_category
   - stale_after
@@ -131,6 +133,7 @@ kind_allowed_fields:
 list_fields:
   - ai_tools
   - branches
+  - coexists_with
   - commits
   - depends_on
   - epic

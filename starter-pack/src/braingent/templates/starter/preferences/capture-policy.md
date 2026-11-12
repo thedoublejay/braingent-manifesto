@@ -66,6 +66,9 @@ Live `agent-task` files use a different frontmatter shape. See
 ## Keywords
 
 On decisions and learnings, add `keywords: [...]` when a reader would likely look for the record with words it does not use: the everyday name for an internal term, the symptom rather than the cause, or the question it settles. Leave out words already in the title. Three to six is enough.
+## Capture Command
+
+Prefer `braingent capture` over `scripts/new-record.sh` when the record is about a PR, ticket or other source with a revision: pass `--source` and `--revision` so a retry does not create a duplicate. For a decision, state how it relates to any live decision it lists: `--supersedes`, `--coexists-with` or `--unrelated`. Never mark an older decision superseded by hand without linking the record that replaces it.
 
 ## Capture Triggers
 

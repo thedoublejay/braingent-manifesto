@@ -222,6 +222,13 @@ class ValidationIssue:
         prefix = "warning: " if self.severity == "warning" else ""
         return f"{prefix}{label}: {self.message}"
 
+    @property
+    def code(self) -> str:
+        """Stable class of the issue: its message with quoted values and numbers removed."""
+
+        template = re.sub(r"`[^`]*`|'[^']*'|\"[^\"]*\"|\d+", " ", self.message.split(";")[0].lower())
+        return "-".join(re.findall(r"[a-z]+", template)[:8]) or "other"
+
 
 def issue_errors(issues: Iterable[ValidationIssue]) -> list[ValidationIssue]:
     return [issue for issue in issues if issue.severity != "warning"]
@@ -805,6 +812,14 @@ def validate_decision_conflicts(records: list[Record]) -> list[ValidationIssue]:
     def title_tokens(record: Record) -> set[str]:
         return {token for token in re.findall(r"[a-z0-9]{4,}", record.title.lower())}
 
+    def coexist(first: Record, second: Record) -> bool:
+        return any(
+            resolve_record_ref(item, source=one.path) == other.path
+            for one, other in ((first, second), (second, first))
+            for item in as_list(one.frontmatter.get("coexists_with"))
+            if not is_nullish(item)
+        )
+
     seen_pairs: set[tuple[str, str]] = set()
     for group in by_repo.values():
         if len(group) < 2:
@@ -819,7 +834,7 @@ def validate_decision_conflicts(records: list[Record]) -> list[ValidationIssue]:
                 pair = (first, second)
                 if pair in seen_pairs or older.relpath == newer.relpath:
                     continue
-                if len(title_tokens(older) & newer_tokens) < 2:
+                if len(title_tokens(older) & newer_tokens) < 2 or coexist(older, newer):
                     continue
                 seen_pairs.add(pair)
                 issues.append(
@@ -2886,11 +2901,80 @@ def cmd_task_archive(args: argparse.Namespace) -> int:
     return 0
 
 
+VALIDATION_BASELINE_PATH = Path(".braingent") / "validation-baseline.json"
+
+
+def issue_relpath(issue: ValidationIssue) -> str:
+    try:
+        return issue.path.relative_to(REPO_ROOT).as_posix()
+    except ValueError:
+        return str(issue.path)
+
+
+def warning_counts(warnings: list[ValidationIssue]) -> dict[str, dict[str, int]]:
+    counts: dict[str, dict[str, int]] = {}
+    for issue in warnings:
+        per_path = counts.setdefault(issue.code, {})
+        per_path[issue_relpath(issue)] = per_path.get(issue_relpath(issue), 0) + 1
+    return counts
+
+
+def load_validation_baseline() -> dict[str, dict[str, int]] | None:
+    path = REPO_ROOT / VALIDATION_BASELINE_PATH
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        return {str(code): {str(rel): int(count) for rel, count in paths.items()} for code, paths in payload["warnings"].items()}
+    except (ValueError, KeyError, AttributeError, TypeError) as exc:
+        raise SystemExit(f"{VALIDATION_BASELINE_PATH} is not a valid baseline: {exc}") from exc
+
+
+def new_warnings(warnings: list[ValidationIssue], baseline: dict[str, dict[str, int]]) -> list[ValidationIssue]:
+    """Warnings beyond the baselined count for their class and file."""
+
+    allowance = {code: dict(paths) for code, paths in baseline.items()}
+    fresh: list[ValidationIssue] = []
+    for issue in warnings:
+        remaining = allowance.get(issue.code, {}).get(issue_relpath(issue), 0)
+        if remaining > 0:
+            allowance[issue.code][issue_relpath(issue)] = remaining - 1
+        else:
+            fresh.append(issue)
+    return fresh
+
+
+def print_warning_summary(warnings: list[ValidationIssue], fresh: list[ValidationIssue]) -> None:
+    print(f"Braingent validation warnings: {len(warnings)} ({len(fresh)} new since the baseline)", file=sys.stderr)
+    fresh_by_code: dict[str, int] = {}
+    for issue in fresh:
+        fresh_by_code[issue.code] = fresh_by_code.get(issue.code, 0) + 1
+    totals = {code: sum(paths.values()) for code, paths in warning_counts(warnings).items()}
+    for code, total in sorted(totals.items(), key=lambda pair: (-pair[1], pair[0])):
+        extra = f" (+{fresh_by_code[code]} new)" if code in fresh_by_code else ""
+        print(f"- {code}: {total}{extra}", file=sys.stderr)
+    if fresh:
+        print("New warnings:", file=sys.stderr)
+        for issue in fresh:
+            print(f"- {issue.format()}", file=sys.stderr)
+
+
 def cmd_validate(args: argparse.Namespace) -> int:
-    issues = validate(path_args(args.paths) if args.paths else None)
+    scoped = bool(args.paths)
+    issues = validate(path_args(args.paths) if scoped else None)
     errors = issue_errors(issues)
     warnings = issue_warnings(issues)
-    if warnings:
+    if args.update_baseline:
+        if scoped:
+            raise SystemExit("--update-baseline covers the whole repo; run it without paths")
+        path = REPO_ROOT / VALIDATION_BASELINE_PATH
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"version": 1, "warnings": warning_counts(warnings)}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(f"Wrote {VALIDATION_BASELINE_PATH} with {len(warnings)} warnings.")
+    baseline = None if args.verbose else load_validation_baseline()
+    if warnings and baseline is not None:
+        print_warning_summary(warnings, new_warnings(warnings, baseline))
+    elif warnings:
         print(f"Braingent validation warnings: {len(warnings)}", file=sys.stderr)
         for issue in warnings:
             print(f"- {issue.format()}", file=sys.stderr)
@@ -2933,6 +3017,16 @@ def cmd_search(args: argparse.Namespace) -> int:
     except (search.SearchUnavailableError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def cmd_capture(args: argparse.Namespace) -> int:
+    from braingent import capture
+
+    return capture.run_capture(
+        args.kind, args.entity, args.title, args.output_dir,
+        source=args.source, revision=args.revision, supersedes=args.supersedes, coexists_with=args.coexists_with,
+        unrelated=args.unrelated, check=args.check, output_json=args.json,
+    )
 
 
 def cmd_recall(args: argparse.Namespace) -> int:
@@ -2998,6 +3092,7 @@ def cmd_daily_log(args: argparse.Namespace) -> int:
             now=now,
             tz=tz,
             sprawl_threshold=CONFIG.daily_sprawl_threshold,
+            stale_after_days=CONFIG.daily_stale_after_days,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
@@ -3009,7 +3104,7 @@ def cmd_daily_status(args: argparse.Namespace) -> int:
     from braingent import daily
 
     tz = daily_tz()
-    summary = daily.summarise(REPO_ROOT, daily_day(tz, args.date), CONFIG.daily_sprawl_threshold, tz)
+    summary = daily.summarise(REPO_ROOT, daily_day(tz, args.date), CONFIG.daily_sprawl_threshold, tz, CONFIG.daily_stale_after_days)
     if args.path:
         print(summary["path"])
         return 0
@@ -3020,8 +3115,9 @@ def cmd_daily_status(args: argparse.Namespace) -> int:
     print(summary["path"])
     print(
         f"ongoing {counts['ongoing']} · review {counts['review']} · blocked {counts['blocked']} · "
-        f"todo {counts['todo']} · done {counts['done']} · spawned {summary['spawned']} "
-        f"({summary['spawned_untouched']} untouched) · carried {summary['carried']}"
+        f"merged not yet verified {counts['landed']} · todo {counts['todo']} · done {counts['done']} · "
+        f"spawned {summary['spawned']} ({summary['spawned_untouched']} untouched) · closed {summary['closed']} · "
+        f"carried {summary['carried']} · stale {summary['stale']}"
     )
     if summary["sprawl"]:
         print(f"sprawl: {summary['spawned']} spawned today, threshold {summary['sprawl_threshold']}")
@@ -3046,12 +3142,15 @@ def cmd_weekly(args: argparse.Namespace) -> int:
         for index, item in enumerate(items, start=1):
             mark = "" if item["done"] is None else ("[x] " if item["done"] else "[ ] ")
             prefix = f"{index}. " if key == "priorities" else "- "
-            print(f"{prefix}{mark}{item['text']}")
+            counts = item.get("progress")
+            tail = f"  [{counts['done']} done, {counts['open']} open, {counts['spawned']} spawned]" if counts else ""
+            print(f"{prefix}{mark}{item['text']}{tail}")
     progress = summary["progress"]
     open_counts = progress["open"]
     print(
         f"\nprogress: done {len(progress['done'])} · spawned {progress['spawned']} · open now "
-        f"{open_counts['ongoing']} ongoing, {open_counts['review']} in review, {open_counts['blocked']} blocked, {open_counts['todo']} todo"
+        f"{open_counts['ongoing']} ongoing, {open_counts['review']} in review, {open_counts['blocked']} blocked, "
+        f"{open_counts['landed']} merged not yet verified, {open_counts['todo']} todo"
     )
     return 0
 
@@ -3061,7 +3160,7 @@ def cmd_weekly_add(args: argparse.Namespace) -> int:
 
     tz = daily_tz()
     try:
-        path = weekly.add_item(REPO_ROOT, args.section, args.text, day=daily_day(tz, args.date), tz=tz)
+        path = weekly.add_item(REPO_ROOT, args.section, args.text, day=daily_day(tz, args.date), tz=tz, epic=args.epic)
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
     print(path.relative_to(REPO_ROOT).as_posix())
@@ -3333,6 +3432,8 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser = subparsers.add_parser("validate", help="validate record frontmatter")
     validate_parser.add_argument("paths", nargs="*", help="optional Markdown files to validate")
     validate_parser.add_argument("--strict", action="store_true", help="fail on taxonomy warnings as well as errors")
+    validate_parser.add_argument("--update-baseline", action="store_true", help="record today's warnings in .braingent/validation-baseline.json")
+    validate_parser.add_argument("--verbose", action="store_true", help="list every warning, ignoring the baseline")
     validate_parser.set_defaults(func=cmd_validate)
 
     reindex_parser = subparsers.add_parser("reindex", help="regenerate derived indexes")
@@ -3363,6 +3464,20 @@ def build_parser() -> argparse.ArgumentParser:
     search_parser.add_argument("--epic", help="restrict to an epic, by slug or full epic-- id")
     search_parser.add_argument("--also", action="append", help="another wording of the same question; repeatable, results are merged")
     search_parser.set_defaults(func=cmd_search)
+
+    capture_parser = subparsers.add_parser("capture", help="create a record after checking for a duplicate or a conflicting decision")
+    capture_parser.add_argument("kind", help="record kind, as for scripts/new-record.sh")
+    capture_parser.add_argument("entity", help="entity key the record belongs to, such as project--example--memory")
+    capture_parser.add_argument("title")
+    capture_parser.add_argument("output_dir", help="directory to write the record in")
+    capture_parser.add_argument("--source", help="what is being recorded, such as a PR or ticket URL; used to detect a repeat")
+    capture_parser.add_argument("--revision", help="revision of the source, such as a head SHA; a new revision is a new record")
+    capture_parser.add_argument("--supersedes", help="decision this one replaces; that record is marked superseded")
+    capture_parser.add_argument("--coexists-with", action="append", help="decision that stays valid beside this one; repeatable")
+    capture_parser.add_argument("--unrelated", action="store_true", help="the similar decisions listed are about something else")
+    capture_parser.add_argument("--check", action="store_true", help="report duplicates and conflicts without writing")
+    capture_parser.add_argument("--json", action="store_true", help="emit JSON")
+    capture_parser.set_defaults(func=cmd_capture)
 
     recall_parser = subparsers.add_parser("recall", help="build a focused context pack")
     recall_parser.add_argument("filters", nargs="*", help="filters like repo=github--example--app ticket=EX-123")
@@ -3395,7 +3510,9 @@ def build_parser() -> argparse.ArgumentParser:
     factcheck_parser.set_defaults(func=cmd_factcheck)
 
     daily_log_parser = subparsers.add_parser("daily-log", help="append an event to today's daily log")
-    daily_log_parser.add_argument("kind", choices=["todo", "started", "review", "blocked", "done", "dropped", "spawned", "note"])
+    daily_log_parser.add_argument(
+        "kind", choices=["todo", "started", "review", "blocked", "merged", "deployed", "verified", "done", "dropped", "spawned", "note"]
+    )
     daily_log_parser.add_argument("text")
     daily_log_parser.add_argument("--as", dest="as_agent", required=True)
     daily_log_parser.add_argument("--ref", help="ticket key, PR reference, or task ID the event is about")
@@ -3451,6 +3568,7 @@ def build_parser() -> argparse.ArgumentParser:
     weekly_add_parser.add_argument("text")
     weekly_add_parser.add_argument("--section", choices=["priorities", "notes", "not-this-week"], default="notes")
     weekly_add_parser.add_argument("--date", help="any YYYY-MM-DD in the week; defaults to today in [daily] timezone")
+    weekly_add_parser.add_argument("--epic", help="tag the item with an epic so its progress is counted")
     weekly_add_parser.set_defaults(func=cmd_weekly_add)
 
     task_new_parser = subparsers.add_parser("task-new", help="create an agent task")

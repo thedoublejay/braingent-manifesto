@@ -32,6 +32,9 @@ Each call appends a line such as `- 09:42 · agent--claude-code · started · EX
 | `blocked` | Blocked | Work waits on a person, access, or another change. |
 | `done` | Done | Work is finished. |
 | `dropped` | Done (dropped) | Work is intentionally abandoned. |
+| `merged` | Merged, not yet verified | The change is merged, but rollout or checks are still owed. Stays open and is carried over. |
+| `deployed` | Merged, not yet verified | The change is live but not yet confirmed. Stays open. |
+| `verified` | Done | The change is confirmed working. Closes the item. |
 | `spawned` | Todo, plus Spawned today | An agent creates a new ticket, PR, or task. |
 | `note` | Log only | Context worth keeping that changes no status. |
 

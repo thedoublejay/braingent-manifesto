@@ -153,6 +153,27 @@ Folders configured as `[[search.corpus]]` (see Configuration), such as a plans r
 A record can carry `keywords: [...]` in its frontmatter: other words someone would search by. They rank above body text.
 
 Ranking: exact ticket and PR matches first, then relevance, with `decision` and `learning` records weighted 1.5 times and superseded records halved. For a two-part question, pass each part with `--also`.
+## `braingent capture`
+
+Create a record after checking that it is not a repeat and, for a decision, that it does not silently contradict a live one.
+
+```bash
+braingent capture review project--example--memory "Review of the retry change" orgs/org--example/projects/project--example--memory/records \
+  --source owner/repo#12 --revision abc1234
+braingent capture decision project--example--memory "Sessions move to the new issuer" <dir> --supersedes <path-to-old-decision>
+```
+
+| Flag / Argument | Description |
+| --- | --- |
+| `kind entity title output_dir` | The same four arguments as `scripts/new-record.sh`. |
+| `--source`, `--revision` | What is being recorded and at which revision. The same pair again reports the existing record and writes nothing. A new revision is a new record. |
+| `--supersedes <path>` | The decision this one replaces. That record is marked `superseded` and both are linked. |
+| `--coexists-with <path>` | A decision that stays valid beside this one. Repeatable. |
+| `--unrelated` | The similar decisions listed are about something else. |
+| `--check` | Report duplicates and conflicts without writing. |
+| `--json` | Emit `status` (`created`, `exists`, `conflict`, `clear`), `path`, `similar` and `conflicts`. |
+
+Exit 3 means a decision needs one of `--supersedes`, `--coexists-with` or `--unrelated`.
 
 ## `braingent recall`
 

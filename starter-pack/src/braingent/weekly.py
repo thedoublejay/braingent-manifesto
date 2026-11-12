@@ -41,6 +41,7 @@ SECTION_HINTS = {
 ITEM_PATTERN = re.compile(r"^(?:[-*]|\d+\.)[ \t]+(?:\[([ xX])\][ \t]+)?(.+?)[ \t]*$")
 CARRIED_SUFFIX = re.compile(r" \(from \d{4}-W\d{2}\)$")
 WEEK_FILE_PATTERN = re.compile(r"^\d{4}-W\d{2}\.md$")
+EPIC_TAG = re.compile(r"(?<![\w-])epic:([a-z0-9]+(?:-[a-z0-9]+)*)")
 
 
 @dataclass(frozen=True)
@@ -93,6 +94,20 @@ def parse_items(text: str, section: str) -> list[Item]:
     return items
 
 
+def epics_of(text: str) -> list[str]:
+    return list(dict.fromkeys(EPIC_TAG.findall(text)))
+
+
+def priority_epics(root: Path, day: date) -> set[str]:
+    """Epics tagged on this week's unticked priorities, read without creating the week file."""
+
+    path = week_path(root, day)
+    if not path.is_file():
+        return set()
+    items = parse_items(path.read_text(encoding="utf-8"), "priorities")
+    return {epic for item in items if item.done is not True for epic in epics_of(item.text)}
+
+
 def previous_week_file(root: Path, day: date) -> Path | None:
     directory = root / WEEKLY_DIR
     if not directory.is_dir():
@@ -132,6 +147,12 @@ def progress(root: Path, day: date) -> dict[str, Any]:
     per_day: list[dict[str, Any]] = []
     done: dict[str, tuple[date, daily.Event]] = {}
     spawned = 0
+    by_epic: dict[str, dict[str, int]] = {}
+
+    def tally(epic: str | None, field: str, amount: int = 1) -> None:
+        if epic:
+            counts = by_epic.setdefault(epic, {"done": 0, "open": 0, "spawned": 0})
+            counts[field] += amount
     latest: daily.Status | None = None
     for current in week_days(day):
         path = daily.day_path(root, current)
@@ -142,10 +163,18 @@ def progress(root: Path, day: date) -> dict[str, Any]:
         for event in status.buckets["done"]:
             done[event.key] = (current, event)
         spawned += len(status.spawned)
+        for event in status.spawned:
+            tally(event.epic, "spawned")
         latest = status
         per_day.append({"date": current.isoformat(), "done": len(status.buckets["done"]), "spawned": len(status.spawned)})
     open_counts = {name: len(latest.buckets[name]) if latest else 0 for name in daily.UNFINISHED}
+    for _, event in done.values():
+        tally(event.epic, "done")
+    for name in daily.UNFINISHED:
+        for event in latest.buckets[name] if latest else []:
+            tally(event.epic, "open")
     return {
+        "by_epic": dict(sorted(by_epic.items())),
         "days": per_day,
         "done": [{"date": when.isoformat(), "ref": event.ref, "text": event.text, "kind": event.kind, "epic": event.epic} for when, event in done.values()],
         "spawned": spawned,
@@ -153,7 +182,20 @@ def progress(root: Path, day: date) -> dict[str, Any]:
     }
 
 
-def render_progress(summary: dict[str, Any]) -> str:
+def priority_progress(text: str, summary: dict[str, Any]) -> dict[str, int] | None:
+    """Counts for the epics a priority names, or None when it names none."""
+
+    epics = epics_of(text)
+    if not epics:
+        return None
+    totals = {"done": 0, "open": 0, "spawned": 0}
+    for epic in epics:
+        for field, amount in summary["by_epic"].get(epic, {}).items():
+            totals[field] += amount
+    return totals
+
+
+def render_progress(summary: dict[str, Any], priorities: list[Item] | None = None) -> str:
     open_counts = summary["open"]
     lines = [
         PROGRESS_START,
@@ -163,7 +205,21 @@ def render_progress(summary: dict[str, Any]) -> str:
         "",
         f"Done: {len(summary['done'])} · Spawned: {summary['spawned']} · Open now: "
         f"{open_counts['ongoing']} ongoing, {open_counts['review']} in review, "
-        f"{open_counts['blocked']} blocked, {open_counts['todo']} todo",
+        f"{open_counts['blocked']} blocked, {open_counts['landed']} merged not yet verified, {open_counts['todo']} todo",
+    ]
+    tagged = [(index, item) for index, item in enumerate(priorities or [], start=1) if epics_of(item.text)]
+    if tagged:
+        lines += ["", "### By priority", ""]
+        for index, item in tagged:
+            counts = priority_progress(item.text, summary) or {}
+            lines.append(
+                f"- {index}. {', '.join('epic:' + epic for epic in epics_of(item.text))}: "
+                f"{counts['done']} done, {counts['open']} open, {counts['spawned']} spawned"
+            )
+        pinned = {epic for _, item in tagged if item.done is not True for epic in epics_of(item.text)}
+        inside = sum(counts["spawned"] for epic, counts in summary["by_epic"].items() if epic in pinned)
+        lines.append(f"- Spawned outside these priorities: {summary['spawned'] - inside} of {summary['spawned']}")
+    lines += [
         "",
         "### By day",
         "",
@@ -209,16 +265,18 @@ def update_week(root: Path, day: date, tz: tzinfo, section: str | None = None, e
         text = handle.read() or new_week(root, day, tz)
         if section is not None and entry is not None:
             text = add_to_section(text, section, Item(entry, None if section == "not-this-week" else False))
-        daily.rewrite(handle, with_progress(text, render_progress(progress(root, day))))
+        daily.rewrite(handle, with_progress(text, render_progress(progress(root, day), parse_items(text, "priorities"))))
     return path
 
 
-def add_item(root: Path, section: str, text: str, *, day: date, tz: tzinfo) -> Path:
+def add_item(root: Path, section: str, text: str, *, day: date, tz: tzinfo, epic: str | None = None) -> Path:
     if section not in SECTIONS:
         raise ValueError(f"unknown section {section!r}; use one of: {', '.join(SECTIONS)}")
     body = daily.clean(text)
     if not body:
         raise ValueError("item text must not be empty")
+    if slug := daily.normalise_epic(epic):
+        body = body if slug in epics_of(body) else f"{body} epic:{slug}"
     return update_week(root, day, tz, section, body)
 
 
@@ -227,15 +285,23 @@ def summarise(root: Path, day: date, tz: tzinfo | None = None) -> dict[str, Any]
     with daily.locked(path) as handle:
         text = handle.read()
 
+    week_progress = progress(root, day)
+
     def as_dicts(section: str) -> list[dict[str, Any]]:
         return [{"text": item.text, "done": item.done} for item in parse_items(text, section)]
 
+    priorities = [
+        {**entry, "epics": epics_of(entry["text"]), "progress": priority_progress(entry["text"], week_progress)}
+        if epics_of(entry["text"])
+        else entry
+        for entry in as_dicts("priorities")
+    ]
     return {
         "week": week_key(day),
         "range": human_range(day),
         "path": path.relative_to(root).as_posix(),
-        "priorities": as_dicts("priorities"),
+        "priorities": priorities,
         "notes": as_dicts("notes"),
         "not_this_week": as_dicts("not-this-week"),
-        "progress": progress(root, day),
+        "progress": week_progress,
     }
